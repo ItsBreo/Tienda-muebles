@@ -49,34 +49,8 @@ cd [nombre-del-proyecto]
     ```bash
     php artisan key:generate
     ```
-4.  **Configurar la Base de Datos:** Abre el archivo `.env` y configura las credenciales de tu base de datos (DB\_DATABASE, DB\_USERNAME, DB\_PASSWORD).
 
-### 3\. Ejecutar Migraciones y Seeds
-
-Ejecuta las migraciones para crear las tablas de la base de datos y los **seeds** para poblar las tablas con datos de prueba (productos, categorías, etc.).
-
-```bash
-php artisan migrate --seed
-```
-
-### 4\. Compilación de Assets (CSS/JS)
-
-Este proyecto utiliza **Vite** para compilar los archivos de Bootstrap y JavaScript.
-
-1.  **Instalar dependencias de Node:**
-    ```bash
-    npm install
-    ```
-2.  **Compilar y monitorear los cambios (modo desarrollo):**
-    ```bash
-    npm run dev
-    ```
-    O compilar para producción:
-    ```bash
-    npm run build
-    ```
-
-### 5\. Iniciar el Servidor de Laravel
+### 3\. Iniciar el Servidor de Laravel
 
 Abre una nueva terminal (mientras `npm run dev` se ejecuta en la otra) e inicia el servidor de desarrollo de Laravel:
 

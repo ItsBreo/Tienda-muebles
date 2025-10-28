@@ -1,59 +1,109 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🪑 Proyecto: Tienda de muebles minimalista
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este proyecto es una aplicación web de comercio electrónico desarrollada con **Laravel** para el backend, enfocada en la venta de muebles con un diseño minimalista. La interfaz de usuario utiliza **Bootstrap** para garantizar un diseño responsivo, moderno y limpio, acorde con la estética minimalista de los productos.
 
-## About Laravel
+-----
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Características Principales
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+  * **Autenticación de Usuarios:** Registro e inicio de sesión seguro para clientes.
+  * **Catálogo de Productos:** Visualización de productos con filtros y categorías (sillas, mesas, lámparas, etc.).
+  * **Carro de Compras Dinámico:** Funcionalidad para añadir, actualizar y eliminar productos antes de la compra.
+  * **Gestión de Pedidos:** Sección para que el usuario pueda ver el historial y estado de sus pedidos.
+  * **Diseño Minimalista:** Uso de Bootstrap y estilos personalizados para una interfaz limpia, enfocada en el producto.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+-----
 
-## Learning Laravel
+## 🛠️ Tecnologías Utilizadas
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+| Categoría | Tecnología | Versión Aproximada |
+| :--- | :--- | :--- |
+| **Backend** | **PHP** | 8.x |
+| **Framework** | **Laravel** | 12.x |
+| **Frontend** | **Bootstrap** | 5.0 |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+-----
 
-## Laravel Sponsors
+## 💻 Instalación y Configuración
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Sigue estos pasos para levantar el proyecto en tu entorno local.
 
-### Premium Partners
+### 1\. Clonar el Repositorio
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+git clone [URL-DE-TU-REPOSITORIO]
+cd [nombre-del-proyecto]
+```
 
-## Contributing
+### 2\. Configuración del Entorno
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1.  **Instalar dependencias de Composer:**
+    ```bash
+    composer install
+    ```
+2.  **Copiar el archivo de entorno:**
+    ```bash
+    cp .env.example .env
+    ```
+3.  **Generar la clave de la aplicación:**
+    ```bash
+    php artisan key:generate
+    ```
+4.  **Configurar la Base de Datos:** Abre el archivo `.env` y configura las credenciales de tu base de datos (DB\_DATABASE, DB\_USERNAME, DB\_PASSWORD).
 
-## Code of Conduct
+### 3\. Ejecutar Migraciones y Seeds
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Ejecuta las migraciones para crear las tablas de la base de datos y los **seeds** para poblar las tablas con datos de prueba (productos, categorías, etc.).
 
-## Security Vulnerabilities
+```bash
+php artisan migrate --seed
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 4\. Compilación de Assets (CSS/JS)
 
-## License
+Este proyecto utiliza **Vite** para compilar los archivos de Bootstrap y JavaScript.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+1.  **Instalar dependencias de Node:**
+    ```bash
+    npm install
+    ```
+2.  **Compilar y monitorear los cambios (modo desarrollo):**
+    ```bash
+    npm run dev
+    ```
+    O compilar para producción:
+    ```bash
+    npm run build
+    ```
+
+### 5\. Iniciar el Servidor de Laravel
+
+Abre una nueva terminal (mientras `npm run dev` se ejecuta en la otra) e inicia el servidor de desarrollo de Laravel:
+
+```bash
+php artisan serve
+```
+
+El proyecto estará disponible en `http://127.0.0.1:8000`.
+
+-----
+
+## 👥 Contribuciones
+
+Las contribuciones son bienvenidas. Si tienes sugerencias o quieres reportar un error, por favor abre un *Issue* o envía un *Pull Request*.
+
+1.  Haz un *fork* del proyecto.
+2.  Crea una rama para tu característica (`git checkout -b feature/nueva-funcionalidad`).
+3.  Haz *commit* de tus cambios (`git commit -am 'Añadir nueva funcionalidad X'`).
+4.  Sube tu rama (`git push origin feature/nueva-funcionalidad`).
+5.  Abre un *Pull Request*.
+
+-----
+
+## 📄 Licencia
+
+Este proyecto está bajo la licencia **MIT**. Consulta el archivo `LICENSE` para más detalles.
+
+-----
+
+*Desarrollado por [Azael, Josue, Daniel, Yanira y Jose Antonio]*

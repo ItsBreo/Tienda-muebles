@@ -1,0 +1,42 @@
+/*
+|--------------------------------------------------------------------------
+| CSS GLOBAL: Paleta de Colores y Base de Estilos
+|--------------------------------------------------------------------------
+| Este CSS se carga en TODAS las páginas.
+*/
+
+/* Definición de la Paleta de Colores en variables CSS (fácil de usar en todo el proyecto) */
+:root {
+    --davys-gray: #565254;      /* Gris Oscuro (Principal: Header, Footer, Botones) */
+    --gray-medium: #7A7D7D;     /* Gris Medio (Secundario: Sidebar, Texto sutil) */
+    --timberwolf: #D0CFCF;      /* Gris Claro (Fondo de página) */
+    --snow: #FFFBFE;            /* Blanco (Texto de contraste, Fondo de tarjeta) */
+}
+
+/* * Mapeo de variables a Bootstrap: Sobreescribimos las variables de color primarias de Bootstrap.
+ * (Esto solo funciona si estás utilizando archivos fuente de Bootstrap o un sistema de sobrescritura).
+ */
+:root {
+    --bs-primary: var(--davys-gray);
+    --bs-secondary: var(--gray-medium);
+    --bs-body-bg: var(--timberwolf); /* Fondo general de la aplicación */
+    --bs-body-color: var(--davys-gray); /* Color principal del texto */
+}
+
+/* Fuente de Letra (Aplicada globalmente) */
+body {
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    min-height: 100vh;
+}
+
+/* Estilos de Utilidad Comunes */
+.text-primary { color: var(--davys-gray) !important; }
+.bg-primary { background-color: var(--davys-gray) !important; }
+.btn-primary {
+    background-color: var(--davys-gray);
+    border-color: var(--davys-gray);
+}
+.btn-primary:hover {
+    background-color: var(--gray-medium);
+    border-color: var(--gray-medium);
+}

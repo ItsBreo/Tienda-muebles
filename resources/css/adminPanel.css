@@ -1,0 +1,64 @@
+/*
+|--------------------------------------------------------------------------
+| CSS ESPECÍFICO: Panel de Administración
+|--------------------------------------------------------------------------
+| Solo se carga en las páginas de administración.
+*/
+
+/* 1. Estructura y Fondo */
+body {
+    background-color: var(--timberwolf); /* Fondo de página gris claro */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 2. Cabecera (Navbar) - Replicando el estilo que definimos en el HTML */
+.navbar-custom {
+    background-color: var(--davys-gray) !important;
+    color: var(--snow);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.navbar-custom .navbar-brand,
+.navbar-custom .nav-link {
+    color: var(--snow) !important;
+}
+.navbar-custom .nav-link:hover {
+    color: var(--timberwolf) !important;
+}
+
+/* 3. Barra Lateral (Sidebar) */
+.sidebar {
+    width: 250px;
+    background-color: var(--gray-medium); /* Gris Medio */
+    padding-top: 1rem;
+    min-height: calc(100vh - 56px); /* 100vh menos altura del navbar */
+    position: sticky; /* Opcional: para que se quede fijo */
+    top: 0;
+}
+.sidebar .nav-link {
+    color: var(--snow);
+    padding: 0.75rem 1rem;
+    border-left: 3px solid transparent;
+}
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    color: var(--davys-gray);
+    background-color: var(--timberwolf);
+    border-left-color: var(--davys-gray);
+    font-weight: 600;
+}
+
+/* 4. Pie de Página (Footer) */
+.footer-custom {
+    background-color: var(--davys-gray); /* Gris Oscuro */
+    color: var(--snow);
+    padding: 1rem 0;
+    margin-top: auto; /* Empuja el footer hacia abajo */
+    box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos de Contenido Principal */
+main {
+    flex-grow: 1; /* Asegura que el contenido ocupe el espacio restante */
+    padding: 1rem 0;
+}

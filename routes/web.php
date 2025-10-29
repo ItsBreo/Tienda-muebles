@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\AdministracionController;
+use App\Http\Controllers\ProductosController;
+
 // Página Principal
  Route::get('/', [PrincipalController::class, 'index'])->name('principal');
 
@@ -30,7 +33,7 @@ use Illuminate\Support\Facades\Route;
  Route::post('/carrito/vaciar', [CarritoController::class, 'clear'])->name('carrito.clear');
 
 // Panel de Administración (Solo usuario rol ADMIN)
- Route::get('/', [AdministracionController::class, 'index'])->name('administracion');
+Route::get('/', [AdministracionController::class, 'index'])->name('administracion');
 
 // Categorías (CRUD)
  Route::resource('categorias', CategoriasController::class);
@@ -43,13 +46,14 @@ use Illuminate\Support\Facades\Route;
 // Nombres generados:
 // productos.index|create|store|show|edit|update|destroy
 // Galería de Productos
- Route::post('productos/{mueble}/galeria', [ProductosGaleriaController::class,'store'])
- ->name('productos.galeria.store');// Subida múltiple
+ Route::post('productos/{mueble}/galeria', [ProductosGaleriaController::class,'store'])->name('productos.galeria.store');// Subida múltiple
 
  Route::post('productos/{mueble}/galeria/{image}',
-[ProductosGaleriaController::class, 'destroy'])
- ->name('productos.galeria.destroy'); // Borrar imagen
+[ProductosGaleriaController::class, 'destroy'])->name('productos.galeria.destroy'); // Borrar imagen
 
  Route::post('productos/{mueble}/galeria/{image}/principal',
-[ProductosGaleriaController::class, 'setMain'])
- ->name('productos.galeria.principal'); // Establecer imagen principal
+[ProductosGaleriaController::class, 'setMain'])->name('productos.galeria.principal'); // Establecer imagen principal
+
+// Panel de Administración de prueba
+// TODO: Borrar esta ruta una vez el CRUD esté hecho
+Route::view('/admin', 'adminPanel')->name('admin.dashboard');

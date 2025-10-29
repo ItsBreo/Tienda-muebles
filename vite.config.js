@@ -1,13 +1,18 @@
+// vite.config.js
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: [
+                // ⬅️ Archivo de Paleta/Global
+                'resources/css/paletas.css',
+                // ⬅️ Archivo Específico de Página
+                'resources/css/adminPanel.css',
+                'resources/js/app.js',
+            ],
             refresh: true,
         }),
-        tailwindcss(),
     ],
 });

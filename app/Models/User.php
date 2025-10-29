@@ -42,6 +42,15 @@ class User extends Authenticatable
         return null;
     }
 
+    // Función para verificar que el usuario es admin
+    public function isAdmin(): bool{
+        if ($this->role === 'admin') {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
 
     /*
 

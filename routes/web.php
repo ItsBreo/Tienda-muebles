@@ -2,8 +2,19 @@
 
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\PrincipalController;
+use App\Http\Controllers\LoginController;
+use App\Http\Controllers\PreferenciasController;
+use App\Http\Controllers\CatalogoController;
+use App\Http\Controllers\MuebleController;
+use App\Http\Controllers\CarritoController;
+use App\Http\Controllers\AdministracionController;
+use App\Http\Controllers\CategoriasController;
+use App\Http\Controllers\ProductosController;
+use App\Http\Controllers\ProductosGaleriaController;
+
 // Página Principal
- Route::get('/', [PrincipalController::class, 'index'])->name('principal');
+ Route::get('/', [PrincipalController::class, 'index'])->name('principal.index');
 
 // Login (Sesiones):
  Route::get('/login', [LoginController::class, 'show'])->name('login');

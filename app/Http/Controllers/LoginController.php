@@ -14,24 +14,24 @@ class LoginController extends Controller
     }
 
 
-    public function login(Request $request) {
-        $data = $request->validate([
+public function login(Request $request) {
+     $data = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string', 'min:4'],
-        ]);
+    ]);
 
 
 
     $user = User::verifyUser($data['email'], $data['password']);
 
-    $sesionId = Session::getId() . "_" . $user->getId();
 
     if (!$user) {
         return back() -> withErrors(['autenticationError' => 'Las credenciales no son correctas']);
     }
 
+    $sesionId = Session::getId() . "_" . $user->getId();
 
-    $users = Session::getId('usuarios', []);
+    $users = Session::get('usuarios', []);
 
     $currentUser = null;
 
@@ -57,7 +57,7 @@ class LoginController extends Controller
 
     // TODO: redireccionar a la pagina principal según se defina la ruta
     // por ahora redirige a "principal" que es nada
-    return redirect() -> route('principal', ['sesionId' => $sesionId]);
+    return redirect() -> route('principal.index', ['sesionId' => $sesionId]);
 }
 
 

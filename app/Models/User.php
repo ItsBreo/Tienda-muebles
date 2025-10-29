@@ -28,8 +28,23 @@ class User extends Authenticatable
         // Creamos varios usuarios para iniciar sesión en la aplicación
         return [
             new User(1, 'admin@correo.com', '1234', 'Admin', 'admin'),
-            new User(2, 'user@correo.com', '1234', 'User', 'user'),
-            new User(3, 'user2@correo.com', '1234', 'User 2', 'user'),
+            new User(2, 'jose@correo.com', '1234', 'Jose', 'user'),
+            new User(3, 'user2@correo.com', '1234', '', 'user'),
         ];
     }
+
+    public static function verifyUser($email, $password):User|null {
+        foreach (User::userData() as $user) {
+            if ($user->email === $email && $user->password === $password) {
+                return $user;
+            }
+        }
+        return null;
+    }
+
+
+    /*
+
+    */
+
 }

@@ -83,7 +83,7 @@
                         Iniciar Sesión
                     </div>
                     <div class="card-body">
-                        <form method="POST" action="/login-action">
+                        <form method="POST" action="{{ route('login.post') }}">
                             @csrf
 
                             <div class="mb-3">

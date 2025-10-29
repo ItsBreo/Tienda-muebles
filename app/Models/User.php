@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Support\Facades\Session;
 
-class User extends Authenticatable
+class User
 {
 
     private $id;
@@ -51,6 +51,66 @@ class User extends Authenticatable
             return false;
         }
     }
+    public static function activeUserSesion($sesionId)
+    {
+        if ($sesionId != null) {
+            // listado de uuarios activos
+            $activeUsersList = Session::get('usuarios');
+
+            // user activo
+            if ($activeUsersList) {
+                return $activeUsersList[$sesionId] ? json_decode($activeUsersList[$sesionId]) : null;
+            }
+        }
+        return null;
+    }
+
+
+    // Getters
+
+    public function getId() {
+        return $this->id;
+    }
+
+    public function getName() {
+        return $this->name;
+    }
+
+    public function getEmail() {
+        return $this->email;
+    }
+
+    public function getRol() {
+        return $this->rol;
+    }
+
+    public function getPassword() {
+        return $this->password;
+    }
+
+
+    // Setters
+
+    public function setName($name) {
+        $this->name = $name;
+    }
+
+    public function setEmail($email) {
+        $this->email = $email;
+    }
+
+    public function setPassword($password) {
+        $this->password = $password;
+    }
+
+    public function setRol($rol) {
+        $this->rol = $rol;
+    }
+
+    public function setId($id) {
+        $this->id = $id;
+    }
+
 
     /*
 

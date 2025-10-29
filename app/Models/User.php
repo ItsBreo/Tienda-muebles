@@ -2,47 +2,34 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Session;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+    private $id;
+    private $email;
+    private $password;
+    private $name;
+    private $rol;
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    public function __construct($id, $email, $password, $name, $rol)
     {
+        $this->id = $id;
+        $this->email = $email;
+        $this->password = $password;
+        $this->name = $name;
+        $this->rol = $rol;
+    }
+
+    private static function userData()
+    {
+        // Creamos varios usuarios para iniciar sesión en la aplicación
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            new User(1, 'admin@correo.com', '1234', 'Admin', 'admin'),
+            new User(2, 'user@correo.com', '1234', 'User', 'user'),
+            new User(3, 'user2@correo.com', '1234', 'User 2', 'user'),
         ];
     }
 }

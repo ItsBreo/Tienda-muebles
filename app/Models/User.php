@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Support\Facades\Session;
 
-class User extends Authenticatable
+class User
 {
 
     private $id;
@@ -37,6 +37,20 @@ class User extends Authenticatable
         foreach (User::userData() as $user) {
             if ($user->email === $email && $user->password === $password) {
                 return $user;
+            }
+        }
+        return null;
+    }
+
+    public static function activeUserSesion($sesionId)
+    {
+        if ($sesionId != null) {
+            // listado de uuarios activos
+            $activeUsersList = Session::get('usuarios');
+
+            // user activo
+            if ($activeUsersList) {
+                return $activeUsersList[$sesionId] ? json_decode($activeUsersList[$sesionId]) : null;
             }
         }
         return null;

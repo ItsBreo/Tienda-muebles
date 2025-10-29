@@ -2,9 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 
+// Página Principal
+ Route::get('/', [PrincipalController::class, 'index'])->name('principal');
 
 // Login (Sesiones):
-
  Route::get('/login', [LoginController::class, 'show'])->name('login');
  Route::post('/login', [LoginController::class, 'login'])->name('login.store');
  Route::post('/logout', [LoginController::class, 'logout'])->name('login.logout');
@@ -42,8 +43,13 @@ use Illuminate\Support\Facades\Route;
 // Nombres generados:
 // productos.index|create|store|show|edit|update|destroy
 // Galería de Productos
- Route::post('productos/{mueble}/galeria', [ProductosGaleriaController::class,'store'])->name('productos.galeria.store');// Subida múltiple
+ Route::post('productos/{mueble}/galeria', [ProductosGaleriaController::class,'store'])
+ ->name('productos.galeria.store');// Subida múltiple
+
  Route::post('productos/{mueble}/galeria/{image}',
-[ProductosGaleriaController::class, 'destroy'])->name('productos.galeria.destroy'); // Borrar imagen
+[ProductosGaleriaController::class, 'destroy'])
+ ->name('productos.galeria.destroy'); // Borrar imagen
+
  Route::post('productos/{mueble}/galeria/{image}/principal',
-[ProductosGaleriaController::class, 'setMain'])->name('productos.galeria.principal'); // Establecer imagen principal
+[ProductosGaleriaController::class, 'setMain'])
+ ->name('productos.galeria.principal'); // Establecer imagen principal

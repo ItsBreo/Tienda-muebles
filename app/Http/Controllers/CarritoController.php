@@ -28,7 +28,7 @@ class CarritoController extends Controller
             }
         }
 
-    return view('carrito.index', compact('carrito', 'total', 'usuario', 'sesionId'));
+    return view('carrito.index', compact('cart', 'total', 'usuario', 'sesionId'));
     }
         public function add(Request $request, int $id)
            {

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Mueble;
+use App\Models\Furniture;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
@@ -13,18 +13,18 @@ class CarritoController extends Controller
     {
         $sesionId = $request->query('sesionId');
 
-        $usuario = User::activeUserSesion($sesionId);
+        $user = User::activeUserSesion($sesionId);
 
-        if (!$usuario) {
+        if (!$user) {
             return redirect()->route('login')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
 
-        $carrito = Session::get('carrito_' . $usuario->id, []);
+        $cart = Session::get('carrito_' . $user->id, []);
         $total = 0;
 
-          if ($carrito) {
-            foreach ($carrito as $car) {
-                $total += $car['precio'] * $car['cantidad'];
+          if ($cart) {
+            foreach ($cart as $c) {
+                $total += $c['precio'] * $c['quantity'];
             }
         }
     return view('carrito.index', compact('carrito', 'total', 'usuario', 'sesionId'));
@@ -32,9 +32,9 @@ class CarritoController extends Controller
         public function add(Request $request, int $id)
            {
         $sesionId = $request->query('sesionId');
-        $usuario = User::activeUserSesion($sesionId);
+        $user = User::activeUserSesion($sesionId);
 
-        if (!$usuario) {
+        if (!$user) {
             return redirect()->route('login')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
 
@@ -42,57 +42,57 @@ class CarritoController extends Controller
             'cantidad' => 'required|int|min:1|max:10'
         ]);
 
-        $cantidad = $request->cantidad;
+        $quantity = $request->quantity;
 
-        $mueble = Mueble::searchById($id);
-        if (!$mueble) {
+        $furniture = Furniture::($id);
+        if (!$furniture) {
             return redirect()->route('muebles.index', ['sesionId' => $sesionId])->withErrors('Mueble no encontrado');
         }
 
-        $carrito = Session::get('carrito_' . $usuario->id, []);
+        $cart = Session::get('carrito_' . $user->id, []);
 
-        if (isset($carrito[$id])) {
-            $carrito[$id]['cantidad'] += $cantidad;
+        if (isset($cart[$id])) {
+            $cart[$id]['cantidad'] += $quantity;
         } else {
-            /* Sustituir esto por los valores apropiados para mueble
-            $carrito[$id] = [
-                'titulo' => $pelicula->getTitulo(),
-                'precio' => $pelicula->getPrecio(),
-                'cantidad' => $cantidad
+             //Sustituir esto por los valores apropiados para mueble
+            $cart[$id] = [
+                'nombre' => $furniture->getName(),
+                'precio' => $furniture->getPrice(),
+                'cantidad' => $quantity
             ];
-            */
+            
         }
 
-        Session::put('carrito_' . $usuario->id, $carrito);
+        Session::put('carrito_' . $user->id, $cart);
         return redirect()->route('carrito.index', ['sesionId' => $sesionId])->with('success', 'Mueble agregado al carrito');
     }
 
         public function remove(Request $request, $id)
     {
         $sesionId = $request->query('sesionId');
-        $usuario = User::activeUserSesion($sesionId);
+        $user = User::activeUserSesion($sesionId);
 
-        if (!$usuario) {
+        if (!$user) {
             return redirect()->route('login')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
 
-        $carrito = Session::get('carrito_' . $usuario->id, []);
+        $cart = Session::get('carrito_' . $user->id, []);
 
-        unset($carrito[$id]);
-        Session::put('carrito_' . $usuario->id, $carrito);
+        unset($cart[$id]);
+        Session::put('carrito_' . $user->id, $cart);
         return redirect()->route('carrito.index', ['sesionId' => $sesionId])->with('success', 'Mueble eliminado del carrito');
     }
 
     public function empty(Request $request)
     {
         $sesionId = $request->query('sesionId');
-        $usuario = User::activeUserSesion($sesionId);
+        $user = User::activeUserSesion($sesionId);
 
-        if (!$usuario) {
+        if (!$user) {
             return redirect()->route('login')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
 
-        Session::forget('carrito_' . $usuario->id);
+        Session::forget('carrito_' . $user->id);
         return redirect()->route('carrito.index', ['sesionId' => $sesionId])->with('success', 'Carrito vaciado');
     }
 

@@ -22,7 +22,7 @@ use App\Http\Controllers\ProductosGaleriaController;
  Route::post('/logout', [LoginController::class, 'logout'])->name('login.logout');
 
 // Preferencias (Cookies)
- Route::get('/preferencias', [PreferenciasController::class, 'edit'])->name('preferencias.edit');
+ Route::get('/preferencias', [PreferenciasController::class, 'show'])->name('preferencias.show');
  Route::post('/preferencias', [PreferenciasController::class, 'update'])->name('preferencias.update');
 
 // Catálogo: categorías

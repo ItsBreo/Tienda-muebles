@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
 
 class LoginController extends Controller
 {
+
+    private $id_COOKIE = 'preferencias' . user.getId();
 
     public function show() {
         return view('login');
@@ -53,11 +56,37 @@ public function login(Request $request) {
         $users[$sesionId] = $userJson;
 
         Session::put('usuarios', $users);
+
+
+    if (request()->cookie($this->id_COOKIE) == null) {
+            $cookieData = [
+            'sesionId' => $sesionId,
+            'email' => $user->getEmail(),
+            'tema' => '',
+            'moneda' => '',
+            'tamaño' => ''
+        ];
+
+        $cookieDuration = config('session.lifetime', 120);
+
+        Cookie::queue(
+            name: $this->id_COOKIE,
+            value: json_encode($cookieData),
+            minutes: $cookieDuration,
+            path: '/',
+            domain: null,
+            secure: config('session.secure', false),
+            httpOnly: true,
+            sameSite: config('session.same_site', 'lax')
+        );
+
+        return redirect() -> route('preferencias.index', ['sesionId' => $sesionId]);
+        }
     }
 
     // TODO: redireccionar a la pagina principal según se defina la ruta
     // por ahora redirige a "principal" que es nada
-    return redirect() -> route('principal.index', ['sesionId' => $sesionId]);
+    return redirect() -> route('principal.show', ['sesionId' => $sesionId]);
 }
 
 
@@ -73,6 +102,10 @@ public function login(Request $request) {
 
         //TODO: redireccionar a la pagina principal segun se defina la ruta
         return redirect() -> route('principal');
+
+        if (Cookie::has($this->id_COOKIE)) {
+            Cookie::forget($this->id_COOKIE);
+        }
     }
 
 

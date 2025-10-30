@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Session;
 
 class CarritoController extends Controller
 {
-    public function index(Request $request)
+    public function show(Request $request)
     {
         $sesionId = $request->query('sesionId');
 
@@ -27,6 +27,7 @@ class CarritoController extends Controller
                 $total += $c['precio'] * $c['quantity'];
             }
         }
+
     return view('carrito.index', compact('carrito', 'total', 'usuario', 'sesionId'));
     }
         public function add(Request $request, int $id)
@@ -60,7 +61,7 @@ class CarritoController extends Controller
                 'precio' => $furniture->getPrice(),
                 'cantidad' => $quantity
             ];
-            
+
         }
 
         Session::put('carrito_' . $user->id, $cart);
@@ -83,7 +84,7 @@ class CarritoController extends Controller
         return redirect()->route('carrito.index', ['sesionId' => $sesionId])->with('success', 'Mueble eliminado del carrito');
     }
 
-    public function empty(Request $request)
+    public function clear(Request $request)
     {
         $sesionId = $request->query('sesionId');
         $user = User::activeUserSesion($sesionId);

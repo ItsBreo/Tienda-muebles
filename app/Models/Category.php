@@ -1,26 +1,57 @@
 <?php
 
-class Category{
+namespace App\Models;
+
+use JsonSerializable;
+// Clase Categoría
+class Category implements JsonSerializable {
     private int $id;
     private string $name;
     private string $description;
 
-    public function __construct(
-        int $id,
-        string $name,
-        string $description
-    ){
+    public function __construct(int $id, string $name, string $description) {
         $this->id = $id;
         $this->name = $name;
         $this->description = $description;
     }
 
-    public static function categoryData(): array{
-        new Category(1, "Categoria Mueble con id: 1", "Descripcion 1");
-        new Category(2, "Categoria Mueble con id: 2", "Descripcion 2");
-        new Category(3, "Categoria Mueble con id: 3", "Descripcion 3");
-        new Category(4, "Categoria Mueble con id: 4", "Descripcion 4");
+    // Implementación de JsonSerializable
+    public function jsonSerialize(): array {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'description' => $this->description,
+        ];
+    }
+
+    // Getters públicos
+    public function getId(): int {
+        return $this->id;
+    }
+    public function getName(): string {
+        return $this->name;
+    }
+    public function getDescription(): string {
+        return $this->description;
+    }
+
+    // Método estático para obtener datos de prueba
+    public static function getMockData(): array {
+        return [
+            new Category(1, 'Salón', 'Muebles para el salón.'),
+            new Category(2, 'Dormitorio', 'Camas y mesitas.'),
+            new Category(3, 'Oficina', 'Sillas y escritorios.'),
+            new Category(4, 'Cocina', 'Muebles de cocina.'),
+        ];
+    }
+
+    // Método estático para buscar una categoría por ID
+    public static function findById(int $id): ?Category {
+        foreach (self::getMockData() as $cat) {
+            if ($cat->getId() === $id) {
+                return $cat;
+            }
+        }
+        return null;
     }
 }
-
-?>

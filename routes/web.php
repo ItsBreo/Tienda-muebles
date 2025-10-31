@@ -9,12 +9,11 @@ use App\Http\Controllers\CatalogoController;
 use App\Http\Controllers\MuebleController;
 use App\Http\Controllers\CarritoController;
 use App\Http\Controllers\AdministracionController;
-use App\Http\Controllers\CategoriasController;
 use App\Http\Controllers\ProductosController;
 use App\Http\Controllers\ProductosGaleriaController;
 
 // Página Principal
- Route::get('/', [PrincipalController::class, 'index'])->name('principal.index');
+ Route::get('/', [PrincipalController::class, 'index'])->name('principal');
 
 // Login (Sesiones):
  Route::get('/login', [LoginController::class, 'show'])->name('login');
@@ -25,13 +24,13 @@ use App\Http\Controllers\ProductosGaleriaController;
  Route::get('/preferencias', [PreferenciasController::class, 'show'])->name('preferencias.show');
  Route::post('/preferencias', [PreferenciasController::class, 'update'])->name('preferencias.update');
 
-// Catálogo: categorías
+// Catálogo: muebles (listado + detalle)
+ Route::get('/muebles', [CatalogoController::class, 'index'])->name('muebles.index');
+ Route::get('/mueble/{id}', [MuebleController::class, 'show'])->name('muebles.show');
+
+ // Catálogo: categorías
  Route::get('/categorias', [CatalogoController::class, 'categorias'])->name('categorias.index');
  Route::get('/categoria/{id}', [CatalogoController::class, 'show'])->name('categorias.show');
-
-// Catálogo: muebles (listado + detalle)
- Route::get('/muebles', [MuebleController::class, 'index'])->name('muebles.index');
- Route::get('/mueble/{id}', [MuebleController::class, 'show'])->name('muebles.show');
 
 // Carrito:
  Route::get('/carrito', [CarritoController::class, 'show'])->name('carrito.show');
@@ -41,10 +40,10 @@ use App\Http\Controllers\ProductosGaleriaController;
  Route::post('/carrito/vaciar', [CarritoController::class, 'clear'])->name('carrito.clear');
 
 // Panel de Administración (Solo usuario rol ADMIN)
-Route::get('/', [AdministracionController::class, 'index'])->name('administracion');
+// Route::get('/', [AdministracionController::class, 'index'])->name('administracion');
 
 // Categorías (CRUD)
- Route::resource('categorias', CategoriasController::class);
+ //Route::resource('categorias', CatalogoController::class);
 
 // Nombres generados:
 // categorias.index|create|store|show|edit|update|destroy

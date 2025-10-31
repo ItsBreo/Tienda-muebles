@@ -23,8 +23,6 @@ public function login(Request $request) {
             'password' => ['required', 'string', 'min:4'],
     ]);
 
-
-
     $user = User::verifyUser($data['email'], $data['password']);
 
 
@@ -86,7 +84,7 @@ public function login(Request $request) {
 
     // TODO: redireccionar a la pagina principal según se defina la ruta
     // por ahora redirige a "principal" que es nada
-    return redirect() -> route('principal.show', ['sesionId' => $sesionId]);
+    return redirect() -> route('principal', ['sesionId' => $sesionId]);
 }
 
 

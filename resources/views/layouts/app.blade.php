@@ -92,7 +92,7 @@
                     @if(Session::has('current_sesion_id'))
                         {{-- Si 'current_sesion_id' existe, el usuario está logueado --}}
                         <li class="nav-item">
-                            {{-- Apunta a la ruta que llama al método 'logout' --}}
+
                             <form action="{{ route('login.logout') }}" method="POST">
                                 @csrf
                                 <button type="submit" class="btn-link-nav">Logout</button>
@@ -101,7 +101,7 @@
                     @else
                         {{-- Si no, mostramos el enlace de Login --}}
                         <li class="nav-item">
-                            {{-- CORREGIDO: Usamos el nombre de ruta 'login.show' --}}
+
                             <a class="nav-link" href="{{ route('login') }}">Login</a>
                         </li>
                     @endif

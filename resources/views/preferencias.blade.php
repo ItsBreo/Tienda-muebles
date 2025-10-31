@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configurar Preferencias</title>
 
-    <!-- Cargar Bootstrap CSS -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
     <style>
-        /* Un pequeño estilo para centrar el contenido verticalmente */
+
         body, html {
             height: 100%;
         }
@@ -17,7 +17,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #f8f9fa; /* bg-light */
+            background-color: #f8f9fa;
         }
     </style>
 </head>
@@ -36,15 +36,12 @@
                             Elige tus preferencias iniciales. Podrás cambiarlas más tarde.
                         </p>
 
-                        <!--
-                          El 'action' apunta a la ruta 'preferencias.store'
-                          que definimos en web.php
-                        -->
+
                         <form action="{{ route('preferencias.update') }}" method="POST">
-                            <!-- Token de seguridad de Laravel -->
+
                             @csrf
 
-                            <!-- Desplegable de Tema -->
+
                             <div class="mb-3">
                                 <label for="tema" class="form-label">
                                     Tema de la Aplicación
@@ -57,7 +54,7 @@
                                 </select>
                             </div>
 
-                            <!-- Desplegable de Moneda -->
+
                             <div class="mb-3">
                                 <label for="moneda" class="form-label">
                                     Moneda Principal
@@ -72,15 +69,14 @@
                                 </select>
                             </div>
 
-                            <!-- --- CORREGIDO --- -->
-                            <!-- Desplegable de Tamaño (Productos por Fila) -->
+
                             <div class="mb-3">
                                 <label for="tamaño" class="form-label">
                                     Productos por Fila
                                 </label>
                                 <select id="tamaño" name="tamaño" class="form-select" required>
                                     <option value="" disabled selected>Selecciona una cantidad...</option>
-                                    <!-- Los 'value' son números, como espera la validación -->
+
                                     <option value="2">2 Productos</option>
                                     <option value="3">3 Productos (Default)</option>
                                     <option value="4">4 Productos</option>
@@ -88,7 +84,7 @@
                                 </select>
                             </div>
 
-                            <!-- Botón de Enviar -->
+
                             <div class="d-grid mt-4">
                                 <button type="submit" class="btn btn-primary btn-lg">
                                     Guardar Preferencias
@@ -102,7 +98,7 @@
         </div>
     </div>
 
-    <!-- Cargar Bootstrap JS (Bundle) -->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>

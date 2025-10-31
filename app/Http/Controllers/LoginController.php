@@ -109,27 +109,27 @@ class LoginController extends Controller
         $sesionId = Session::get('current_sesion_id');
         $id_COOKIE = Session::get('current_cookie_name');
 
-        // 2. Limpiar el array de usuarios en la sesión (como en tu código original)
+
         if ($sesionId) {
-            $users = Session::get('usuarios', []); // Usar 'usuarios', no 'users'
+            $users = Session::get('usuarios', []);
             if (isset($users[$sesionId])) {
                 unset($users[$sesionId]);
                 Session::put('usuarios', $users);
             }
         }
 
-        // 3. Invalidar la sesión actual
+
         // Esto borra 'current_sesion_id', 'current_cookie_name' y 'usuarios'
         $request->session()->invalidate();
 
-        // 4. Regenerar el token CSRF
+        // Regenerar el token CSRF
         $request->session()->regenerateToken();
 
-        // 5. Crear una cookie "olvidada" (expirada)
+
         // Usamos el nombre de la cookie que guardamos en la sesión
         $cookie = Cookie::forget($id_COOKIE);
 
-        // 6. Redirigir al principal y adjuntar la cookie expirada
+        // Redirigir al principal y adjuntar la cookie expirada
         return redirect()->route('principal')->withCookie($cookie);
     }
 }

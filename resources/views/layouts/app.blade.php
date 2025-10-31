@@ -51,6 +51,18 @@
         .page-link {
             color: #565254;
         }
+        /* Estilo para que el botón de Logout parezca un link */
+        .btn-link-nav {
+            color: var(--bs-nav-link-color);
+            padding: var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-x);
+            font-weight: var(--bs-nav-link-font-weight);
+            text-decoration: none;
+            border: none;
+            background: none;
+        }
+        .btn-link-nav:hover {
+            color: var(--bs-nav-link-hover-color);
+        }
     </style>
 </head>
 <body>
@@ -75,16 +87,21 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('preferencias.show') }}">Preferencias</a>
                     </li>
-                    {{-- Lógica de Login (tus compañeros) --}}
-                    @if(session('user_email'))
+
+
+                    @if(Session::has('current_sesion_id'))
+                        {{-- Si 'current_sesion_id' existe, el usuario está logueado --}}
                         <li class="nav-item">
+                            {{-- Apunta a la ruta que llama al método 'logout' --}}
                             <form action="{{ route('login.logout') }}" method="POST">
                                 @csrf
-                                <button type="submit" class="btn btn-link nav-link">Logout ({{ session('user_email') }})</button>
+                                <button type="submit" class="btn-link-nav">Logout</button>
                             </form>
                         </li>
                     @else
+                        {{-- Si no, mostramos el enlace de Login --}}
                         <li class="nav-item">
+                            {{-- CORREGIDO: Usamos el nombre de ruta 'login.show' --}}
                             <a class="nav-link" href="{{ route('login') }}">Login</a>
                         </li>
                     @endif

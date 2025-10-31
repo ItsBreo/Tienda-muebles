@@ -2,93 +2,81 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Http\Request;
-use App\Models\Usuario;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Session;
 
 class PreferenciasController extends Controller
 {
 
-    private $id_COOKIE = 'autorizacion_login';
-
+    /**
+     * Muestra la vista del formulario de preferencias.
+     * Esta ruta es llamada por LoginController la primera vez que
+     * un usuario inicia sesión y no tiene la cookie.
+     */
     public function show()
     {
+        // Simplemente mostramos la vista que creamos
         return view('preferencias');
     }
 
-    public function login(Request $request)
+    /**
+     * Almacena las preferencias seleccionadas en el formulario.
+     * Esta ruta es llamada por el 'action' del formulario.
+     */
+    public function update(Request $request)
     {
-        $datos = $request->validate(
-            [
-                'email'    => ['required', 'email'],
-                'password' => ['required', 'string', 'min:4'],
-                'recuerdame' => ['nullable', 'boolean'],
-            ],
-            [
-                'email.required' => 'Debes introducir el email del usuario.',
-                'email.email'  => 'Formato de email no válido',
-                'password.required' => 'Debes introducir el password de usuario.',
-                'password.min'  => 'La longitud del password no es adecuada',
-            ],
+        // 1. Validar los datos que vienen del formulario
+        $validatedData = $request->validate([
+            'tema' => 'required|string|max:50',
+            'moneda' => 'required|string|max:10',
+            'tamaño' => 'required|integer|min:2|max:6',
+        ]);
+
+        // 2. Obtener el nombre de la cookie que guardamos en la sesión
+        // durante el login.
+        $id_COOKIE = Session::get('current_cookie_name');
+
+        // 3. Seguridad: Si no hay nombre de cookie en la sesión,
+        // significa que la sesión se perdió. Redirigimos a login.
+        if (!$id_COOKIE) {
+            return redirect()->route('login.show')->withErrors([
+                'autenticationError' => 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo.'
+            ]);
+        }
+
+        // 4. Leer los datos de la cookie actual que creó LoginController
+        $cookieJson = $request->cookie($id_COOKIE);
+
+        // Decodificamos el JSON a un array de PHP
+        // Si la cookie no existiera (raro), usamos un array vacío
+        $cookieData = $cookieJson ? json_decode($cookieJson, true) : [];
+
+        // 5. Actualizar el array con los nuevos datos del formulario.
+        // Esto conservará los datos antiguos (como 'sesionId' y 'email')
+        // y rellenará los que estaban vacíos ('tema', 'moneda', 'tamaño').
+        $cookieData['tema'] = $validatedData['tema'];
+        $cookieData['moneda'] = $validatedData['moneda'];
+        $cookieData['tamaño'] = $validatedData['tamaño'];
+
+        // 6. Obtener la duración de la cookie de la configuración
+        $cookieDuration = config('session.lifetime', 120);
+
+        // 7. Crear una NUEVA cookie (actualizada)
+        $newCookie = Cookie::make(
+            $id_COOKIE,                     // El mismo nombre de la cookie
+            json_encode($cookieData),       // El array actualizado, codificado a JSON
+            $cookieDuration,                // Duración
+            '/',                             // Path
+            null,                            // Domain
+            config('session.secure', false), // Secure
+            true,                            // httpOnly
+            false,
+            config('session.same_site', 'lax') // SameSite
         );
 
-        $usuario = Usuario::verificarUsuario($datos['email'], $datos['password']);
-        if (!$usuario) {
-            // Vuelve hacia atrás en el navegador y envia un objeto messageBag propio de Laravel
-            // con una array de errores.
-            return back()->withErrors(['errorCredenciales' => 'Credenciales no válidas']);
-        }
-
-        $datosCookie = [
-            'email' => $usuario->email,
-            'nombre'  => 'yeray',
-            'fecha_ingreso'   => now()->toString(),
-        ];
-
-        // Recordar el inicio de sesión 30 días o 1 hora.
-        $minutos = $request->boolean('recuerdame') ? 43200 : 60;
-
-        // queue: Laravel se encarga de crear y enviar la cookie al navegador
-        // a través de las cabeceras.
-
-        Cookie::queue(
-            name: $this->id_COOKIE,
-            // Guardamos la información del array en formato JSON para más comodidad
-            value: json_encode($datosCookie),
-            minutes: $minutos,
-            path: '/',
-            domain: null,
-            secure: config('session.secure', false),
-            httpOnly: true,
-            sameSite: config('session.same_site', 'lax')
-        );
-
-        // Redireccionar rutas
-        return redirect()->route('dashboard');
-    }
-
-    public function cerrarSesion()
-    {
-        // forget: modifica el objeto cookie poniendole una fecha expirada
-        // queue: lo envia al navegador, sin tenerlo que pasar manualmente.
-        Cookie::queue(Cookie::forget($this->id_COOKIE));
-        // Pasar estados con redirecciones.
-        return redirect()->route('login')->with('estado', 'Sesión cerrada');
-    }
-
-    public function index()
-    {
-        $json = Cookie::get('autorizacion_login');
-
-        if (!$json) {
-            return redirect()->route('login');
-        }
-
-        $usuario = json_decode($json, true);
-        if (!is_array($usuario) || empty($usuario['email'])) {
-            return redirect()->route('login');
-        }
-
-        return view('dashboard', compact('usuario'));
+        // 8. Redirigir al usuario a la página principal
+        // y adjuntar la cookie actualizada a esa respuesta.
+        return redirect()->route('principal')->withCookie($newCookie);
     }
 }

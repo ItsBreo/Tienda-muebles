@@ -11,6 +11,7 @@ use App\Http\Controllers\CarritoController;
 use App\Http\Controllers\AdministracionController;
 use App\Http\Controllers\ProductosController;
 use App\Http\Controllers\ProductosGaleriaController;
+use Illuminate\Http\Request;
 
 // Página Principal
  Route::get('/', [PrincipalController::class, 'index'])->name('principal');
@@ -64,3 +65,12 @@ use App\Http\Controllers\ProductosGaleriaController;
 // Panel de Administración de prueba
 // TODO: Borrar esta ruta una vez el CRUD esté hecho
 Route::view('/admin', 'adminPanel')->name('admin.dashboard');
+
+// Depuración de cookies
+Route::get('/cookiesActivas', function (Request $request) {
+
+    $cookies = $request->cookies->all();
+
+    echo "<h3>Cookies detectadas por Request:</h3>";
+    dd($cookies);
+});

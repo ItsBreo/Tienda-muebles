@@ -144,4 +144,29 @@ class Furniture implements JsonSerializable {
         }
         return null;
     }
+
+    /**
+     * Formatea el precio del mueble según la moneda (solo simulación).
+     *
+     * @param string $moneda El código de moneda (ej. "EUR", "USD", "GBP").
+     * @return string El precio formateado.
+     */
+    public function getFormattedPrice(string $moneda): string
+    {
+        // Definimos los símbolos
+        $symbolMap = [
+            'EUR' => '€',
+            'USD' => '$',
+            'GBP' => '£',
+        ];
+
+        // Buscamos el símbolo. Si no, usamos la moneda
+        $simbolo = $symbolMap[$moneda] ?? $moneda;
+
+        // Formateamos el precio
+        $precioFormateado = number_format($this->price, 2, ',', '.');
+
+        // Devolvemos el string final
+        return $precioFormateado . ' ' . $simbolo;
+    }
 }

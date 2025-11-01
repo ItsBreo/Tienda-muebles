@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
  Route::get('/', [PrincipalController::class, 'index'])->name('principal');
 
 // Login (Sesiones):
- Route::get('/login', [LoginController::class, 'show'])->name('login');
+ Route::get('/login', [LoginController::class, 'show'])->name('login.show');
  Route::post('/login', [LoginController::class, 'login'])->name('login.store');
  Route::post('/logout', [LoginController::class, 'logout'])->name('login.logout');
 

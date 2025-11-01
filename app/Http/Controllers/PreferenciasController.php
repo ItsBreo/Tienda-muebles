@@ -8,65 +8,75 @@ use Illuminate\Support\Facades\Session;
 
 class PreferenciasController extends Controller
 {
-
-
-    public function show()
+    /**
+     * Muestra la vista de preferencias.
+     * El sesionId nos lo pasa la plantilla 'app.blade.php' en la URL.
+     */
+    public function show(Request $request)
     {
+        $sesionId = $request->query('sesionId');
 
-        return view('preferencias');
+        // Pasamos el sesionId a la vista para que pueda incluirlo en el formulario
+        return view('preferencias', ['sesionId' => $sesionId]);
     }
 
-
+    /**
+     * Actualiza las preferencias del usuario.
+     * Esta es la lógica que sigue el requisito 2.e
+     */
     public function update(Request $request)
     {
-
-        $validatedData = $request->validate([
-            'tema' => 'required|string|max:50',
-            'moneda' => 'required|string|max:10',
-            'tamaño' => 'required|integer|min:2|max:6',
+        // Validamos los datos del formulario
+        $data = $request->validate([
+            'tema' => ['required', 'string', 'in:claro,oscuro,sistema'],
+            'moneda' => ['required', 'string', 'in:USD,EUR,GBP'],
+            'tamaño' => ['required', 'integer', 'min:6', 'max:24'],
+            'sesionId' => ['required', 'string'], // El sesionId debe venir del campo oculto
         ]);
 
-        // Obtener el nombre de la cookie que guardamos en la sesión
+        $sesionId = $data['sesionId'];
+        $cookieName = null;
 
-        $id_COOKIE = Session::get('current_cookie_name');
-
-        // Si no hay nombre de cookie en la sesión,
-        // significa que la sesión se perdió. Redirigimos a login.
-        if (!$id_COOKIE) {
-            return redirect()->route('login.show')->withErrors([
-                'autenticationError' => 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo.'
-            ]);
+        // 1. Buscamos al usuario en el array de la sesión
+        $allUsers = Session::get('usuarios', []);
+        if (isset($allUsers[$sesionId])) {
+            $activeUser = json_decode($allUsers[$sesionId]);
+            // 2. Obtenemos el nombre de la cookie que le corresponde
+            $cookieName = $activeUser->cookie_name ?? null;
         }
 
+        if (!$cookieName || !$request->hasCookie($cookieName)) {
+            // Si no encontramos al usuario/cookie, volvemos con error
+            return redirect()->route('principal', ['sesionId' => $sesionId])
+                             ->withErrors('No se pudo encontrar la cookie para guardar las preferencias.');
+        }
 
-        $cookieJson = $request->cookie($id_COOKIE);
+        // 3. Leemos la cookie actual para preservar otros datos (email, sesionId original, etc.)
+        $cookieData = json_decode($request->cookie($cookieName), true);
 
-        // Si la cookie no existiera, usamos un array vacío
-        $cookieData = $cookieJson ? json_decode($cookieJson, true) : [];
-
-        // Actualizar el array con los nuevos datos del formulario
-        // y rellenando los que estaban vacíos ('tema', 'moneda', 'tamaño').
-        $cookieData['tema'] = $validatedData['tema'];
-        $cookieData['moneda'] = $validatedData['moneda'];
-        $cookieData['tamaño'] = $validatedData['tamaño'];
+        // 4. Actualizamos solo los valores de preferencias
+        $cookieData['tema'] = $data['tema'];
+        $cookieData['moneda'] = $data['moneda'];
+        $cookieData['tamaño'] = $data['tamaño']; // Guardamos como número
 
         $cookieDuration = config('session.lifetime', 120);
 
-        // 7. Crear una NUEVA cookie (actualizada)
-        $newCookie = Cookie::make(
-            $id_COOKIE,
-            json_encode($cookieData),
-            $cookieDuration,
-            '/',
-            null,
-            config('session.secure', false),
-            true,
-            false,
-            config('session.same_site', 'lax')
+        // 5. Creamos la nueva cookie actualizada
+        $cookie = Cookie::make(
+            name: $cookieName,
+            value: json_encode($cookieData),
+            minutes: $cookieDuration,
+            path: '/',
+            domain: null,
+            secure: config('session.secure', false),
+            httpOnly: true,
+            sameSite: config('session.same_site', 'lax')
         );
 
-        // Redirigir al usuario a la página principal
-        // y adjuntar la cookie actualizada
-        return redirect()->route('principal')->withCookie($newCookie);
+        // 6. Redirigimos a principal (pasando el sesionId) y adjuntamos la cookie
+        return redirect()
+            ->route('principal', ['sesionId' => $sesionId])
+            ->withCookie($cookie);
     }
 }
+

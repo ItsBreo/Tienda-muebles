@@ -3,27 +3,56 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cookie;
 use App\Models\Furniture;
+use App\Models\User;
 
-// Controlador de Muebles
 class MuebleController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Función helper privada para cargar la sesión y las preferencias.
+     */
+    private function getSesionYPreferencias(Request $request)
     {
-        // redirigimos al listado general
-        return redirect()->route('muebles.index');
+        $activeSesionId = $request->query('sesionId');
+        $activeUser = null;
+
+        $defaultPrefs = [
+            'tema' => 'claro',
+            'moneda' => 'EUR',
+            'tamaño' => 6,
+        ];
+
+        if ($activeSesionId) {
+            $activeUser = User::activeUserSesion($activeSesionId);
+        }
+
+        if ($activeUser) {
+            $cookieName = 'preferencias_' . $activeUser->id;
+            $cookieData = json_decode($request->cookie($cookieName), true);
+            $preferencias = $cookieData ? array_merge($defaultPrefs, $cookieData) : $defaultPrefs;
+        } else {
+            $preferencias = $defaultPrefs;
+        }
+
+        return compact('activeSesionId', 'activeUser', 'preferencias');
     }
+
+
 
     public function show(Request $request, $id)
     {
-        // Obtenemos mueble por id
+        // Carga la sesión y las preferencias
+        $sesionData = $this->getSesionYPreferencias($request);
+
+        // Busca el mueble
         $mueble = Furniture::findById((int)$id);
 
-        // Guardamos cookie por mueble (nombre: mueble_{id})
-        Cookie::queue("mueble_{$mueble->getId()}", json_encode($mueble), 60 * 24 * 30);
+        if (!$mueble) {
+            abort(404, 'Mueble no encontrado');
+        }
 
-        // Vista detalle: pasamos el mueble a la vista
-        return view('muebles.show', ['mueble' => $mueble]);
+        return view('muebles.show', array_merge($sesionData, [
+            'mueble' => $mueble,
+        ]));
     }
 }

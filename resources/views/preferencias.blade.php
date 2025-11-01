@@ -1,104 +1,65 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurar Preferencias</title>
+@extends('layouts.app')
+
+@section('title', 'Configurar Preferencias')
+
+@section('content')
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="card shadow-lg border-0" style="background-color: var(--bs-tertiary-bg);">
+            <div class="card-body p-4 p-md-5">
+                <h2 class="card-title text-center mb-4">Mis Preferencias</h2>
+                <p class="text-center text-muted mb-4">
+                    Personaliza tu experiencia. Estos ajustes se guardarán en este navegador.
+                </p>
 
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-
-    <style>
-
-        body, html {
-            height: 100%;
-        }
-        body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f8f9fa;
-        }
-    </style>
-</head>
-<body class="bg-light">
-
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-5 col-md-7 col-sm-9">
-                <div class="card shadow-lg border-0 rounded-3">
-                    <div class="card-body p-4 p-md-5">
-
-                        <h1 class="h3 fw-bold text-center text-dark mb-3">
-                            Configura tus Preferencias
-                        </h1>
-                        <p class="text-center text-muted mb-4">
-                            Elige tus preferencias iniciales. Podrás cambiarlas más tarde.
-                        </p>
+                <form action="{{ route('preferencias.update') }}" method="POST">
+                    @csrf
 
 
-                        <form action="{{ route('preferencias.update') }}" method="POST">
+                    <!-- Esta variable $sesionId la pasa el método 'index' del controlador -->
+                    <input type="hidden" name="sesionId" value="{{ $sesionId }}">
 
-                            @csrf
-
-
-                            <div class="mb-3">
-                                <label for="tema" class="form-label">
-                                    Tema de la Aplicación
-                                </label>
-                                <select id="tema" name="tema" class="form-select" required>
-                                    <option value="" disabled selected>Selecciona un tema...</option>
-                                    <option value="claro">Claro</option>
-                                    <option value="oscuro">Oscuro</option>
-                                    <option value="sistema">Usar tema del sistema</option>
-                                </select>
-                            </div>
-
-
-                            <div class="mb-3">
-                                <label for="moneda" class="form-label">
-                                    Moneda Principal
-                                </label>
-                                <select id="moneda" name="moneda" class="form-select" required>
-                                    <option value="" disabled selected>Selecciona una moneda...</option>
-                                    <option value="USD">USD - Dólar Americano</option>
-                                    <option value="EUR">EUR - Euro</option>
-                                    <option value="MXN">MXN - Peso Mexicano</option>
-                                    <option value="COP">COP - Peso Colombiano</option>
-                                    <option value="ARS">ARS - Peso Argentino</option>
-                                </select>
-                            </div>
-
-
-                            <div class="mb-3">
-                                <label for="tamaño" class="form-label">
-                                    Productos por Fila
-                                </label>
-                                <select id="tamaño" name="tamaño" class="form-select" required>
-                                    <option value="" disabled selected>Selecciona una cantidad...</option>
-
-                                    <option value="2">2 Productos</option>
-                                    <option value="3">3 Productos (Default)</option>
-                                    <option value="4">4 Productos</option>
-                                    <option value="6">6 Productos</option>
-                                </select>
-                            </div>
-
-
-                            <div class="d-grid mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    Guardar Preferencias
-                                </button>
-                            </div>
-                        </form>
-
+                    <!-- 1. Tema Visual -->
+                    <div class="mb-3">
+                        <label for="tema" class="form-label">Tema Visual</label>
+                        <select class="form-select form-select-lg" id="tema" name="tema">
+                            <option value="claro">Claro (Por defecto)</option>
+                            <option value="oscuro">Oscuro</option>
+                            <option value="sistema">Automático (Sistema)</option>
+                        </select>
                     </div>
-                </div>
+
+                    <!-- 2. Moneda -->
+                    <div class="mb-3">
+                        <label for="moneda" class="form-label">Moneda</label>
+                        <select class="form-select form-select-lg" id="moneda" name="moneda">
+                            <option value="USD">Dólar (USD)</option>
+                            <option value="EUR">Euro (EUR)</option>
+                            <option value="GBP">Libra (GBP)</option>
+                        </select>
+                    </div>
+
+                    <!-- 3. Tamaño (Productos por Página) -->
+                    <div class="mb-3">
+                        <label for="tamaño" class="form-label fw-bold">Productos por Página:</label>
+                        <select name="tamaño" id="tamaño" class="form-select">
+                            <option value="6" {{ ($preferencias['tamaño'] ?? 0) == 6 ? 'selected' : '' }}>6 Productos</option>
+                            <option value="12" {{ ($preferencias['tamaño'] ?? 0) == 12 ? 'selected' : '' }}>12 Productos (Defecto)</option>
+                            <option value="24" {{ ($preferencias['tamaño'] ?? 0) == 24 ? 'selected' : '' }}>24 Productos</option>
+                        </select>
+                        <div class="form-text">Cuántos productos se mostrarán en el catálogo antes de cambiar de página.</div>
+                    </div>
+
+                    <!-- Botón de Guardar -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Guardar Preferencias</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
+@endsection
 
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-</body>
-</html>

@@ -46,6 +46,11 @@
 
 
                 <a href="{{ route('muebles.show', ['id' => $m->getId(), 'sesionId' => $activeSesionId]) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+                <form action="{{ route('carrito.add', [$m->getId() ,'sesionId' => $activeSesionId]) }}" method="POST" class="d-inline">
+                    @csrf
+                    <input type="hidden" name="qty" value="1">
+                    <button class="btn btn-sm btn-success">Añadir</button>
+                </form>
             </div>
         </div>
     </div>

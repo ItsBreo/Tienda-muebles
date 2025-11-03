@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
-use Illuminate\Http\Request;
 
 class PreferenciasController extends Controller
 {
@@ -51,12 +50,14 @@ class PreferenciasController extends Controller
             // Si no encontramos al usuario/cookie, volvemos con error
             return redirect()->route('principal', ['sesionId' => $sesionId])
                              ->withErrors('No se pudo encontrar la cookie para guardar las preferencias.');
-        $usuario = User::verifyUser($datos['email'], $datos['password']);
-        if (!$usuario) {
-            // Vuelve hacia atrás en el navegador y envia un objeto messageBag propio de Laravel
-            // con una array de errores.
-            return back()->withErrors(['errorCredenciales' => 'Credenciales no válidas']);
         }
+
+        if (!Session::has('usuarios')) {
+            // Si no encontramos al usuario/cookie, volvemos con error
+            return redirect()->route('principal', ['sesionId' => $sesionId])
+                             ->withErrors('No se pudo encontrar la cookie para guardar las preferencias.');
+        }
+
 
         // 3. Leemos la cookie actual para preservar otros datos (email, sesionId original, etc.)
         $cookieData = json_decode($request->cookie($cookieName), true);

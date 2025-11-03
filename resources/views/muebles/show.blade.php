@@ -70,9 +70,12 @@
                                    value="1" min="1" max="{{ $mueble->getStock() }}">
                         </div>
                         <div class="col-md-8 d-grid">
+                            <form action="{{ route('carrito.add', [$m->getId(), 'sesionId' => $activeSesionId]) }}" method="POST" class="d-inline">
+                            @csrf
                             <button type="submit" class="btn btn-primary btn-lg mt-auto">
                                 Añadir al Carrito
                             </button>
+                            </form>
                         </div>
                     </div>
                 </form>

@@ -50,7 +50,7 @@
                         <p class="card-text">{{ \Illuminate\Support\Str::limit($m->getDescription(), 100) }}</p>
                         <p class="mb-1"><strong>{{ number_format($m->getPrice(), 2) }} €</strong></p>
                         <a href="{{ route('muebles.show', ['id' => $m->getId(), 'sesionId' => $activeSesionId]) }}" class="btn btn-sm btn-outline-primary">Ver</a>
-                        <form action="{{ route('carrito.add', $m->getId()) }}" method="POST" class="d-inline">
+                        <form action="{{ route('carrito.add', [$m->getId(), 'sesionId' => $activeSesionId]) }}" method="POST" class="d-inline">
                             @csrf
                             <input type="hidden" name="qty" value="1">
                             <button class="btn btn-sm btn-success">Añadir</button>

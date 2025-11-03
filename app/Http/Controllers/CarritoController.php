@@ -12,13 +12,13 @@ class CarritoController extends Controller
     public function show(Request $request)
     {
         $sesionId = $request->query('sesionId');
-        /* Bloque comentado para saltarse el login temporalmente
+
         $user = User::activeUserSesion($sesionId);
 
         if (!$user) {
             return redirect()->route('login')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
-        */
+
         $user = (object) ['id' => 1]; //Usuario ficticio
         $cart = Session::get('carrito_' . $user->id, []);
         $total = 0;
@@ -31,18 +31,21 @@ class CarritoController extends Controller
 
     return view('carrito.show', compact('cart', 'total', 'user', 'sesionId'));
     }
-        public function add(Request $request, int $id)
+    public function add(Request $request, int $id)
            {
         $sesionId = $request->query('sesionId');
         $user = User::activeUserSesion($sesionId);
 
         if (!$user) {
-            return redirect()->route('login')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
+            return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
 
+        // TODO: La validación esta mal y bloquea el mueble
+        /*
         $request->validate([
             'cantidad' => 'required|int|min:1|max:10'
         ]);
+        */
 
         $quantity = $request->quantity;
 
@@ -65,6 +68,7 @@ class CarritoController extends Controller
 
         }
 
+        // TODO: La entrada de muebles falla. El carrito queda vacio despues de agregar un mueble aunque exista la confirmación
         Session::put('carrito_' . $user->id, $cart);
         return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('success', 'Mueble agregado al carrito');
     }
@@ -75,7 +79,7 @@ class CarritoController extends Controller
         $user = User::activeUserSesion($sesionId);
 
         if (!$user) {
-            return redirect()->route('login')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
+            return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
 
         $cart = Session::get('carrito_' . $user->id, []);

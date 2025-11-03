@@ -7,67 +7,23 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\File;
 
-class ProductosGaleriaController extends Controller
-{
-    private $cookieName = 'muebles_crud';
-    private $cookieMinutes = 60 * 24 * 7; // 1 semana
-
-    /**
-     * Obtiene los muebles desde la cookie.
-     * Replicado de AdministracionController para mantener la consistencia.
-     */
-    private function getMuebles()
-    {
-        $mueblesJson = Cookie::get($this->cookieName);
-        if ($mueblesJson) {
-            return collect(json_decode($mueblesJson, true))->map(function ($item) {
-                return new Furniture(
-                    $item['id'],
-                    $item['category_id'],
-                    $item['name'],
-                    $item['description'],
-                    $item['price'],
-                    $item['stock'],
-                    $item['materials'] ?? '',
-                    $item['dimensions'] ?? '',
-                    $item['main_color'],
-                    $item['is_salient'],
-                    $item['images']
-                );
-            });
-        }
-        // Si no hay cookie, devuelve una colección vacía para evitar errores.
-        return collect([]);
-    }
-
-    /**
-     * Guarda la colección de muebles en la cookie.
-     * Replicado de AdministracionController.
-     */
-    private function saveMuebles($muebles)
-    {
-        Cookie::queue($this->cookieName, $muebles->toJson(), $this->cookieMinutes);
-    }
-
+class ProductosGaleriaController extends Controller {
     /**
      * Sube y guarda las imágenes para un mueble específico.
      */
     public function store(Request $request, $id)
     {
         $request->validate([
-            'images' => 'required',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            'images'   => 'required|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
-
-        $muebles = $this->getMuebles();
-        $muebleIndex = $muebles->search(fn($m) => $m->getId() == (int)$id);
-
-        if ($muebleIndex === false) {
+        // Usamos el modelo para encontrar el mueble directamente en la base de datos.
+        $mueble = Furniture::find($id);
+        if (!$mueble) {
             return back()->with('error', 'Mueble no encontrado.');
         }
-
-        $mueble = $muebles[$muebleIndex];
-        $imagePaths = $mueble->getImages();
+        // Asumiendo que 'images' es una columna de tipo JSON en tu tabla de muebles.
+        $imagePaths = $mueble->images ?? [];
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
@@ -82,18 +38,14 @@ class ProductosGaleriaController extends Controller
             }
         }
 
-        // Si el mueble no tenía imagen principal, asigna la primera que se subió
-        if ($mueble->getMainImage() === 'default.jpg' && !empty($imagePaths)) {
-            // Filtra para asegurarse de que no se asigne 'default.jpg' si aún está en la lista
-            $firstImage = collect($imagePaths)->first(fn($img) => $img !== 'default.jpg');
-            if ($firstImage) {
-                $mueble->setImages($firstImage);
-            }
+        // Si el mueble no tenía imagen principal ('main_image'), asigna la primera que se subió.
+        // Asumo que tienes una columna 'main_image' en tu tabla.
+        if (!$mueble->main_image && !empty($imagePaths)) {
+            $mueble->main_image = $imagePaths[0];
         }
 
-        $mueble->setImages($imagePaths);
-        $muebles[$muebleIndex] = $mueble;
-        $this->saveMuebles($muebles);
+        $mueble->images = $imagePaths;
+        $mueble->save(); // Guardamos los cambios en la base de datos.
 
         return back()->with('success', 'Imágenes subidas correctamente.');
     }

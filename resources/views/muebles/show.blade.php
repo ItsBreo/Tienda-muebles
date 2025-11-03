@@ -5,6 +5,12 @@
 @section('title', $mueble->getName())
 
 @section('content')
+
+    @php
+        // Aseguramos compatibilidad: algunas plantillas usan $m y el controlador pasa $mueble
+        $m = $mueble ?? null;
+    @endphp
+
     <div class="row g-5">
 
         <div class="col-lg-6">
@@ -58,11 +64,8 @@
             <hr>
 
             @if($mueble->getStock() > 0)
-                <form action="{{ route('carrito.add', ['mueble' => $mueble->getId()]) }}" method="POST">
+                <form action="{{ route('carrito.add', ['mueble' => $mueble->getId(), 'sesionId' => $activeSesionId]) }}" method="POST">
                     @csrf
-
-                    <input type="hidden" name="sesionId" value="{{ $activeSesionId }}">
-
                     <div class="row g-2">
                         <div class="col-md-4">
                             <label for="quantity" class="form-label">Cantidad:</label>
@@ -70,12 +73,9 @@
                                    value="1" min="1" max="{{ $mueble->getStock() }}">
                         </div>
                         <div class="col-md-8 d-grid">
-                            <form action="{{ route('carrito.add', [$m->getId(), 'sesionId' => $activeSesionId]) }}" method="POST" class="d-inline">
-                            @csrf
                             <button type="submit" class="btn btn-primary btn-lg mt-auto">
                                 Añadir al Carrito
                             </button>
-                            </form>
                         </div>
                     </div>
                 </form>

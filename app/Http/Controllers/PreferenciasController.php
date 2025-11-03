@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Http\Request;
-use App\Models\Usuario;
 
 class PreferenciasController extends Controller
 {
@@ -32,7 +32,7 @@ class PreferenciasController extends Controller
             ],
         );
 
-        $usuario = Usuario::verificarUsuario($datos['email'], $datos['password']);
+        $usuario = User::verifyUser($datos['email'], $datos['password']);
         if (!$usuario) {
             // Vuelve hacia atrás en el navegador y envia un objeto messageBag propio de Laravel
             // con una array de errores.

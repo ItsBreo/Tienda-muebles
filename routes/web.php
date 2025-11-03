@@ -40,7 +40,13 @@ use App\Http\Controllers\ProductosGaleriaController;
  Route::post('/carrito/vaciar', [CarritoController::class, 'clear'])->name('carrito.clear');
 
 // Panel de Administración (Solo usuario rol ADMIN)
-// Route::get('/', [AdministracionController::class, 'index'])->name('administracion');
+// CRUD de Muebles (con cookies)
+Route::get('/admin/muebles', [AdministracionController::class, 'index'])->name('admin.muebles.index');
+Route::get('/admin/muebles/crear', [AdministracionController::class, 'create'])->name('admin.muebles.create');
+Route::post('/admin/muebles', [AdministracionController::class, 'store'])->name('admin.muebles.store');
+Route::get('/admin/muebles/{id}/editar', [AdministracionController::class, 'edit'])->name('admin.muebles.edit');
+Route::put('/admin/muebles/{id}', [AdministracionController::class, 'update'])->name('admin.muebles.update');
+Route::delete('/admin/muebles/{id}', [AdministracionController::class, 'destroy'])->name('admin.muebles.destroy');
 
 // Categorías (CRUD)
  //Route::resource('categorias', CatalogoController::class);
@@ -63,4 +69,4 @@ use App\Http\Controllers\ProductosGaleriaController;
 
 // Panel de Administración de prueba
 // TODO: Borrar esta ruta una vez el CRUD esté hecho
-Route::view('/admin', 'adminPanel')->name('admin.dashboard');
+// Route::view('/admin', 'adminPanel')->name('admin.dashboard');

@@ -44,7 +44,7 @@ class User
 
     // Función para verificar que el usuario es admin
     public function isAdmin(): bool{
-        if ($this->role === 'admin') {
+        if ($this->rol === 'admin') {
             return true;
         }
         else {

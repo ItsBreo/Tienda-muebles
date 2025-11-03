@@ -8,6 +8,7 @@ use App\Http\Controllers\PreferenciasController;
 use App\Http\Controllers\CatalogoController;
 use App\Http\Controllers\MuebleController;
 use App\Http\Controllers\CarritoController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\AdministracionController;
 use App\Http\Controllers\ProductosController;
 use App\Http\Controllers\ProductosGaleriaController;
@@ -34,11 +35,14 @@ use Illuminate\Http\Request;
  Route::get('/categoria/{id}', [CatalogoController::class, 'show'])->name('categorias.show');
 
 // Carrito:
- Route::get('/carrito', [CarritoController::class, 'show'])->name('carrito.show');
- Route::post('/carrito/insertar/{mueble}', [CarritoController::class, 'add'])->name('carrito.add');
- Route::post('/carrito/actualizar/{mueble}', [CarritoController::class, 'update'])->name('carrito.update');
- Route::post('/carrito/eliminar/{mueble}', [CarritoController::class, 'remove'])->name('carrito.remove');
- Route::post('/carrito/vaciar', [CarritoController::class, 'clear'])->name('carrito.clear');
+Route::get('/carrito', [CarritoController::class, 'show'])->name('carrito.show');
+Route::post('/carrito/insertar/{mueble}', [CarritoController::class, 'add'])->name('carrito.add');
+Route::post('/carrito/actualizar/{mueble}', [CarritoController::class, 'update'])->name('carrito.update');
+Route::post('/carrito/eliminar/{mueble}', [CarritoController::class, 'remove'])->name('carrito.remove');
+Route::post('/carrito/vaciar', [CarritoController::class, 'clear'])->name('carrito.clear');
+
+// Checkout (página de resumen/pago):
+Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 
 // Panel de Administración (Solo usuario rol ADMIN)
 // CRUD de Muebles (con cookies)

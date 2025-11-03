@@ -14,7 +14,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
-        
+
         @if (session('error'))
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 {{ session('error') }}
@@ -54,10 +54,10 @@
                                             <td class="text-center">{{ $item['cantidad'] }}</td>
                                             <td class="text-end fw-bold">{{ number_format($item['precio'] * $item['cantidad'], 2) }} €</td>
                                             <td class="text-center" style="width: 100px;">
-                                                <form method="POST" action="{{ route('carrito.remove', ['id' => $id, 'sesionId' => $sesionId]) }}">
+                                                <form method="POST" action="{{ route('carrito.remove', ['mueble' => $id, 'sesionId' => $sesionId]) }}">
                                                     @csrf
                                                     {{-- Usamos el método DELETE para ser más RESTful, aunque Laravel lo simule con POST --}}
-                                                    @method('DELETE') 
+                                                    {{-- @method('DELETE') COMENTO ESTA LINEA--}}
                                                     <button class="btn btn-sm btn-outline-danger" type="submit" title="Eliminar ítem">
                                                         <i class="bi bi-trash"></i> 🗑️
                                                     </button>
@@ -80,10 +80,10 @@
                 </div>
                 <div class="col-md-6 text-end">
                     <h3 class="fw-bold mb-3">Total del Pedido: <span class="text-primary">{{ number_format($total, 2) }} €</span></h3>
-                    
+
                     <form method="POST" action="{{ route('carrito.clear', ['sesionId' => $sesionId]) }}" class="d-inline me-2">
                         @csrf
-                        @method('DELETE') {{-- Usamos DELETE para la acción de vaciar --}}
+                        {{-- @method('DELETE') COMENTO ESTA LINEA TAMBIEN --}}
                         <button class="btn btn-outline-warning" type="submit">Vaciar Carrito</button>
                     </form>
 

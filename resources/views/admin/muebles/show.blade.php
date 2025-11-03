@@ -121,7 +121,7 @@
                             <div class="col-md-6"><p><span class="detail-label">Materiales:</span> {{ $mueble->getMaterials() ?: 'No especificado' }}</p></div>
                             <div class="col-md-6"><p><span class="detail-label">Dimensiones:</span> {{ $mueble->getDimensions() ?: 'No especificado' }}</p></div>
                             <div class="col-md-6"><p><span class="detail-label">Color Principal:</span> {{ $mueble->getMainColor() }}</p></div>
-                            <div class="col-md-6"><p><span class="detail-label">Destacado:</span> {{ $mueble->getIsSalient() ? 'Sí' : 'No' }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Destacado:</span> {{ $mueble->isSalient() ? 'Sí' : 'No' }}</p></div>
                             <div class="col-12">
                                 <p class="detail-label">Imágenes:</p>
                                 @forelse ($mueble->getImages() as $image)

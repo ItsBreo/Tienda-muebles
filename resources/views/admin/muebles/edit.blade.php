@@ -140,7 +140,7 @@
                                 </div>
                                 <div class="col-md-6 d-flex align-items-end">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_salient" name="is_salient" value="1" @if($mueble->getIsSalient()) checked @endif>
+                                        <input class="form-check-input" type="checkbox" id="is_salient" name="is_salient" value="1" @if($mueble->isSalient()) checked @endif>
                                         <label class="form-check-label" for="is_salient">¿Es un producto destacado?</label>
                                     </div>
                                 </div>

@@ -11,38 +11,48 @@ class AdministracionController extends Controller
     private $cookieName = 'muebles_crud';
     private $cookieMinutes = 60 * 24 * 7; // 1 semana
 
-    /**
-     * Obtiene los muebles desde la cookie o los datos mock.
-     */
     private function getMuebles()
     {
+        // 1. Intenta obtener el JSON de la cookie
         $mueblesJson = Cookie::get($this->cookieName);
+
         if ($mueblesJson) {
-            // Decodificamos y convertimos a una colección de objetos Furniture
-            return collect(json_decode($mueblesJson, true))->map(function ($item) {
+            // 2. Decodifica el JSON a un array de arrays
+            $mueblesArrays = json_decode($mueblesJson, true);
+
+            // 3. SI EXISTEN, rehidratamos los arrays a Objetos Furniture
+            return collect($mueblesArrays)->map(function ($item) {
                 return new Furniture(
-                    $item['id'], // id
-                    $item['category_id'], // categoryId
-                    $item['name'], // name
-                    $item['description'], // description
-                    $item['price'], // price
-                    $item['stock'], // stock
-                    $item['materials'] ?? '', // materials (con valor por defecto)
-                    $item['dimensions'] ?? '', // dimensions (con valor por defecto)
-                    $item['main_color'], // mainColor
-                    $item['is_salient'], // isSalient
-                    $item['images'] // images
+                    $item['id'],
+                    $item['category_id'],
+                    $item['name'],
+                    $item['description'],
+                    $item['price'],
+                    $item['stock'],
+                    $item['materials'] ?? '',
+                    $item['dimensions'] ?? '',
+                    $item['main_color'],
+                    $item['is_salient'],
+                    $item['images']
                 );
             });
         }
-        return collect(Furniture::getMockData());
-    }
 
+        // 4. Si no, carga los datos mock (que ya son Objetos Furniture)
+        $muebles = collect(Furniture::getMockData());
+
+        // 5. Los guarda en la cookie para la próxima vez
+        $this->saveMuebles($muebles);
+        return $muebles;
+    }
+    
     /**
      * Guarda la colección de muebles en la cookie.
      */
     private function saveMuebles($muebles)
     {
+        // Convertimos la colección de Objetos a JSON y la ponemos en la cola
+        // para que se guarde en la respuesta del navegador.
         Cookie::queue($this->cookieName, $muebles->toJson(), $this->cookieMinutes);
     }
 
@@ -91,6 +101,7 @@ class AdministracionController extends Controller
         );
 
         $muebles->push($newMueble);
+        // FIX: Guardar la colección actualizada en la cookie.
         $this->saveMuebles($muebles);
 
         return redirect()->route('admin.muebles.index')->with('success', 'Mueble creado correctamente.');
@@ -102,7 +113,8 @@ class AdministracionController extends Controller
     public function show($id)
     {
         $muebles = $this->getMuebles();
-        $mueble = $muebles->firstWhere('id', (int)$id);
+        // FIX: Usar una función de callback para acceder al método getId().
+        $mueble = $muebles->first(fn($m) => $m->getId() == (int)$id);
 
         if (!$mueble) {
             abort(404);
@@ -118,7 +130,8 @@ class AdministracionController extends Controller
     public function edit($id)
     {
         $muebles = $this->getMuebles();
-        $mueble = $muebles->firstWhere('id', (int)$id);
+        // FIX: Usar una función de callback para acceder al método getId().
+        $mueble = $muebles->first(fn($m) => $m->getId() == (int)$id);
 
         if (!$mueble) {
             abort(404);
@@ -127,9 +140,6 @@ class AdministracionController extends Controller
         return view('admin.muebles.edit', compact('mueble'));
     }
 
-    /**
-     * Actualiza un mueble en la cookie.
-     */
     public function update(Request $request, $id)
     {
         $muebles = $this->getMuebles();
@@ -140,6 +150,8 @@ class AdministracionController extends Controller
         }
 
         $mueble = $muebles[$muebleIndex];
+
+        // Asignación de todos los campos del formulario
         $mueble->setName($request->input('name', $mueble->getName()));
         $mueble->setDescription($request->input('description', $mueble->getDescription()));
         $mueble->setPrice((float)$request->input('price', $mueble->getPrice()));
@@ -147,6 +159,10 @@ class AdministracionController extends Controller
         $mueble->setIsSalient($request->has('is_salient'));
         $mueble->setStock((int)$request->input('stock', $mueble->getStock()));
         $mueble->setCategoryId((int)$request->input('category_id', $mueble->getCategoryId()));
+
+        // CAMPOS QUE FALTABAN
+        $mueble->setMaterials($request->input('materials', $mueble->getMaterials()));
+        $mueble->setDimensions($request->input('dimensions', $mueble->getDimensions()));
 
         $muebles[$muebleIndex] = $mueble;
         $this->saveMuebles($muebles);
@@ -160,7 +176,8 @@ class AdministracionController extends Controller
     public function destroy($id)
     {
         $muebles = $this->getMuebles();
-        $muebles = $muebles->reject(fn($m) => $m->getId() == (int)$id)->values();
+        // FIX: Usar una función de callback para acceder al método getId().
+        $muebles = $muebles->reject(fn($m) => $m->getId() == (int)$id);
         $this->saveMuebles($muebles);
 
         return redirect()->route('admin.muebles.index')->with('success', 'Mueble eliminado correctamente.');

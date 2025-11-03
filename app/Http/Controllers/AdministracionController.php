@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Furniture;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Str;
 
 class AdministracionController extends Controller
 {
@@ -22,16 +21,17 @@ class AdministracionController extends Controller
             // Decodificamos y convertimos a una colección de objetos Furniture
             return collect(json_decode($mueblesJson, true))->map(function ($item) {
                 return new Furniture(
-                    $item['id'],
-                    $item['name'],
-                    $item['description'],
-                    $item['price'],
-                    $item['main_color'],
-                    $item['is_salient'],
-                    $item['stock'],
-                    $item['category_id'],
-                    $item['main_image'],
-                    $item['images']
+                    $item['id'], // id
+                    $item['category_id'], // categoryId
+                    $item['name'], // name
+                    $item['description'], // description
+                    $item['price'], // price
+                    $item['stock'], // stock
+                    $item['materials'] ?? '', // materials (con valor por defecto)
+                    $item['dimensions'] ?? '', // dimensions (con valor por defecto)
+                    $item['main_color'], // mainColor
+                    $item['is_salient'], // isSalient
+                    $item['images'] // images
                 );
             });
         }
@@ -78,15 +78,16 @@ class AdministracionController extends Controller
         // Creamos una instancia de Furniture para mantener la consistencia
         $newMueble = new Furniture(
             $newMuebleData['id'],
+            (int)$newMuebleData['category_id'],
             $newMuebleData['name'],
             $newMuebleData['description'],
             (float)$newMuebleData['price'],
+            (int)$newMuebleData['stock'],
+            $newMuebleData['materials'] ?? '',
+            $newMuebleData['dimensions'] ?? '',
             $newMuebleData['main_color'],
             $request->has('is_salient'),
-            (int)$newMuebleData['stock'],
-            (int)$newMuebleData['category_id'],
-            'default.jpg', // Imagen por defecto
-            []
+            $newMuebleData['images'] ?? ['default.jpg']
         );
 
         $muebles->push($newMueble);

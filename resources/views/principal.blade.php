@@ -8,9 +8,9 @@
         <h1 class="display-5">Bienvenido a la Tienda de Muebles</h1>
         <p class="lead">Catálogo de muebles de ejemplo, sin base de datos — todo con mock, cookies y sesiones.</p>
         <p>
-            <!-- Cambio: botón claro para catálogo y botón para ver todas las categorías -->
-            <a class="btn btn-primary" href="{{ route('muebles.index') }}">Ver catálogo completo</a>
-            <a class="btn btn-outline-secondary" href="{{ route('categorias.index') }}">Explorar categorías</a>
+
+            <a class="btn btn-primary" href="{{ route('muebles.index', ['sesionId' => $activeSesionId]) }}">Ver catálogo completo</a>
+            <a class="btn btn-outline-secondary" href="{{ route('categorias.index', ['sesionId' => $activeSesionId]) }}">Explorar categorías</a>
         </p>
     </div>
 </div>
@@ -23,8 +23,8 @@
             <div class="card-body">
                 <h5 class="card-title">{{ $cat->getName() }}</h5>
                 <p class="card-text">{{ $cat->getDescription() }}</p>
-                <!-- Cambio: texto más claro y mantiene la ruta que filtra muebles por categoría -->
-                <a href="{{ route('categorias.show', $cat->getId()) }}" class="btn btn-sm btn-primary">Ver muebles</a>
+
+                <a href="{{ route('categorias.show', ['id' => $cat->getId(), 'sesionId' => $activeSesionId]) }}" class="btn btn-sm btn-primary">Ver muebles</a>
             </div>
         </div>
     </div>
@@ -40,8 +40,12 @@
             <div class="card-body">
                 <h5 class="card-title">{{ $m->getName() }}</h5>
                 <p class="card-text">{{ \Illuminate\Support\Str::limit($m->getDescription(), 90) }}</p>
-                <p class="mb-1"><strong>{{ number_format($m->getPrice(), 2) }} €</strong></p>
-                <a href="{{ route('muebles.show', $m->getId()) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+
+
+                <p class="mb-1"><strong>{{ $m->getFormattedPrice($preferencias['moneda']) }}</strong></p>
+
+
+                <a href="{{ route('muebles.show', ['id' => $m->getId(), 'sesionId' => $activeSesionId]) }}" class="btn btn-sm btn-outline-primary">Ver</a>
             </div>
         </div>
     </div>

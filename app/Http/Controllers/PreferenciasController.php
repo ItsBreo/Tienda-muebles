@@ -2,36 +2,55 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Session;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class PreferenciasController extends Controller
 {
-
-    private $id_COOKIE = 'autorizacion_login';
-
-    public function show()
+    /**
+     * Muestra la vista de preferencias.
+     * El sesionId nos lo pasa la plantilla 'app.blade.php' en la URL.
+     */
+    public function show(Request $request)
     {
-        return view('preferencias');
+        $sesionId = $request->query('sesionId');
+
+        // Pasamos el sesionId a la vista para que pueda incluirlo en el formulario
+        return view('preferencias', ['sesionId' => $sesionId]);
     }
 
-    public function login(Request $request)
+    /**
+     * Actualiza las preferencias del usuario.
+     * Esta es la lógica que sigue el requisito 2.e
+     */
+    public function update(Request $request)
     {
-        $datos = $request->validate(
-            [
-                'email'    => ['required', 'email'],
-                'password' => ['required', 'string', 'min:4'],
-                'recuerdame' => ['nullable', 'boolean'],
-            ],
-            [
-                'email.required' => 'Debes introducir el email del usuario.',
-                'email.email'  => 'Formato de email no válido',
-                'password.required' => 'Debes introducir el password de usuario.',
-                'password.min'  => 'La longitud del password no es adecuada',
-            ],
-        );
+        // Validamos los datos del formulario
+        $data = $request->validate([
+            'tema' => ['required', 'string', 'in:claro,oscuro,sistema'],
+            'moneda' => ['required', 'string', 'in:USD,EUR,GBP'],
+            'tamaño' => ['required', 'integer', 'min:6', 'max:24'],
+            'sesionId' => ['required', 'string'], // El sesionId debe venir del campo oculto
+        ]);
 
+        $sesionId = $data['sesionId'];
+        $cookieName = null;
+
+        // 1. Buscamos al usuario en el array de la sesión
+        $allUsers = Session::get('usuarios', []);
+        if (isset($allUsers[$sesionId])) {
+            $activeUser = json_decode($allUsers[$sesionId]);
+            // 2. Obtenemos el nombre de la cookie que le corresponde
+            $cookieName = $activeUser->cookie_name ?? null;
+        }
+
+        if (!$cookieName || !$request->hasCookie($cookieName)) {
+            // Si no encontramos al usuario/cookie, volvemos con error
+            return redirect()->route('principal', ['sesionId' => $sesionId])
+                             ->withErrors('No se pudo encontrar la cookie para guardar las preferencias.');
         $usuario = User::verifyUser($datos['email'], $datos['password']);
         if (!$usuario) {
             // Vuelve hacia atrás en el navegador y envia un objeto messageBag propio de Laravel
@@ -39,23 +58,21 @@ class PreferenciasController extends Controller
             return back()->withErrors(['errorCredenciales' => 'Credenciales no válidas']);
         }
 
-        $datosCookie = [
-            'email' => $usuario->email,
-            'nombre'  => 'yeray',
-            'fecha_ingreso'   => now()->toString(),
-        ];
+        // 3. Leemos la cookie actual para preservar otros datos (email, sesionId original, etc.)
+        $cookieData = json_decode($request->cookie($cookieName), true);
 
-        // Recordar el inicio de sesión 30 días o 1 hora.
-        $minutos = $request->boolean('recuerdame') ? 43200 : 60;
+        // 4. Actualizamos solo los valores de preferencias
+        $cookieData['tema'] = $data['tema'];
+        $cookieData['moneda'] = $data['moneda'];
+        $cookieData['tamaño'] = $data['tamaño']; // Guardamos como número
 
-        // queue: Laravel se encarga de crear y enviar la cookie al navegador
-        // a través de las cabeceras.
+        $cookieDuration = config('session.lifetime', 120);
 
-        Cookie::queue(
-            name: $this->id_COOKIE,
-            // Guardamos la información del array en formato JSON para más comodidad
-            value: json_encode($datosCookie),
-            minutes: $minutos,
+        // 5. Creamos la nueva cookie actualizada
+        $cookie = Cookie::make(
+            name: $cookieName,
+            value: json_encode($cookieData),
+            minutes: $cookieDuration,
             path: '/',
             domain: null,
             secure: config('session.secure', false),
@@ -63,32 +80,10 @@ class PreferenciasController extends Controller
             sameSite: config('session.same_site', 'lax')
         );
 
-        // Redireccionar rutas
-        return redirect()->route('dashboard');
-    }
-
-    public function cerrarSesion()
-    {
-        // forget: modifica el objeto cookie poniendole una fecha expirada
-        // queue: lo envia al navegador, sin tenerlo que pasar manualmente.
-        Cookie::queue(Cookie::forget($this->id_COOKIE));
-        // Pasar estados con redirecciones.
-        return redirect()->route('login')->with('estado', 'Sesión cerrada');
-    }
-
-    public function index()
-    {
-        $json = Cookie::get('autorizacion_login');
-
-        if (!$json) {
-            return redirect()->route('login');
-        }
-
-        $usuario = json_decode($json, true);
-        if (!is_array($usuario) || empty($usuario['email'])) {
-            return redirect()->route('login');
-        }
-
-        return view('dashboard', compact('usuario'));
+        // 6. Redirigimos a principal (pasando el sesionId) y adjuntamos la cookie
+        return redirect()
+            ->route('principal', ['sesionId' => $sesionId])
+            ->withCookie($cookie);
     }
 }
+

@@ -1,0 +1,124 @@
+/*
+|--------------------------------------------------------------------------
+| CSS GLOBAL: Paleta de Colores y Base de Estilos
+|--------------------------------------------------------------------------
+| Este CSS se carga en TODAS las páginas.
+
+ EL ARCHIVO SES MUEVE A PUBLIC/CSS YA QUE EN LA OTRA VERSIÓN EL ARCHIVO DE BOOTSTRAP LO REEMPLAZA Y NECESITAMOS AMBOS
+*/
+
+/* |--------------------------------------------------------------------------
+| TEMA CLARO (Por defecto)
+|--------------------------------------------------------------------------
+*/
+:root {
+    /* Paleta de Colores */
+    --davys-gray: #565254;      /* Gris Oscuro (Principal: Header, Footer, Botones) */
+    --gray-medium: #7A7D7D;     /* Gris Medio (Secundario: Texto sutil) */
+    --timberwolf: #D0CFCF;      /* Gris Claro (Fondo de página) */
+    --snow: #FFFBFE;            /* Blanco (Texto de contraste, Fondo de tarjeta) */
+
+    /* Mapeo de variables a Bootstrap */
+    --bs-primary: var(--davys-gray);
+    --bs-secondary: var(--gray-medium);
+    --bs-body-bg: var(--timberwolf); /* Fondo general de la aplicación */
+    --bs-body-color: var(--davys-gray); /* Color principal del texto */
+    --bs-tertiary-bg: var(--snow); /* Fondo de tarjetas, navbar */
+}
+
+/* |--------------------------------------------------------------------------
+| TEMA OSCURO (Activado por <html data-theme="oscuro">)
+|--------------------------------------------------------------------------
+*/
+[data-theme="oscuro"] {
+    /* Paleta de Colores Invertida */
+    --davys-gray: #e0e0e0;      /* (Invertido) Texto claro principal */
+    --gray-medium: #a0a0a0;     /* (Invertido) Texto sutil */
+    --timberwolf: #1a1a1a;      /* (Invertido) Fondo de página oscuro */
+    --snow: #242424;            /* (Invertido) Fondo de tarjeta oscuro */
+
+    /* El Mapeo de Bootstrap no cambia, pero usará las variables oscuras */
+    --bs-body-color: var(--davys-gray);
+    --bs-body-bg: var(--timberwolf);
+    --bs-tertiary-bg: var(--snow);
+}
+
+/* |--------------------------------------------------------------------------
+| FUENTES Y ESTILOS GLOBALES
+|--------------------------------------------------------------------------
+*/
+body {
+    /* Fuentes de Google Fonts (de tu app.blade.php) */
+    font-family: 'Inter', sans-serif;
+    color: var(--bs-body-color); /* Aplicado por Bootstrap, pero lo reforzamos */
+    background-color: var(--bs-body-bg);
+    min-height: 100vh;
+    /* Transición suave al cambiar de tema */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6, .navbar-brand, .card-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400; /* Regular */
+    color: var(--bs-body-color);
+}
+
+/*
+|--------------------------------------------------------------------------
+| ESTILOS DE COMPONENTES (Usando variables)
+|--------------------------------------------------------------------------
+*/
+
+/* Navbar */
+.navbar {
+    background-color: var(--bs-tertiary-bg) !important;
+}
+
+/* Botones */
+.btn-primary {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    /* Color del texto del botón */
+    color: var(--bs-body-bg);
+}
+
+.btn-primary:hover {
+    filter: brightness(1.2); /* Un efecto genérico de hover que funciona en ambos temas */
+}
+
+.btn-outline-secondary {
+    color: var(--bs-secondary);
+    border-color: var(--bs-secondary);
+}
+.btn-outline-secondary:hover {
+    background-color: var(--bs-secondary);
+    color: var(--bs-body-bg); /* Invertimos color con el fondo */
+}
+
+/* Paginación */
+.page-item.active .page-link {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: var(--bs-body-bg);
+}
+.page-link {
+    color: var(--bs-primary);
+    background-color: var(--bs-tertiary-bg);
+    border-color: var(--bs-secondary);
+}
+.page-link:hover {
+    filter: brightness(0.9);
+}
+
+/* Estilo para que el botón de Logout parezca un link */
+.btn-link-nav {
+    color: var(--bs-nav-link-color);
+    padding: var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-x);
+    font-weight: var(--bs-nav-link-font-weight);
+    text-decoration: none;
+    border: none;
+    background: none;
+}
+.btn-link-nav:hover {
+    color: var(--bs-nav-link-hover-color);
+}

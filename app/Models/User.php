@@ -25,11 +25,12 @@ class User
 
     private static function userData()
     {
-        // Creamos varios usuarios para iniciar sesión en la aplicación
+
         return [
             new User(1, 'admin@correo.com', '1234', 'Admin', 'admin'),
             new User(2, 'jose@correo.com', '1234', 'Jose', 'user'),
-            new User(3, 'user2@correo.com', '1234', '', 'user'),
+            new User(3, 'pedro@correo.com', '1234', '', 'user'),
+            new User(4, 'juan@correo.com', '1234', '', 'user'),
         ];
     }
 

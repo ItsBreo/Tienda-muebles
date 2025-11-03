@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+{{-- $mueble, $activeSesionId, $activeUser, y $preferencias vienen de MuebleController@show --}}
+
 @section('title', $mueble->getName())
 
 @section('content')
@@ -18,7 +20,8 @@
                          class="img-thumbnail me-2 mb-2"
                          style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;"
                          alt="Miniatura"
-                         onclick="document.getElementById('main-image').src = this.src"> @endforeach
+                         onclick="document.getElementById('main-image').src = this.src">
+                @endforeach
             </div>
         </div>
 
@@ -31,9 +34,9 @@
 
             <p class="lead">{{ $mueble->getDescription() }}</p>
 
-            <p class="display-4 fw-bold" style="color: #565254;">
-                {{-- TODO: Formatear moneda según la cookie de preferencias (Apartado 1) --}}
-                {{ number_format($mueble->getPrice(), 2) }} €
+            <p class="display-4 fw-bold" style="color: var(--bs-body-color);">
+
+                {{ $mueble->getFormattedPrice($preferencias['moneda']) }}
             </p>
 
             <hr>
@@ -55,8 +58,11 @@
             <hr>
 
             @if($mueble->getStock() > 0)
-                <form action="{{ route('carrito.add', $mueble->getId()) }}" method="POST">
+                <form action="{{ route('carrito.add', ['mueble' => $mueble->getId()]) }}" method="POST">
                     @csrf
+
+                    <input type="hidden" name="sesionId" value="{{ $activeSesionId }}">
+
                     <div class="row g-2">
                         <div class="col-md-4">
                             <label for="quantity" class="form-label">Cantidad:</label>
@@ -75,9 +81,11 @@
             @endif
 
             <div class="mt-4">
-                <a href="{{ route('categorias.show', $mueble->getCategoryId()) }}" class="btn btn-outline-secondary">&larr; Volver a la Categoría</a>
-                <a href="{{ route('muebles.index') }}" class="btn btn-outline-secondary">Ver todos los muebles</a>
+
+                <a href="{{ route('categorias.show', ['id' => $mueble->getCategoryId(), 'sesionId' => $activeSesionId]) }}" class="btn btn-outline-secondary">&larr; Volver a la Categoría</a>
+                <a href="{{ route('muebles.index', ['sesionId' => $activeSesionId]) }}" class="btn btn-outline-secondary">Ver todos los muebles</a>
             </div>
         </div>
     </div>
 @endsection
+

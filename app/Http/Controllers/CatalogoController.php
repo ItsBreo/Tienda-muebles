@@ -4,36 +4,88 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Session; // <-- Importar Session
 use App\Models\Furniture;
 use App\Models\Category;
 
 // Controlador de Catálogo
 class CatalogoController extends Controller
 {
+    /**
+     * Carga las preferencias y el usuario activo desde la sesión y las cookies.
+     */
+    private function cargarSesionYPreferencias(Request $request): array
+    {
+        $activeSesionId = $request->query('sesionId');
+        $activeUser = null;
+        $cookieName = null;
+        // Valores por defecto
+        $preferencias = [
+            'tema' => 'claro',
+            'moneda' => 'EUR',
+            'tamaño' => 6, //
+        ];
+
+        if ($activeSesionId && Session::has('usuarios')) {
+            $usuarios = Session::get('usuarios');
+            if (isset($usuarios[$activeSesionId])) {
+                $activeUser = json_decode($usuarios[$activeSesionId]);
+                $cookieName = 'preferencias_' . $activeUser->id;
+            }
+        }
+
+        if ($cookieName && $request->hasCookie($cookieName)) {
+            $preferencias = array_merge($preferencias, json_decode($request->cookie($cookieName), true));
+        }
+
+        return [$activeSesionId, $preferencias];
+    }
+
+
     // Listado de categorías
-    public function categorias(){
+    public function categorias(Request $request){
+        // Cargar sesión y preferencias para el layout (navbar)
+        list($activeSesionId, $preferencias) = $this->cargarSesionYPreferencias($request);
+
         $categories = Category::getMockData();
-        return view('catalogo.categorias', compact('categories'));
+
+        return view('catalogo.categorias', compact('categories', 'activeSesionId', 'preferencias'));
     }
 
     // Mostrar muebles por categoría
     public function show(Request $request, $id){
+        // Cargar sesionId para la redirección
+        list($activeSesionId, $preferencias) = $this->cargarSesionYPreferencias($request);
+
         $category = Category::findById((int)$id);
 
-        // Guardar cookie por categoría con función queque (nombre: categoria_{id})
+        // Si la categoría no existe, redirigir
+        if (!$category) {
+            return redirect()->route('principal', ['sesionId' => $activeSesionId]);
+        }
+
+
         Cookie::queue("categoria_{$category->getId()}", json_encode($category), 60 * 24 * 30);
 
-        // Redirigimos a /muebles con parámetro category para el filtrado
-        return redirect()->route('muebles.index', ['category' => $category->getId()]);
+        // Redirigimos a /muebles propagando el sesionId
+        return redirect()->route('muebles.index', [
+            'category' => $category->getId(),
+            'sesionId' => $activeSesionId
+        ]);
     }
 
     // Listado de muebles con filtros, orden y paginación
     public function index(Request $request)
     {
-        // Obtenemos preferencia de paginación desde cookie (nombre: pref_pagination)
-        $perPage = (int) $request->cookie('pref_pagination', 6);
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        // Cargar sesión y preferencias
+        list($activeSesionId, $preferencias) = $this->cargarSesionYPreferencias($request);
+
+        // Obtenemos preferencia de paginación desde NUESTRA cookie
+        $perPage = (int) ($preferencias['tamaño'] ?? 6);
+        $currentPage = LengthAwarePaginator::resolveCurrentPage('page');
 
         // Obtenemos todos los muebles
         $items = collect(Furniture::getMockData());
@@ -60,9 +112,9 @@ class CatalogoController extends Controller
             $items = $items->filter(fn($mueble) => str_contains(strtolower($mueble->getMainColor()), $color));
         }
 
-        // Texto (nombre o descripción)
-        if ($request->filled('query')) {
-            $query = strtolower($request->input('query'));
+
+        if ($request->filled('q')) {
+            $query = strtolower($request->input('q'));
             $items = $items->filter(fn($mueble) =>
                 str_contains(strtolower($mueble->getName()), $query) || str_contains(strtolower($mueble->getDescription()), $query)
             );
@@ -93,22 +145,28 @@ class CatalogoController extends Controller
         // Reindexar colección después de filtros y orden
         $items = $items->values();
 
-        // Paginar manualmente (Tengo dudas)
+        // Paginar manualmente
         $total = $items->count();
         $slice = $items->slice(($currentPage - 1) * $perPage, $perPage)->all();
+
+        // Pasar los query params al paginador para que los filtros persistan
         $paginator = new LengthAwarePaginator($slice, $total, $perPage, $currentPage, [
-            'path' => url()->current(),
-            'query' => $request->query(),
+            'path' => Paginator::resolveCurrentPath(), // Usa Paginator
+            'pageName' => 'page',
         ]);
+
+        $paginator->appends($request->except('page'));
+
 
         // Pasamos categorías para filtros
         $categories = Category::getMockData();
 
-        // Vista con muebles paginados y filtros
+        // Devolver la vista y pasar las variables
         return view('catalogo.index', [
             'muebles' => $paginator,
             'categories' => $categories,
-            'perPage' => $perPage
+            'activeSesionId' => $activeSesionId,
+            'preferencias' => $preferencias,
         ]);
     }
 }

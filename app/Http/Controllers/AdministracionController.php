@@ -97,6 +97,22 @@ class AdministracionController extends Controller
     }
 
     /**
+     * Muestra los detalles de un mueble específico.
+     */
+    public function show($id)
+    {
+        $muebles = $this->getMuebles();
+        $mueble = $muebles->firstWhere('id', (int)$id);
+
+        if (!$mueble) {
+            abort(404);
+        }
+
+        return view('admin.muebles.show', compact('mueble'));
+    }
+
+
+    /**
      * Muestra el formulario para editar un mueble.
      */
     public function edit($id)

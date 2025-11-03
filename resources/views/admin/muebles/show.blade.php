@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administración de Muebles - Tienda</title>
+    <title>Detalle del Mueble - Tienda</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
@@ -61,6 +61,10 @@
             padding: 1rem 0;
             margin-top: auto; /* Empuja el footer hacia abajo */
         }
+        .detail-label {
+            font-weight: 600;
+            color: var(--bs-secondary);
+        }
     </style>
 </head>
 <body>
@@ -96,56 +100,36 @@
             </div>
 
             <div class="col-md-9 col-lg-10 p-4">
-                <h1 class="mb-4 text-primary">Gestión de Muebles</h1>
+                <h1 class="mb-4 text-primary">Detalle del Mueble</h1>
 
-                @if(session('success'))
-                    <div class="alert alert-success shadow-sm">
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                <div class="card shadow-sm border-0 mb-4">
+                <div class="card shadow-sm border-0">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="card-title text-primary">Listado de Muebles</h5>
-                            <a href="{{ route('admin.muebles.create') }}" class="btn btn-primary">Crear Nuevo Mueble</a>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title text-primary mb-0">{{ $mueble->getName() }}</h5>
+                            <div>
+                                <a href="{{ route('admin.muebles.edit', $mueble->getId()) }}" class="btn btn-secondary">Editar</a>
+                                <a href="{{ route('admin.muebles.index') }}" class="btn btn-outline-secondary">Volver al listado</a>
+                            </div>
                         </div>
-
-                        <div class="table-responsive mt-3">
-                            <table class="table table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Nombre</th>
-                                        <th>Precio</th>
-                                        <th>Stock</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($muebles as $mueble)
-                                        <tr>
-                                            <td>{{ $mueble->getId() }}</td>
-                                            <td>{{ $mueble->getName() }}</td>
-                                            <td>{{ number_format($mueble->getPrice(), 2) }} €</td>
-                                            <td>{{ $mueble->getStock() }}</td>
-                                            <td>
-                                                <a href="{{ route('admin.muebles.show', $mueble->getId()) }}" class="btn btn-sm btn-info">Ver</a>
-                                                <a href="{{ route('admin.muebles.edit', $mueble->getId()) }}" class="btn btn-sm btn-secondary">Editar</a>
-                                                <form action="{{ route('admin.muebles.destroy', $mueble->getId()) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este mueble?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center text-secondary">No hay muebles para mostrar.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
+                        <hr>
+                        <div class="row g-3">
+                            <div class="col-md-6"><p><span class="detail-label">ID:</span> {{ $mueble->getId() }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Categoría ID:</span> {{ $mueble->getCategoryId() }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Precio:</span> {{ number_format($mueble->getPrice(), 2) }} €</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Stock:</span> {{ $mueble->getStock() }}</p></div>
+                            <div class="col-12"><p><span class="detail-label">Descripción:</span><br>{{ $mueble->getDescription() }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Materiales:</span> {{ $mueble->getMaterials() ?: 'No especificado' }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Dimensiones:</span> {{ $mueble->getDimensions() ?: 'No especificado' }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Color Principal:</span> {{ $mueble->getMainColor() }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Destacado:</span> {{ $mueble->getIsSalient() ? 'Sí' : 'No' }}</p></div>
+                            <div class="col-12">
+                                <p class="detail-label">Imágenes:</p>
+                                @forelse ($mueble->getImages() as $image)
+                                    <span class="badge bg-light text-dark">{{ $image }}</span>
+                                @empty
+                                    <span class="text-muted">No hay imágenes asociadas.</span>
+                                @endforelse
+                            </div>
                         </div>
                     </div>
                 </div>

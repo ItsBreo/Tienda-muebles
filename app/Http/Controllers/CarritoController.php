@@ -19,20 +19,22 @@ class CarritoController extends Controller
             return redirect()->route('login')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
 
-        $user = (object) ['id' => 1]; //Usuario ficticio
+        // obtener carrito por usuario real
         $cart = Session::get('carrito_' . $user->id, []);
         $total = 0;
-
-          if ($cart) {
+        if (!empty($cart)) {
             foreach ($cart as $c) {
-                $total += $c['precio'] * $c['quantity'];
+                // la clave usada en el array es 'cantidad'
+                $cantidad = isset($c['cantidad']) ? (int) $c['cantidad'] : 0;
+                $precio = isset($c['precio']) ? (float) $c['precio'] : 0.0;
+                $total += $precio * $cantidad;
             }
         }
 
-    return view('carrito.show', compact('cart', 'total', 'user', 'sesionId'));
+        return view('carrito.show', compact('cart', 'total', 'user', 'sesionId'));
     }
     public function add(Request $request, int $id)
-           {
+    {
         $sesionId = $request->query('sesionId');
         $user = User::activeUserSesion($sesionId);
 
@@ -40,24 +42,25 @@ class CarritoController extends Controller
             return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
 
-        // TODO: La validación esta mal y bloquea el mueble
-        /*
-        $request->validate([
-            'cantidad' => 'required|int|min:1|max:10'
-        ]);
-        */
+        if (!$user) {
+            return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
+        }
 
-        $quantity = $request->quantity;
+        // aseguramos cantidad mínima/por defecto y casteo a entero
+        $quantity = (int) $request->input('cantidad', $request->input('quantity', 1));
+        if ($quantity < 1) {
+            $quantity = 1;
+        }
 
         $furniture = Furniture::findById($id);
         if (!$furniture) {
-            return redirect()->route('muebles.show', ['sesionId' => $sesionId])->withErrors('Mueble no encontrado');
+            return redirect()->route('muebles.index', ['sesionId' => $sesionId])->withErrors('Mueble no encontrado');
         }
 
         $cart = Session::get('carrito_' . $user->id, []);
 
         if (isset($cart[$id])) {
-            $cart[$id]['cantidad'] += $quantity;
+            $cart[$id]['cantidad'] = (int)$cart[$id]['cantidad'] + $quantity;
         } else {
              //Sustituir esto por los valores apropiados para mueble
             $cart[$id] = [

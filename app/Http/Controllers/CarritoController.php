@@ -12,13 +12,14 @@ class CarritoController extends Controller
     public function show(Request $request)
     {
         $sesionId = $request->query('sesionId');
-
+        /* Bloque comentado para saltarse el login temporalmente
         $user = User::activeUserSesion($sesionId);
 
         if (!$user) {
             return redirect()->route('login')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
-
+        */
+        $user = (object) ['id' => 1]; //Usuario ficticio
         $cart = Session::get('carrito_' . $user->id, []);
         $total = 0;
 
@@ -28,7 +29,7 @@ class CarritoController extends Controller
             }
         }
 
-    return view('carrito.index', compact('cart', 'total', 'usuario', 'sesionId'));
+    return view('carrito.show', compact('cart', 'total', 'user', 'sesionId'));
     }
         public function add(Request $request, int $id)
            {
@@ -45,9 +46,9 @@ class CarritoController extends Controller
 
         $quantity = $request->quantity;
 
-        $furniture = Furniture::($id);
+        $furniture = Furniture::findById($id);
         if (!$furniture) {
-            return redirect()->route('muebles.index', ['sesionId' => $sesionId])->withErrors('Mueble no encontrado');
+            return redirect()->route('muebles.show', ['sesionId' => $sesionId])->withErrors('Mueble no encontrado');
         }
 
         $cart = Session::get('carrito_' . $user->id, []);
@@ -65,7 +66,7 @@ class CarritoController extends Controller
         }
 
         Session::put('carrito_' . $user->id, $cart);
-        return redirect()->route('carrito.index', ['sesionId' => $sesionId])->with('success', 'Mueble agregado al carrito');
+        return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('success', 'Mueble agregado al carrito');
     }
 
         public function remove(Request $request, $id)
@@ -81,7 +82,7 @@ class CarritoController extends Controller
 
         unset($cart[$id]);
         Session::put('carrito_' . $user->id, $cart);
-        return redirect()->route('carrito.index', ['sesionId' => $sesionId])->with('success', 'Mueble eliminado del carrito');
+        return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('success', 'Mueble eliminado del carrito');
     }
 
     public function clear(Request $request)
@@ -94,7 +95,7 @@ class CarritoController extends Controller
         }
 
         Session::forget('carrito_' . $user->id);
-        return redirect()->route('carrito.index', ['sesionId' => $sesionId])->with('success', 'Carrito vaciado');
+        return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('success', 'Carrito vaciado');
     }
 
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administración - Empresa</title>
+    <title>Administración de Muebles - Tienda</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
@@ -18,7 +18,6 @@
             --bs-secondary: var(--bs-gray-medium); /* Color secundario: Gris Medio */
         }
 
-        /* 1. Fuente de Letra (Ejemplo de fuente profesional y limpia) */
         body {
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background-color: var(--bs-timberwolf); /* Fondo de página gris claro */
@@ -27,7 +26,6 @@
             flex-direction: column;
         }
 
-        /* 2. Cabecera (Navbar) */
         .navbar-custom {
             background-color: var(--bs-primary) !important;
             color: var(--bs-snow);
@@ -37,11 +35,7 @@
         .navbar-custom .nav-link {
             color: var(--bs-snow) !important;
         }
-        .navbar-custom .nav-link:hover {
-            color: var(--bs-timberwolf) !important;
-        }
 
-        /* 3. Barra Lateral (Sidebar) */
         .sidebar {
             width: 250px;
             background-color: var(--bs-secondary); /* Gris Medio */
@@ -61,13 +55,11 @@
             font-weight: 600;
         }
 
-        /* 4. Pie de Página (Footer) */
         .footer-custom {
             background-color: var(--bs-primary); /* Gris Oscuro */
             color: var(--bs-snow);
             padding: 1rem 0;
             margin-top: auto; /* Empuja el footer hacia abajo */
-            box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -76,8 +68,7 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" href="#">Panel de Control</a>
-
+                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">Panel de Control</a>
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
@@ -96,50 +87,74 @@
         <div class="row">
 
             <div class="col-md-3 col-lg-2 sidebar">
-                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                    <a class="nav-link active" id="v-pills-dashboard-tab" data-bs-toggle="pill" href="#v-pills-dashboard" role="tab" aria-selected="true">Dashboard</a>
-                    <a class="nav-link" id="v-pills-usuarios-tab" data-bs-toggle="pill" href="#v-pills-usuarios" role="tab" aria-selected="false">Usuarios</a>
-                    <a class="nav-link" id="v-pills-productos-tab" data-bs-toggle="pill" href="#v-pills-productos" role="tab" aria-selected="false">Productos</a>
-                    <a class="nav-link" id="v-pills-config-tab" data-bs-toggle="pill" href="#v-pills-config" role="tab" aria-selected="false">Configuración</a>
+                <div class="nav flex-column nav-pills">
+                    <a class="nav-link" href="#">Dashboard</a>
+                    <a class="nav-link" href="#">Usuarios</a>
+                    <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
+                    <a class="nav-link" href="#">Configuración</a>
                 </div>
             </div>
 
             <div class="col-md-9 col-lg-10 p-4">
-                <h1 class="mb-4 text-primary">Dashboard Principal</h1>
+                <h1 class="mb-4 text-primary">Gestión de Muebles</h1>
+
+                @if(session('success'))
+                    <div class="alert alert-success shadow-sm">
+                        {{ session('success') }}
+                    </div>
+                @endif
 
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-body">
-                        <h5 class="card-title text-primary">Resumen Rápido</h5>
-                        <p class="card-text text-secondary">
-                            Aquí puedes colocar métricas, gráficos o la información más importante.
-                        </p>
-                        <button class="btn btn-primary">Ver Reporte</button>
-                    </div>
-                </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title text-primary">Listado de Muebles</h5>
+                            <a href="{{ route('admin.muebles.create') }}" class="btn btn-primary">Crear Nuevo Mueble</a>
+                        </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-4">
-                        <div class="card shadow-sm border-0">
-                            <div class="card-body">
-                                <h5 class="card-title text-secondary">Últimas Actividades</h5>
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">Usuario X se registró.</li>
-                                    <li class="list-group-item">Producto Y editado.</li>
-                                </ul>
-                            </div>
+                        <div class="table-responsive mt-3">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                        <th>Precio</th>
+                                        <th>Stock</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($muebles as $mueble)
+                                        <tr>
+                                            <td>{{ $mueble->getId() }}</td>
+                                            <td>{{ $mueble->getName() }}</td>
+                                            <td>{{ number_format($mueble->getPrice(), 2) }} €</td>
+                                            <td>{{ $mueble->getStock() }}</td>
+                                            <td>
+                                                <a href="{{ route('admin.muebles.edit', $mueble->getId()) }}" class="btn btn-sm btn-secondary">Editar</a>
+                                                <form action="{{ route('admin.muebles.destroy', $mueble->getId()) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este mueble?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="text-center text-secondary">No hay muebles para mostrar.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </main>
 
     <footer class="footer-custom text-center mt-auto">
         <div class="container">
-            <p class="mb-0">
-                &copy; {{ date('Y') }} Nombre de tu Empresa. Todos los derechos reservados.
-            </p>
+            <p class="mb-0">&copy; {{ date('Y') }} Tienda de Muebles. Todos los derechos reservados.</p>
         </div>
     </footer>
 

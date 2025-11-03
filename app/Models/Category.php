@@ -35,6 +35,19 @@ class Category implements JsonSerializable {
         return $this->description;
     }
 
+    // Setters públicos
+    public function setId(int $id): void {
+        $this->id = $id;
+    }
+
+    public function setName(string $name): void {
+        $this->name = $name;
+    }
+
+    public function setDescription(string $description): void {
+        $this->description = $description;
+    }
+
     // Método estático para obtener datos de prueba
     public static function getMockData(): array {
         return [

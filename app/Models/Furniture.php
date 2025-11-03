@@ -107,6 +107,50 @@ class Furniture implements JsonSerializable {
         return $this->images;
     }
 
+    // Setters públicos
+    public function setId(int $id): void {
+        $this->id = $id;
+    }
+
+    public function setCategoryId(int $categoryId): void {
+        $this->categoryId = $categoryId;
+    }
+
+    public function setName(string $name): void {
+        $this->name = $name;
+    }
+
+    public function setDescription(string $description): void {
+        $this->description = $description;
+    }
+
+    public function setPrice(float $price): void {
+        $this->price = $price;
+    }
+
+    public function setStock(int $stock): void {
+        $this->stock = $stock;
+    }
+
+    public function setMaterials(string $materials): void {
+        $this->materials = $materials;
+    }
+
+    public function setDimensions(string $dimensions): void {
+        $this->dimensions = $dimensions;
+    }
+
+    public function setMainColor(string $mainColor): void {
+        $this->mainColor = $mainColor;
+    }
+
+    public function setIsSalient(bool $isSalient): void {
+        $this->isSalient = $isSalient;
+    }
+
+    public function setImages(array $images): void {
+        $this->images = $images;
+    }
 
     // Método helper para obtener la imagen principal
     public function getMainImage(): string {

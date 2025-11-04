@@ -28,3 +28,4 @@
         @endforelse
     </div>
 @endsection
+<!-- ToDo: Pasar la sesión del usuario -->

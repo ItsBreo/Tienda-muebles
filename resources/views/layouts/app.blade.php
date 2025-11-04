@@ -73,15 +73,15 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('categorias.index', ['sesionId' => $activeSesionId]) }}">Categorías</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('muebles.index', ['sesionId' => $activeSesionId]) }}">Todos los Muebles</a>
+                    </li>
                     {{-- !! CORRECCIÓN: Todos los enlaces de navegación van DENTRO del @if($activeUser) !! --}}
                     @if($activeUser)
                         {{-- Si el usuario está logueado, muestra todos los enlaces --}}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('categorias.index', ['sesionId' => $activeSesionId]) }}">Categorías</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('muebles.index', ['sesionId' => $activeSesionId]) }}">Todos los Muebles</a>
-                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('carrito.show', ['sesionId' => $activeSesionId]) }}">Carrito</a>
                         </li>

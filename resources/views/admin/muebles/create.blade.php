@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Nuevo Mueble - Tienda</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
     <style>
         /* Paleta */
@@ -68,14 +68,20 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">Panel de Control</a>
+
+                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Panel de Control</a>
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
                             <a class="nav-link" href="#">Usuario (Admin)</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Cerrar Sesión</a>
+
+                            <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
+                                @csrf
+                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
+                                <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">Cerrar Sesión</button>
+                            </form>
                         </li>
                     </ul>
                 </div>
@@ -88,9 +94,10 @@
 
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-                    <a class="nav-link" href="#">Dashboard</a>
+
+                    <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Dashboard</a>
                     <a class="nav-link" href="#">Usuarios</a>
-                    <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
+                    <a class="nav-link active" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
                     <a class="nav-link" href="#">Configuración</a>
                 </div>
             </div>
@@ -104,48 +111,71 @@
                         <hr>
                         <form action="{{ route('admin.muebles.store') }}" method="POST">
                             @csrf
+
+
+                            <input type="hidden" name="sesionId" value="{{ $sesionId }}">
+
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="name" class="form-label">Nombre del Mueble</label>
-                                    <input type="text" class="form-control" id="name" name="name" required>
+
+                                    <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="price" class="form-label">Precio</label>
-                                    <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+                                    <input type="number" step="0.01" class="form-control" id="price" name="price" value="{{ old('price') }}" required>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="stock" class="form-label">Stock</label>
-                                    <input type="number" class="form-control" id="stock" name="stock" required>
+                                    <input type="number" class="form-control" id="stock" name="stock" value="{{ old('stock') }}" required>
                                 </div>
                                 <div class="col-12">
                                     <label for="description" class="form-label">Descripción</label>
-                                    <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                                    <textarea class="form-control" id="description" name="description" rows="3" required>{{ old('description') }}</textarea>
                                 </div>
+
+
                                 <div class="col-md-4">
-                                    <label for="category_id" class="form-label">ID de Categoría</label>
-                                    <input type="number" class="form-control" id="category_id" name="category_id" required>
+                                    <label for="category_id" class="form-label">Categoría</label>
+                                    <select class="form-select" id="category_id" name="category_id" required>
+                                        <option value="">Seleccione una categoría...</option>
+                                        @foreach ($categories as $category)
+                                            <option value="{{ $category->getId() }}" @if(old('category_id') == $category->getId()) selected @endif>
+                                                {{ $category->getName() }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
+
                                 <div class="col-md-4">
                                     <label for="materials" class="form-label">Materiales</label>
-                                    <input type="text" class="form-control" id="materials" name="materials">
+                                    <input type="text" class="form-control" id="materials" name="materials" value="{{ old('materials') }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="dimensions" class="form-label">Dimensiones</label>
-                                    <input type="text" class="form-control" id="dimensions" name="dimensions">
+                                    <input type="text" class="form-control" id="dimensions" name="dimensions" value="{{ old('dimensions') }}">
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label for="main_color" class="form-label">Color Principal</label>
-                                    <input type="text" class="form-control" id="main_color" name="main_color" required>
+                                    <input type="text" class="form-control" id="main_color" name="main_color" value="{{ old('main_color') }}" required>
                                 </div>
-                                <div class="col-md-6 d-flex align-items-end">
+
+
+                                <div class="col-md-4">
+                                    <label for="image" class="form-label">Imagen (ej: "default.jpg")</label>
+                                    <input type="text" class="form-control" id="image" name="image" value="{{ old('image', 'default.jpg') }}">
+                                </div>
+
+                                <div class="col-md-4 d-flex align-items-end">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_salient" name="is_salient" value="1">
+                                        <input class="form-check-input" type="checkbox" id="is_salient" name="is_salient" value="1" @if(old('is_salient')) checked @endif>
                                         <label class="form-check-label" for="is_salient">¿Es un producto destacado?</label>
                                     </div>
                                 </div>
                                 <div class="col-12 mt-4">
                                     <button type="submit" class="btn btn-primary">Guardar Mueble</button>
-                                    <a href="{{ route('admin.muebles.index') }}" class="btn btn-secondary">Cancelar</a>
+
+                                    <a href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}" class="btn btn-secondary">Cancelar</a>
                                 </div>
                             </div>
                         </form>
@@ -165,6 +195,7 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>
+

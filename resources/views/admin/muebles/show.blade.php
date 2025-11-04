@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalle del Mueble - Tienda</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
     <style>
         /* Paleta */
@@ -72,14 +72,20 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">Panel de Control</a>
+
+                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Panel de Control</a>
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
                             <a class="nav-link" href="#">Usuario (Admin)</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Cerrar Sesión</a>
+
+                            <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
+                                @csrf
+                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
+                                <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">Cerrar Sesión</button>
+                            </form>
                         </li>
                     </ul>
                 </div>
@@ -92,9 +98,10 @@
 
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-                    <a class="nav-link" href="#">Dashboard</a>
+
+                    <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Dashboard</a>
                     <a class="nav-link" href="#">Usuarios</a>
-                    <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
+                    <a class="nav-link active" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
                     <a class="nav-link" href="#">Configuración</a>
                 </div>
             </div>
@@ -107,8 +114,9 @@
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="card-title text-primary mb-0">{{ $mueble->getName() }}</h5>
                             <div>
-                                <a href="{{ route('admin.muebles.edit', $mueble->getId()) }}" class="btn btn-secondary">Editar</a>
-                                <a href="{{ route('admin.muebles.index') }}" class="btn btn-outline-secondary">Volver al listado</a>
+
+                                <a href="{{ route('admin.muebles.edit', ['id' => $mueble->getId(), 'sesionId' => $sesionId]) }}" class="btn btn-secondary">Editar</a>
+                                <a href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}" class="btn btn-outline-secondary">Volver al listado</a>
                             </div>
                         </div>
                         <hr>
@@ -143,6 +151,6 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>

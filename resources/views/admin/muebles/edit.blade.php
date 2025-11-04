@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Mueble - Tienda</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
     <style>
         /* Paleta */
@@ -68,14 +68,21 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">Panel de Control</a>
+
+                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Panel de Control</a>
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
+
                             <a class="nav-link" href="#">Usuario (Admin)</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Cerrar Sesión</a>
+                            <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
+                                @csrf
+                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
+
+                                <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">Cerrar Sesión</button>
+                            </form>
                         </li>
                     </ul>
                 </div>
@@ -88,9 +95,10 @@
 
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-                    <a class="nav-link" href="#">Dashboard</a>
+
+                    <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Dashboard</a>
                     <a class="nav-link" href="#">Usuarios</a>
-                    <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
+                    <a class="nav-link active" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
                     <a class="nav-link" href="#">Configuración</a>
                 </div>
             </div>
@@ -105,63 +113,86 @@
                         <form action="{{ route('admin.muebles.update', $mueble->getId()) }}" method="POST">
                             @csrf
                             @method('PUT')
+
+                            {{-- Añadido sesionId para que el update no falle el checkAdmin --}}
+                            <input type="hidden" name="sesionId" value="{{ $sesionId }}">
+
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="name" class="form-label">Nombre del Mueble</label>
-                                    <input type="text" class="form-control" id="name" name="name" value="{{ $mueble->getName() }}" required>
+                                    <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $mueble->getName()) }}" required>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="price" class="form-label">Precio</label>
-                                    <input type="number" step="0.01" class="form-control" id="price" name="price" value="{{ $mueble->getPrice() }}" required>
+                                    <input type="number" step="0.01" class="form-control" id="price" name="price" value="{{ old('price', $mueble->getPrice()) }}" required>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="stock" class="form-label">Stock</label>
-                                    <input type="number" class="form-control" id="stock" name="stock" value="{{ $mueble->getStock() }}" required>
+                                    <input type="number" class="form-control" id="stock" name="stock" value="{{ old('stock', $mueble->getStock()) }}" required>
                                 </div>
                                 <div class="col-12">
                                     <label for="description" class="form-label">Descripción</label>
-                                    <textarea class="form-control" id="description" name="description" rows="3" required>{{ $mueble->getDescription() }}</textarea>
+                                    <textarea class="form-control" id="description" name="description" rows="3" required>{{ old('description', $mueble->getDescription()) }}</textarea>
                                 </div>
+
+
                                 <div class="col-md-4">
-                                    <label for="category_id" class="form-label">ID de Categoría</label>
-                                    <input type="number" class="form-control" id="category_id" name="category_id" value="{{ $mueble->getCategoryId() }}" required>
+                                    <label for="category_id" class="form-label">Categoría</label>
+                                    <select class="form-select" id="category_id" name="category_id" required>
+                                        <option value="">Seleccione una categoría...</option>
+                                        @foreach ($categories as $category)
+                                            <option value="{{ $category->getId() }}"
+                                                {{-- Comparamos old() con el ID actual del mueble --}}
+                                                @if(old('category_id', $mueble->getCategoryId()) == $category->getId()) selected @endif>
+                                                {{ $category->getName() }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
+
                                 <div class="col-md-4">
                                     <label for="materials" class="form-label">Materiales</label>
-                                    <input type="text" class="form-control" id="materials" name="materials" value="{{ $mueble->getMaterials() }}">
+                                    <input type="text" class="form-control" id="materials" name="materials" value="{{ old('materials', $mueble->getMaterials()) }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="dimensions" class="form-label">Dimensiones</label>
-                                    <input type="text" class="form-control" id="dimensions" name="dimensions" value="{{ $mueble->getDimensions() }}">
+                                    <input type="text" class="form-control" id="dimensions" name="dimensions" value="{{ old('dimensions', $mueble->getDimensions()) }}">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="main_color" class="form-label">Color Principal</label>
-                                    <input type="text" class="form-control" id="main_color" name="main_color" value="{{ $mueble->getMainColor() }}" required>
+                                    <input type="text" class="form-control" id="main_color" name="main_color" value="{{ old('main_color', $mueble->getMainColor()) }}" required>
                                 </div>
                                 <div class="col-md-6 d-flex align-items-end">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_salient" name="is_salient" value="1" @if($mueble->isSalient()) checked @endif>
+                                        {{-- El value="1" es importante para que se envíe algo --}}
+                                        <input class="form-check-input" type="checkbox" id="is_salient" name="is_salient" value="1"
+                                            {{-- Comprobamos old() o el estado actual del mueble --}}
+                                            @if(old('is_salient', $mueble->isSalient())) checked @endif>
                                         <label class="form-check-label" for="is_salient">¿Es un producto destacado?</label>
                                     </div>
                                 </div>
                                 <div class="col-12 mt-4">
                                     <button type="submit" class="btn btn-primary">Actualizar Mueble</button>
-                                    <a href="{{ route('admin.muebles.index') }}" class="btn btn-secondary">Cancelar</a>
+
+                                    <a href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}" class="btn btn-secondary">Cancelar</a>
                                 </div>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                {{-- Sección para la Galería de Imágenes --}}
+
+                {{-- TODO: Corregir la subida de imagenes --}}
                 <div class="card shadow-sm border-0 mt-4">
                     <div class="card-body">
                         <h5 class="card-title text-primary">Galería de Imágenes</h5>
                         <hr>
 
-                        {{-- Formulario para subir nuevas imágenes --}}
                         <form action="{{ route('productos.galeria.store', ['mueble' => $mueble->getId()]) }}" method="POST" enctype="multipart/form-data" class="mb-4">
                             @csrf
+
+                            <input type="hidden" name="sesionId" value="{{ $sesionId }}">
+
                             <div class="mb-3">
                                 <label for="images" class="form-label">Añadir nuevas imágenes</label>
                                 <input type="file" class="form-control" id="images" name="images[]" multiple required>
@@ -169,7 +200,7 @@
                             <button type="submit" class="btn btn-primary">Subir Imágenes</button>
                         </form>
 
-                        {{-- Mostrar imágenes existentes --}}
+                        {{-- TODO: Mostrar imágenes existentes funciona correactmente aqui pero en la vista no --}}
                         @if (count($mueble->getImages()) > 0 && $mueble->getImages() !== ['default.jpg'])
                             <div class="row g-3">
                                 @foreach ($mueble->getImages() as $image)
@@ -178,11 +209,14 @@
                                             <div class="card">
                                                 <img src="{{ asset('images/' . $image) }}" class="card-img-top" alt="Imagen del mueble" style="height: 150px; object-fit: cover;">
                                                 <div class="card-body text-center">
-                                                    {{-- Formulario para eliminar imagen --}}
-                                                    <form action="{{ route('productos.galeria.destroy', ['mueble' => $mueble->getId(), 'image' => $image]) }}" method="POST" class="d-inline">
+
+
+                                                    <form action="{{ route('productos.galeria.destroy', ['mueble' => $mueble->getId(), 'image' => basename($image)]) }}" method="POST" class="d-inline">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar imagen">
+
+                                                        <input type="hidden" name="sesionId" value="{{ $sesionId }}">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar imagen" onclick="return confirm('¿Seguro que quieres eliminar esta imagen?');">
                                                             Eliminar
                                                         </button>
                                                     </form>
@@ -210,6 +244,6 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>

@@ -45,16 +45,13 @@
 @endphp
 <!DOCTYPE html>
 <html lang="es" data-theme="{{ $preferencias['tema'] ?? 'claro' }}">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tienda Muebles - @yield('title', 'Inicio')</title>
 
     <!-- Google Fonts: Inter + Poppins -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@300;500;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
 
     <!-- CSS: Bootstrap PRIMERO -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -62,32 +59,21 @@
     <link rel="stylesheet" href="{{ asset('css/paletas.css') }}">
 
 </head>
-<<<<<<< HEAD
 {{-- !! CORRECCIÓN: Añadido data-bs-theme al body !! --}}
 <body data-bs-theme="{{ $bsTheme }}">
-=======
-
-<body>
->>>>>>> eb191b335f0d7bade44a654ecc5ae5c9e7308f21
 
     {{-- !! CORRECCIÓN: Añadidas $navbarClass y data-bs-theme al nav !! --}}
     <nav class="navbar navbar-expand-lg shadow-sm {{ $navbarClass }}" data-bs-theme="{{ $bsTheme }}">
         <div class="container">
-<<<<<<< HEAD
 
             {{-- Este enlace es seguro, si $activeSesionId es null, simplemente no se añade --}}
             <a class="navbar-brand" href="{{ route('principal', ['sesionId' => $activeSesionId]) }}">Tienda Muebles JJDAY</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-=======
-            <a class="navbar-brand" href="{{ route('principal', ['sesionId' => $activeSesionId]) }}">Tienda Muebles
-                JJDAY</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
->>>>>>> eb191b335f0d7bade44a654ecc5ae5c9e7308f21
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    {{-- !! CORRECCIÓN: Todos los enlaces de navegación van DENTRO del @if($activeUser) !! --}}
                     @if($activeUser)
                         {{-- Si el usuario está logueado, muestra todos los enlaces --}}
                         <li class="nav-item">
@@ -111,22 +97,10 @@
                         @endif
 
                         <li class="nav-item">
-                            <a class="nav-link"
-                                href="{{ route('preferencias.show', ['sesionId' => $activeSesionId]) }}">Preferencias</a>
-                        </li>
-                    @else
-                        <li class="nav-item">
-                            <a class="nav-link"
-                                href="{{ route('login.show', ['sesionId' => $activeSesionId]) }}">Preferencias</a>
-                        </li>
-                    @endif
-                    @if ($activeUser)
-                        <li class="nav-item">
                             <form action="{{ route('login.logout') }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="sesionId" value="{{ $activeSesionId }}">
-                                <button type="submit" class="btn btn-link nav-link">Logout
-                                    ({{ $activeUser->email }})</button>
+                                <button type="submit" class="btn btn-link nav-link">Logout ({{ $activeUser->email }})</button>
                             </form>
                         </li>
                     @else
@@ -145,13 +119,12 @@
     </main>
 
     <footer class="text-center py-4 mt-auto shadow-inner" style="background-color: var(--bs-tertiary-bg);">
-        <p class="mb-0 text-muted">&copy; {{ date('Y') }} Tienda de Muebles JJDAY. Todos los derechos reservados.
-        </p>
+        <p class="mb-0 text-muted">&copy; {{ date('Y') }} Tienda de Muebles JJDAY. Todos los derechos reservados.</p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     @stack('scripts')
 </body>
-
 </html>
+

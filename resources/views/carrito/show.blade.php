@@ -5,7 +5,7 @@
 @section('content')
     <div class="container py-4">
 
-        <h1 class="mb-4 display-5">🛒 Resumen de tu Carrito</h1>
+        <h1 class="mb-4 display-5">🛒 Resumen del Carrito</h1>
 
         {{-- Mostrar mensajes de sesión (ej: "Mueble agregado al carrito") --}}
         @if (session('success'))
@@ -25,7 +25,7 @@
         {{-- 🛑 Usamos $cart, la variable que pasaste desde el CarritoController --}}
         @if (empty($cart))
             <div class="alert alert-info" role="alert">
-                <p class="lead mb-0">No tienes **muebles** en el carrito. ¡Añade algunos!</p>
+                <p class="lead mb-0">No tienes muebles en el carrito.</p>
             </div>
             <a href="{{ route('muebles.index', ['sesionId' => $sesionId]) }}" class="btn btn-primary mt-3">Ver Catálogo</a>
         @else

@@ -80,7 +80,8 @@
             <div class="col-md-8 col-lg-5">
                 <div class="card">
                     <div class="card-header text-center">
-                        Iniciar Sesión
+                        Iniciar Sesión <img src="{{ asset('images/JJDAY.png') }}" alt="Logo Tienda Muebles JJDAY" class="navbar-logo"
+                    style="width: 100px;">
                     </div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('login.store') }}">

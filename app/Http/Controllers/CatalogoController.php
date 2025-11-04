@@ -104,7 +104,7 @@ class CatalogoController extends Controller
         list($activeSesionId, $preferencias) = $this->cargarSesionYPreferencias($request);
 
         // Obtenemos preferencia de paginación desde NUESTRA cookie
-        $perPage = (int) ($preferencias['tamaño'] ?? 6);
+        $perPage = max((int) ($preferencias['tamaño'] ?? 6), 6); // Mínimo 6
         $currentPage = LengthAwarePaginator::resolveCurrentPage('page');
 
         // Obtenemos todos los muebles

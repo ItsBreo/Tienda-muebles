@@ -1,14 +1,13 @@
 @php
-
     if (!isset($activeSesionId)) {
         $activeSesionId = request()->query('sesionId');
     }
-
 
     // Debemos definir $activeUser SIEMPRE,
     // independientemente de si las otras variables venían del controlador.
     if (!isset($activeUser)) {
         if ($activeSesionId) {
+            // Usamos el método estático de tu modelo User
             $activeUser = \App\Models\User::activeUserSesion($activeSesionId);
         } else {
             $activeUser = null;
@@ -25,6 +24,7 @@
 
         // Usamos el $activeUser que acabamos de definir
         if ($activeUser) {
+            // !! CORRECCIÓN: El objeto User de la sesión tiene 'id' (stdClass)
             $cookieName = 'preferencias_' . $activeUser->id;
             $cookieData = json_decode(request()->cookie($cookieName), true);
 
@@ -38,6 +38,10 @@
             $preferencias = $defaultPrefs;
         }
     }
+
+    // !! CORRECCIÓN: Añadida la lógica para el tema del navbar (soluciona el texto oscuro)
+    $bsTheme = ($preferencias['tema'] === 'oscuro') ? 'dark' : 'light';
+    $navbarClass = ($preferencias['tema'] === 'oscuro') ? 'navbar-dark' : 'navbar-light';
 @endphp
 <!DOCTYPE html>
 <html lang="es" data-theme="{{ $preferencias['tema'] ?? 'claro' }}">
@@ -55,30 +59,43 @@
     <link rel="stylesheet" href="{{ asset('css/paletas.css') }}">
 
 </head>
-<body>
+{{-- !! CORRECCIÓN: Añadido data-bs-theme al body !! --}}
+<body data-bs-theme="{{ $bsTheme }}">
 
-    <nav class="navbar navbar-expand-lg shadow-sm" data-bs-theme="{{ $preferencias['tema'] ?? 'claro' }}">
+    {{-- !! CORRECCIÓN: Añadidas $navbarClass y data-bs-theme al nav !! --}}
+    <nav class="navbar navbar-expand-lg shadow-sm {{ $navbarClass }}" data-bs-theme="{{ $bsTheme }}">
         <div class="container">
+
+            {{-- Este enlace es seguro, si $activeSesionId es null, simplemente no se añade --}}
             <a class="navbar-brand" href="{{ route('principal', ['sesionId' => $activeSesionId]) }}">Tienda Muebles JJDAY</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('categorias.index', ['sesionId' => $activeSesionId]) }}">Categorías</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('muebles.index', ['sesionId' => $activeSesionId]) }}">Todos los Muebles</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('carrito.show', ['sesionId' => $activeSesionId]) }}">Carrito</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('preferencias.show', ['sesionId' => $activeSesionId]) }}">Preferencias</a>
-                    </li>
-
+                    {{-- !! CORRECCIÓN: Todos los enlaces de navegación van DENTRO del @if($activeUser) !! --}}
                     @if($activeUser)
+                        {{-- Si el usuario está logueado, muestra todos los enlaces --}}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('categorias.index', ['sesionId' => $activeSesionId]) }}">Categorías</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('muebles.index', ['sesionId' => $activeSesionId]) }}">Todos los Muebles</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('carrito.show', ['sesionId' => $activeSesionId]) }}">Carrito</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('preferencias.show', ['sesionId' => $activeSesionId]) }}">Preferencias</a>
+                        </li>
+
+                        {{-- También comprobamos el rol de admin aquí --}}
+                        @if($activeUser->rol === 'admin')
+                             <li class="nav-item">
+                                <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $activeSesionId]) }}">Administración</a>
+                            </li>
+                        @endif
+
                         <li class="nav-item">
                             <form action="{{ route('login.logout') }}" method="POST">
                                 @csrf
@@ -87,6 +104,7 @@
                             </form>
                         </li>
                     @else
+                        {{-- Si no está logueado, solo muestra "Login" --}}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('login.show') }}">Login</a>
                         </li>

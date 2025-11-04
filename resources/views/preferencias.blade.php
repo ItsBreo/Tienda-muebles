@@ -27,7 +27,6 @@
                         <select class="form-select form-select-lg" id="tema" name="tema">
                             <option value="claro">Claro (Por defecto)</option>
                             <option value="oscuro">Oscuro</option>
-                            <option value="sistema">Automático (Sistema)</option>
                         </select>
                     </div>
 

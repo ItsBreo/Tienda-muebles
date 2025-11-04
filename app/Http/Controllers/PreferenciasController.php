@@ -38,11 +38,11 @@ class PreferenciasController extends Controller
         $sesionId = $data['sesionId'];
         $cookieName = null;
 
-        // 1. Buscamos al usuario en el array de la sesión
+        // Buscamos al usuario en el array de la sesión
         $allUsers = Session::get('usuarios', []);
         if (isset($allUsers[$sesionId])) {
             $activeUser = json_decode($allUsers[$sesionId]);
-            // 2. Obtenemos el nombre de la cookie que le corresponde
+            // Obtenemos el nombre de la cookie que le corresponde
             $cookieName = $activeUser->cookie_name ?? null;
         }
 
@@ -59,17 +59,17 @@ class PreferenciasController extends Controller
         }
 
 
-        // 3. Leemos la cookie actual para preservar otros datos (email, sesionId original, etc.)
+        // Leemos la cookie actual para preservar otros datos (email, sesionId original, etc.)
         $cookieData = json_decode($request->cookie($cookieName), true);
 
-        // 4. Actualizamos solo los valores de preferencias
+        // Actualizamos solo los valores de preferencias
         $cookieData['tema'] = $data['tema'];
         $cookieData['moneda'] = $data['moneda'];
         $cookieData['tamaño'] = $data['tamaño']; // Guardamos como número
 
         $cookieDuration = config('session.lifetime', 120);
 
-        // 5. Creamos la nueva cookie actualizada
+        // Creamos la nueva cookie actualizada
         $cookie = Cookie::make(
             name: $cookieName,
             value: json_encode($cookieData),
@@ -84,7 +84,7 @@ class PreferenciasController extends Controller
         $user = User::activeUserSesion($sesionId);
 
 
-        // 6. Redirigimos a principal (pasando el sesionId) y adjuntamos la cookie
+        // Redirigimos a principal (pasando el sesionId) y adjuntamos la cookie
         return redirect()
             ->route('principal', ['sesionId' => $sesionId])
             ->withCookie($cookie);

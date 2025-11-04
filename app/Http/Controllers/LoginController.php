@@ -50,6 +50,11 @@ class LoginController extends Controller
         $users[$sesionId] = json_encode($userDataSesion);
         Session::put('usuarios', $users);
 
+        if ($user->getRol() === 'admin') {
+            return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId]);
+        }
+
+
         // Comprobamos si la cookie ya existia, si no, la creamos
         if ($request->cookie($id_COOKIE) == null) {
             $cookieData = [

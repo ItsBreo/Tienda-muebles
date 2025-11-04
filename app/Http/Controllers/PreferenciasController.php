@@ -81,6 +81,12 @@ class PreferenciasController extends Controller
             sameSite: config('session.same_site', 'lax')
         );
 
+        $user = User::activeUserSesion($sesionId);
+
+        if ($user->getRol() === 'admin') {
+            return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId]);
+        }
+
         // 6. Redirigimos a principal (pasando el sesionId) y adjuntamos la cookie
         return redirect()
             ->route('principal', ['sesionId' => $sesionId])

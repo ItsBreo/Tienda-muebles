@@ -162,18 +162,18 @@ class Furniture implements JsonSerializable {
      */
     public static function getMockData(): array {
         return [
-            new Furniture(1, 1, "Mesa de Centro 'Nórdica'", "Mesa de roble con diseño minimalista.", 149.99, 5, "Madera de roble oscuro", "120cm x 60cm x 45cm", "Roble Oscuro", true, ["salon/mesa_nordica_1.png", "salon/mesa_nordica_2.png", "salon/mesa_nordica_3.png"]),
-            new Furniture(2, 1, "Sofá 'Confort'", "Sofá de 3 plazas, tela gris.", 399.99, 3, "Tela y madera", "200cm x 90cm x 85cm", "Gris", false, ["salon/sofa_confort_1.png", "salon/sofa_confort_2.png", "salon/sofa_confort_3.png"]),
-            new Furniture(3, 1, "Estantería 'Lineal'", "Estantería modular metálica.", 89.50, 10, "Metal", "80cm x 30cm x 180cm", "Negro", false, ["salon/estanteria_lineal_1.png", "salon/estanteria_lineal_2.png", "salon/estanteria_lineal_3.png"]),
-            new Furniture(4, 2, "Cama 'Queen'", "Cama con cabecero tapizado.", 299.00, 2, "Madera y tela", "160cm x 200cm", "Beige", true, ["dormitorio/cama_queen_1.png", "dormitorio/cama_queen_2.png", "dormitorio/cama_queen_3.png"]),
-            new Furniture(5, 3, "Silla de Oficina 'Ergo'", "Silla ergonómica con ruedas.", 120.00, 15, "Plástico y malla", "60cm x 60cm x 110cm", "Negro", true, ["oficina/silla_ergo_1.png", "oficina/silla_ergo_2.png", "oficina/silla_ergo_3.png"]),
-            new Furniture(6, 3, "Escritorio 'Minimal'", "Escritorio de madera clara y metal.", 110.00, 6, "Madera de pino y metal", "140cm x 70cm x 75cm", "Pino Claro", false, ["oficina/escritorio_minimal_1.png", "oficina/escritorio_minimal_2.png", "oficina/escritorio_minimal_3.png"]),
-            new Furniture(7, 4, "Armario de Cocina 'Chef'", "Módulo superior con 2 puertas.", 75.50, 8, "Aglomerado", "80cm x 40cm x 60cm", "Blanco", true, ["cocina/armario_chef_1.png", "cocina/armario_chef_2.png", "cocina/armario_chef_3.png"]),
-            new Furniture(8, 4, "Isla 'Gourmet'", "Isla de cocina con almacenaje.", 350.00, 3, "Granito y madera", "120cm x 80cm x 90cm", "Blanco", true, ["cocina/isla_gourmet_1.png", "cocina/isla_gourmet_2.png", "cocina/isla_gourmet_3.png"]),
-            new Furniture(9, 2, "Mesita de Noche 'Clásica'", "Mesita con 2 cajones.", 60.00, 10, "Madera de pino", "40cm x 30cm x 55cm", "Pino Claro", false, ["dormitorio/mesita_clasica_1.png", "dormitorio/mesita_clasica_2.png", "dormitorio/mesita_clasica_3.png"]),
-            new Furniture(10, 1, "Butaca 'Relax'", "Butaca de lectura color mostaza.", 180.00, 4, "Tela", "70cm x 80cm x 95cm", "Mostaza", false, ["salon/butaca_relax_1.png", "salon/butaca_relax_2.png", "salon/butaca_relax_3.png"]),
-            new Furniture(11, 2, "Cama 'Nido'", "Cama individual con cajones.", 210.00, 7, "Madera de pino", "90cm x 200cm", "Blanco", false, ["dormitorio/cama_nido_1.png", "dormitorio/cama_nido_2.png", "dormitorio/cama_nido_3.png"]),
-            new Furniture(12, 4, "Mesa de Cocina 'Extensible'", "Mesa para 4-6 personas.", 175.00, 3, "Madera y metal", "140cm (ext. 180cm) x 80cm", "Pino Claro", true, ["cocina/mesa_cocina_1.png", "cocina/mesa_cocina_2.png", "cocina/mesa_cocina_3.png"]),
+            new Furniture(1, 1, "Mesa de Centro 'Nórdica'", "Mesa de roble con diseño minimalista.", 149.99, 5, "Madera de roble oscuro", "120cm x 60cm x 45cm", "Roble Oscuro", true, ["images/mesa_nordica_1.png", "images/mesa_nordica_2.png", "images/mesa_nordica_3.png"]),
+            new Furniture(2, 1, "Sofá 'Confort'", "Sofá de 3 plazas, tela gris.", 399.99, 3, "Tela y madera", "200cm x 90cm x 85cm", "Gris", false, ["images/sofa_confort_1.png", "images/sofa_confort_2.png", "images/sofa_confort_3.png"]),
+            new Furniture(3, 1, "Estantería 'Lineal'", "Estantería modular metálica.", 89.50, 10, "Metal", "80cm x 30cm x 180cm", "Negro", false, ["images/estanteria_lineal_1.png", "images/estanteria_lineal_2.png", "images/estanteria_lineal_3.png"]),
+            new Furniture(4, 2, "Cama 'Queen'", "Cama con cabecero tapizado.", 299.00, 2, "Madera y tela", "160cm x 200cm", "Beige", true, ["images/cama_queen_1.png", "images/cama_queen_2.png", "images/cama_queen_3.png"]),
+            new Furniture(5, 3, "Silla de Oficina 'Ergo'", "Silla ergonómica con ruedas.", 120.00, 15, "Plástico y malla", "60cm x 60cm x 110cm", "Negro", true, ["images/silla_ergo_1.png", "images/silla_ergo_2.png", "images/silla_ergo_3.png"]),
+            new Furniture(6, 3, "Escritorio 'Minimal'", "Escritorio de madera clara y metal.", 110.00, 6, "Madera de pino y metal", "140cm x 70cm x 75cm", "Pino Claro", false, ["images/escritorio_minimal_1.png", "images/escritorio_minimal_2.png", "images/escritorio_minimal_3.png"]),
+            new Furniture(7, 4, "Armario de Cocina 'Chef'", "Módulo superior con 2 puertas.", 75.50, 8, "Aglomerado", "80cm x 40cm x 60cm", "Blanco", true, ["images/armario_chef_1.png", "images/armario_chef_2.png", "images/armario_chef_3.png"]),
+            new Furniture(8, 4, "Isla 'Gourmet'", "Isla de cocina con almacenaje.", 350.00, 3, "Granito y madera", "120cm x 80cm x 90cm", "Blanco", true, ["images/isla_gourmet_1.png", "images/isla_gourmet_2.png", "images/isla_gourmet_3.png"]),
+            new Furniture(9, 2, "Mesita de Noche 'Clásica'", "Mesita con 2 cajones.", 60.00, 10, "Madera de pino", "40cm x 30cm x 55cm", "Pino Claro", false, ["images/mesita_clasica_1.png", "images/mesita_clasica_2.png", "images/mesita_clasica_3.png"]),
+            new Furniture(10, 1, "Butaca 'Relax'", "Butaca de lectura color mostaza.", 180.00, 4, "Tela", "70cm x 80cm x 95cm", "Mostaza", false, ["images/butaca_relax_1.png", "images/butaca_relax_2.png", "images/butaca_relax_3.png"]),
+            new Furniture(11, 2, "Cama 'Nido'", "Cama individual con cajones.", 210.00, 7, "Madera de pino", "90cm x 200cm", "Blanco", false, ["images/cama_nido_1.png", "images/cama_nido_2.png", "images/cama_nido_3.png"]),
+            new Furniture(12, 4, "Mesa de Cocina 'Extensible'", "Mesa para 4-6 personas.", 175.00, 3, "Madera y metal", "140cm (ext. 180cm) x 80cm", "Pino Claro", true, ["images/mesa_cocina_1.png", "images/mesa_cocina_2.png", "images/mesa_cocina_3.png"]),
         ];
     }
 

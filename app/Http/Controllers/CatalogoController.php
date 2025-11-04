@@ -77,6 +77,26 @@ class CatalogoController extends Controller
         ]);
     }
 
+    private $sessionKey = 'muebles_crud_session';
+
+    private function getMuebles()
+    {
+        // Intenta obtener los muebles de la sesión
+        $muebles = Session::get($this->sessionKey);
+
+        // Si la sesión tiene una colección de muebles, la devuelve
+        if ($muebles instanceof \Illuminate\Support\Collection) {
+            return $muebles;
+        }
+
+        // Si no, carga los datos mock
+        $muebles = collect(Furniture::getMockData());
+
+        // Guarda los muebles en la sesión para futuros usos
+        Session::put($this->sessionKey, $muebles);
+
+        return $muebles;
+    }
     // Listado de muebles con filtros, orden y paginación
     public function index(Request $request)
     {
@@ -88,7 +108,7 @@ class CatalogoController extends Controller
         $currentPage = LengthAwarePaginator::resolveCurrentPage('page');
 
         // Obtenemos todos los muebles
-        $items = collect(Furniture::getMockData());
+        $items = $this->getMuebles();
 
         // Filtrar por categoría
         if ($request->filled('category')) {

@@ -14,7 +14,7 @@
     <div class="row g-5">
 
         <div class="col-lg-6">
-            <img src="{{ asset('images/' . $mueble->getMainImage()) }}"
+            <img src="{{ asset($mueble->getMainImage()) }}"
                  class="img-fluid rounded shadow-sm w-100 mb-3"
                  alt="{{ $mueble->getName() }}"
                  id="main-image"
@@ -22,7 +22,7 @@
 
             <div class="d-flex flex-wrap">
                 @foreach($mueble->getImages() as $image)
-                    <img src="{{ asset('images/' . $image) }}"
+                    <img src="{{ asset('/' . $image) }}"
                          class="img-thumbnail me-2 mb-2"
                          style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;"
                          alt="Miniatura"

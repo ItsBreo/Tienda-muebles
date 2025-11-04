@@ -132,6 +132,29 @@ class AdministracionController extends Controller
         $newMuebleData = $request->all();
         $newMuebleData['id'] = $maxId + 1;
 
+        $imagePath = 'default.jpg';
+        if ($request->hasFile('image')) {
+            $request->validate([
+                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            ]);
+            $imageName = time().'.'.$request->image->extension();
+            $request->image->move(public_path('images'), $imageName);
+            $imagePath = 'images/'.$imageName;
+        }
+
+        /*
+if ($request->hasFile('image')) {
+            $request->validate([
+                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            ]);
+            $imageName = time().'.'.$request->image->extension();
+            $request->image->move(public_path('images'), $imageName);
+            $imagePath = 'images/'.$imageName;
+            $mueble->setImages([$imagePath]);
+        }
+
+        */
+
         // Creamos una instancia de Furniture para mantener la consistencia
         $newMueble = new Furniture(
             $newMuebleData['id'],
@@ -144,8 +167,7 @@ class AdministracionController extends Controller
             $newMuebleData['dimensions'] ?? '',
             $newMuebleData['main_color'],
             $request->has('is_salient'),
-
-            [$request->input('image', 'default.jpg')]
+            [$imagePath]
         );
 
 
@@ -237,14 +259,21 @@ class AdministracionController extends Controller
         $mueble->setMaterials($request->input('materials', $mueble->getMaterials()));
         $mueble->setDimensions($request->input('dimensions', $mueble->getDimensions()));
 
-        if ($request->filled('image')) {
-            $mueble->setImages([$request->input('image')]);
+
+        if ($request->hasFile('image')) {
+            $request->validate([
+                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            ]);
+            $imageName = time().'.'.$request->image->extension();
+            $request->image->move(public_path('images'), $imageName);
+            $imagePath = 'images/'.$imageName;
+            $mueble->setImages([$imagePath]);
         }
+
 
 
         $muebles[$muebleIndex] = $mueble;
         $this->saveMuebles($muebles);
-
 
         $sesionId = $request->input('sesionId');
         return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId])->with('success', 'Mueble actualizado correctamente.');

@@ -110,9 +110,9 @@
                     <div class="card-body">
                         <h5 class="card-title text-primary">Detalles del Mueble</h5>
                         <hr>
-                        <form action="{{ route('admin.muebles.update', $mueble->getId()) }}" method="POST">
+                        <form action="{{ route('admin.muebles.update', $mueble->getId()) }}" method="POST" enctype="multipart/form-data">
                             @csrf
-                            @method('PUT')
+                            @method('POST')
 
                             {{-- Añadido sesionId para que el update no falle el checkAdmin --}}
                             <input type="hidden" name="sesionId" value="{{ $sesionId }}">
@@ -162,6 +162,10 @@
                                     <label for="main_color" class="form-label">Color Principal</label>
                                     <input type="text" class="form-control" id="main_color" name="main_color" value="{{ old('main_color', $mueble->getMainColor()) }}" required>
                                 </div>
+                                <div class="col-md-6">
+                                    <label for="image" class="form-label">Imagen Principal</label>
+                                    <input type="file" class="form-control" id="image" name="image">
+                                </div>
                                 <div class="col-md-6 d-flex align-items-end">
                                     <div class="form-check">
                                         {{-- El value="1" es importante para que se envíe algo --}}
@@ -207,7 +211,7 @@
                                     @if ($image !== 'default.jpg')
                                         <div class="col-md-3">
                                             <div class="card">
-                                                <img src="{{ asset('images/' . $image) }}" class="card-img-top" alt="Imagen del mueble" style="height: 150px; object-fit: cover;">
+                                                <img src="{{ asset($image) }}" class="card-img-top" alt="Imagen del mueble" style="height: 150px; object-fit: cover;">
                                                 <div class="card-body text-center">
 
 

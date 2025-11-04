@@ -51,7 +51,7 @@ Route::get('/admin/muebles/crear', [AdministracionController::class, 'create'])-
 Route::post('/admin/muebles', [AdministracionController::class, 'store'])->name('admin.muebles.store');
 Route::get('/admin/muebles/{id}', [AdministracionController::class, 'show'])->name('admin.muebles.show');
 Route::get('/admin/muebles/{id}/editar', [AdministracionController::class, 'edit'])->name('admin.muebles.edit');
-Route::put('/admin/muebles/{id}', [AdministracionController::class, 'update'])->name('admin.muebles.update');
+Route::post('/admin/muebles/{id}', [AdministracionController::class, 'update'])->name('admin.muebles.update');
 Route::delete('/admin/muebles/{id}', [AdministracionController::class, 'destroy'])->name('admin.muebles.destroy');
 
 // Categorías (CRUD)

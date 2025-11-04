@@ -109,7 +109,7 @@
                     <div class="card-body">
                         <h5 class="card-title text-primary">Detalles del Mueble</h5>
                         <hr>
-                        <form action="{{ route('admin.muebles.store') }}" method="POST">
+                        <form action="{{ route('admin.muebles.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
 
 
@@ -162,8 +162,8 @@
 
 
                                 <div class="col-md-4">
-                                    <label for="image" class="form-label">Imagen (ej: "default.jpg")</label>
-                                    <input type="text" class="form-control" id="image" name="image" value="{{ old('image', 'default.jpg') }}">
+                                    <label for="image" class="form-label">Imagen</label>
+                                    <input type="file" class="form-control" id="image" name="image">
                                 </div>
 
                                 <div class="col-md-4 d-flex align-items-end">

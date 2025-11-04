@@ -50,10 +50,9 @@ class LoginController extends Controller
         $users[$sesionId] = json_encode($userDataSesion);
         Session::put('usuarios', $users);
 
-        if ($user->getRol() === 'admin') {
+        if ($user->getRol() == 'admin') {
             return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId]);
         }
-
 
         // Comprobamos si la cookie ya existia, si no, la creamos
         if ($request->cookie($id_COOKIE) == null) {
@@ -86,7 +85,11 @@ class LoginController extends Controller
         }
 
         // Si la cookie ya existía, vamos a principal (pasando el sesionId)
+        if ($user->getRol() == 'admin') {
+            return redirect()->route('admin', ['sesionId' => $sesionId]);
+        } else {
         return redirect()->route('principal', ['sesionId' => $sesionId]);
+        }
     }
 
     public function logout(Request $request)

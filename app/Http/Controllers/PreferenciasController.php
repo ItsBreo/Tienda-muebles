@@ -83,9 +83,6 @@ class PreferenciasController extends Controller
 
         $user = User::activeUserSesion($sesionId);
 
-        if ($user->getRol() === 'admin') {
-            return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId]);
-        }
 
         // 6. Redirigimos a principal (pasando el sesionId) y adjuntamos la cookie
         return redirect()

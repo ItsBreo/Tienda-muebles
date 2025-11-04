@@ -15,7 +15,7 @@
                     <div class="card-body text-center d-flex flex-column">
                         <h5 class="card-title">{{ $category->getName() }}</h5>
                         <p class="card-text small">{{ $category->getDescription() }}</p>
-                        <a href="{{ route('categorias.show', $category->getId()) }}" class="btn btn-primary mt-auto">
+                        <a href="{{ route('categorias.show', [$category->getId(), 'sesionId' => $activeSesionId]) }}" class="btn btn-primary mt-auto">
                             Ver Muebles
                         </a>
                     </div>

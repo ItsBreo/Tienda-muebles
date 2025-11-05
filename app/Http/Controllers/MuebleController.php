@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Furniture;
 use App\Models\User;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Cookie; // <-- Añadido
 
 class MuebleController extends Controller
 {
@@ -73,6 +74,9 @@ class MuebleController extends Controller
         if (!$mueble) {
             abort(404, 'Mueble no encontrado');
         }
+
+        // Crear cookie para el mueble mostrado (mueble_{id}) por 30 días
+        Cookie::queue("mueble_{$mueble->getId()}", json_encode($mueble), 60 * 24 * 30);
 
         return view('muebles.show', array_merge($sesionData, [
             'mueble' => $mueble,

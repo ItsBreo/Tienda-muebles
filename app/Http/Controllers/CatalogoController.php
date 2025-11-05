@@ -132,7 +132,7 @@ class CatalogoController extends Controller
             $items = $items->filter(fn($mueble) => str_contains(strtolower($mueble->getMainColor()), $color));
         }
 
-
+        // Filtrar por búsqueda general (nombre y descripción)
         if ($request->filled('q')) {
             $query = strtolower($request->input('q'));
             $items = $items->filter(fn($mueble) =>

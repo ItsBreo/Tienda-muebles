@@ -9,46 +9,86 @@ use Illuminate\Support\Facades\Session;
 
 class CarritoController extends Controller
 {
+    // Clave de la sesión donde guardamos la "BD" de muebles del Admin
+    private $mueblesSessionKey = 'muebles_crud_session';
+
     public function show(Request $request)
     {
+
         $sesionId = $request->query('sesionId');
 
         $user = User::activeUserSesion($sesionId);
 
         if (!$user) {
-            return redirect()->route('login')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
+
+            return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
 
-        // obtener carrito por usuario real
+        // Obtenemos el carrito
         $cart = Session::get('carrito_' . $user->id, []);
+
+        // Obtenemos los datos "en vivo"
+        // Leemos la lista de muebles que el Admin edita.
+        $allMuebles = collect(Session::get($this->mueblesSessionKey, Furniture::getMockData()));
+
         $total = 0;
+        $cartWithLiveData = []; // Un nuevo array para la vista
+
         if (!empty($cart)) {
-            foreach ($cart as $c) {
-                // la clave usada en el array es 'cantidad'
-                $cantidad = isset($c['cantidad']) ? (int) $c['cantidad'] : 0;
-                $precio = isset($c['precio']) ? (float) $c['precio'] : 0.0;
-                $total += $precio * $cantidad;
+            foreach ($cart as $id => $item) {
+                // Encontrar el mueble en la BD de sesión
+                $liveMueble = $allMuebles->first(fn($m) => $m->getId() == $id);
+
+                if ($liveMueble) {
+                    // El mueble existe, usamos sus datos
+                    $cantidad = (int) $item['cantidad'];
+                    $precioVivo = $liveMueble->getPrice();
+                    $nombreVivo = $liveMueble->getName();
+
+                    // Re-creamos el array del carrito para la vista
+                    $cartWithLiveData[$id] = [
+                        'id' => $id,
+                        'nombre' => $nombreVivo,
+                        'precio' => $precioVivo,
+                        'cantidad' => $cantidad,
+                        // Añadimos la imagen para la vista
+                        'imagen' => $liveMueble->getMainImage(),
+                    ];
+                    $total += $precioVivo * $cantidad;
+                }
+                // Si $liveMueble es null (p.ej. admin lo borró),
+                // el item simplemente no aparecerá en el carrito.
             }
         }
 
-        return view('carrito.show', compact('cart', 'total', 'user', 'sesionId'));
+
+        return view('carrito.show', [
+            'cart' => $cartWithLiveData,
+            'total' => $total,
+            'user' => $user,
+            'sesionId' => $sesionId
+        ]);
     }
+
     public function add(Request $request, int $id)
     {
-        $sesionId = $request->query('sesionId');
+
+        $sesionId = $request->input('sesionId');
         $user = User::activeUserSesion($sesionId);
 
         if (!$user) {
             return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
 
-        // aseguramos cantidad mínima/por defecto y casteo a entero
         $quantity = (int) $request->input('cantidad', $request->input('quantity', 1));
         if ($quantity < 1) {
             $quantity = 1;
         }
 
-        $furniture = Furniture::findById($id);
+
+        $allMuebles = collect(Session::get($this->mueblesSessionKey, Furniture::getMockData()));
+        $furniture = $allMuebles->first(fn($m) => $m->getId() == (int)$id);
+
         if (!$furniture) {
             return redirect()->route('muebles.index', ['sesionId' => $sesionId])->withErrors('Mueble no encontrado');
         }
@@ -58,23 +98,25 @@ class CarritoController extends Controller
         if (isset($cart[$id])) {
             $cart[$id]['cantidad'] = (int)$cart[$id]['cantidad'] + $quantity;
         } else {
-             //Sustituir esto por los valores apropiados para mueble
+
             $cart[$id] = [
+                'id' => $furniture->getId(),
                 'nombre' => $furniture->getName(),
                 'precio' => $furniture->getPrice(),
-                'cantidad' => $quantity
+                'cantidad' => $quantity,
+                'imagen' => $furniture->getMainImage()
             ];
 
         }
 
-        // TODO: La entrada de muebles falla. El carrito queda vacio despues de agregar un mueble aunque exista la confirmación
         Session::put('carrito_' . $user->id, $cart);
         return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('success', 'Mueble agregado al carrito');
     }
 
         public function remove(Request $request, $id)
     {
-        $sesionId = $request->query('sesionId');
+
+        $sesionId = $request->input('sesionId');
         $user = User::activeUserSesion($sesionId);
 
         if (!$user) {
@@ -90,16 +132,16 @@ class CarritoController extends Controller
 
     public function clear(Request $request)
     {
-        $sesionId = $request->query('sesionId');
+
+        $sesionId = $request->input('sesionId');
         $user = User::activeUserSesion($sesionId);
 
         if (!$user) {
-            return redirect()->route('login')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
+
+            return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
 
         Session::forget('carrito_' . $user->id);
         return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('success', 'Carrito vaciado');
     }
-
-
 }

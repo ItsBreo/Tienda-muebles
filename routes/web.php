@@ -43,6 +43,9 @@ Route::post('/carrito/vaciar', [CarritoController::class, 'clear'])->name('carri
 
 // Checkout (página de resumen/pago):
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+Route::post('/checkout', [CheckoutController::class, 'processCheckout'])->name('checkout.process');
+
+
 
 // Panel de Administración (Solo usuario rol ADMIN)
 // CRUD de Muebles (con cookies)

@@ -50,11 +50,18 @@
                         <p class="card-text">{{ \Illuminate\Support\Str::limit($m->getDescription(), 100) }}</p>
                         <p class="mb-1"><strong>{{ number_format($m->getPrice(), 2) }} €</strong></p>
                         <a href="{{ route('muebles.show', ['id' => $m->getId(), 'sesionId' => $activeSesionId]) }}" class="btn btn-sm btn-outline-primary">Ver</a>
-                        <form action="{{ route('carrito.add', [$m->getId(), 'sesionId' => $activeSesionId]) }}" method="POST" class="d-inline">
-                            @csrf
-                            <input type="hidden" name="qty" value="1">
-                            <button class="btn btn-sm btn-success">Añadir</button>
-                        </form>
+
+                        @if ($m->getStock() > 0)
+                            <form action="{{ route('carrito.add', ['mueble' => $m->getId(), 'sesionId' => $activeSesionId]) }}" method="POST" class="d-inline ms-1">
+                                @csrf
+                                <input type="hidden" name="sesionId" value="{{ $activeSesionId }}">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-sm btn-success">Añadir</button>
+                            </form>
+                        @else
+                            <button class="btn btn-sm btn-secondary d-inline ms-1" disabled>Agotado</button>
+                        @endif
+
                     </div>
                 </div>
             </div>

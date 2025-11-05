@@ -35,7 +35,7 @@ class LoginController extends Controller
         // Obtenemos el array de usuarios de la sesión
         $users = Session::get('usuarios', []);
 
-        // Guardamos los datos que pide el requisito 2.c
+        // Guardamos los datos
         $userDataSesion = [
             'id' => $user->getId(),
             'email' => $user->getEmail(),
@@ -94,7 +94,7 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
-        // El sesionId nos dice QUÉ pestaña/usuario cerrar
+        // El sesionId nos dice que pestaña/usuario cerrar
         $sesionId = $request->input('sesionId');
 
         $users = Session::get('usuarios', []);

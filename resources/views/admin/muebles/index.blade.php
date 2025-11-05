@@ -72,7 +72,7 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-                {{-- !! CORRECCIÓN: Añadido sesionId !! --}}
+
                 <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Panel de Control</a>
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
@@ -80,7 +80,7 @@
                             <a class="nav-link" href="#">Usuario (Admin)</a>
                         </li> --}}
                         <li class="nav-item">
-                            {{-- !! CORRECCIÓN: Convertido a formulario POST para Logout !! --}}
+
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
                                 <input type="hidden" name="sesionId" value="{{ $sesionId }}">
@@ -98,7 +98,7 @@
 
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-                    {{-- !! CORRECCIÓN: Añadido sesionId a todos los enlaces !! --}}
+
                     <a class="nav-link" href="#">Dashboard</a>
                     <a class="nav-link" href="#">Usuarios</a>
                     <a class="nav-link active" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
@@ -119,7 +119,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="card-title text-primary">Listado de Muebles</h5>
-                            {{-- !! CORRECCIÓN: Añadido sesionId !! --}}
+
                             <a href="{{ route('admin.muebles.create', ['sesionId' => $sesionId]) }}" class="btn btn-primary">Crear Nuevo Mueble</a>
                         </div>
 
@@ -142,15 +142,15 @@
                                             <td>{{ number_format($mueble->getPrice(), 2) }} €</td>
                                             <td>{{ $mueble->getStock() }}</td>
                                             <td>
-                                                {{-- !! CORRECCIÓN: Añadido sesionId !! --}}
+
                                                 <a href="{{ route('admin.muebles.show', ['id' => $mueble->getId(), 'sesionId' => $sesionId]) }}" class="btn btn-sm btn-info">Ver</a>
-                                                {{-- !! CORRECCIÓN: Añadido sesionId !! --}}
+
                                                 <a href="{{ route('admin.muebles.edit', ['id' => $mueble->getId(), 'sesionId' => $sesionId]) }}" class="btn btn-sm btn-secondary">Editar</a>
 
                                                 <form action="{{ route('admin.muebles.destroy', $mueble->getId()) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este mueble?');">
                                                     @csrf
                                                     @method('DELETE')
-                                                    {{-- !! CORRECCIÓN: Añadido sesionId !! --}}
+
                                                     <input type="hidden" name="sesionId" value="{{ $sesionId }}">
                                                     <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
                                                 </form>

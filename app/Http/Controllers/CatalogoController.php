@@ -104,7 +104,7 @@ class CatalogoController extends Controller
         list($activeSesionId, $preferencias) = $this->cargarSesionYPreferencias($request);
 
         // Obtenemos preferencia de paginación desde NUESTRA cookie
-        $perPage = (int) ($preferencias['tamaño'] ?? 6);
+        $perPage = max((int) ($preferencias['tamaño'] ?? 6), 6); // Mínimo 6
         $currentPage = LengthAwarePaginator::resolveCurrentPage('page');
 
         // Obtenemos todos los muebles
@@ -132,7 +132,7 @@ class CatalogoController extends Controller
             $items = $items->filter(fn($mueble) => str_contains(strtolower($mueble->getMainColor()), $color));
         }
 
-
+        // Filtrar por búsqueda general (nombre y descripción)
         if ($request->filled('q')) {
             $query = strtolower($request->input('q'));
             $items = $items->filter(fn($mueble) =>

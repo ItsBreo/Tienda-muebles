@@ -42,10 +42,6 @@ class CarritoController extends Controller
             return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
         }
 
-        if (!$user) {
-            return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
-        }
-
         // aseguramos cantidad mínima/por defecto y casteo a entero
         $quantity = (int) $request->input('cantidad', $request->input('quantity', 1));
         if ($quantity < 1) {

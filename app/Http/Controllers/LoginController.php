@@ -119,4 +119,22 @@ class LoginController extends Controller
 
         return $response;
     }
+
+    public function register()
+    {
+        return view('registro');
+    }
+
+    public function registerUser(Request $request)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'min:3'],
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string', 'min:4'],
+        ]);
+
+        $user = User::createUser($data['name'], $data['email'], $data['password']);
+
+        return redirect()->route('login.show');
+    }
 }

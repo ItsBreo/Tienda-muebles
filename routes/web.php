@@ -20,6 +20,8 @@ use Illuminate\Http\Request;
 // Login (Sesiones):
  Route::get('/login', [LoginController::class, 'show'])->name('login.show');
  Route::post('/login', [LoginController::class, 'login'])->name('login.store');
+ Route::get('/inscribir', [LoginController::class, 'register'])->name('login.register');
+ Route::post('/inscribir', [LoginController::class, 'registerUser'])->name('login.registerUser');
  Route::post('/logout', [LoginController::class, 'logout'])->name('login.logout');
 
 // Preferencias (Cookies)

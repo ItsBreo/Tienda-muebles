@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login con Paleta de Colores</title>
+    <title>Registro de Usuario</title>
 
     {{-- Asumiendo que bootstrap.min.css está en public/resources/ --}}
     <link rel="stylesheet" href="{{ asset('resources/bootstrap.min.css') }}">
@@ -65,13 +65,6 @@
             border-color: #7A7D7D;
             color: #FFFFFF;
         }
-        .form-check-input:checked {
-            background-color: #565254;
-            border-color: #565254;
-        }
-        .form-check-label {
-            color: #7A7D7D; /* Gray - Etiqueta del checkbox */
-        }
     </style>
 </head>
 <body>
@@ -80,34 +73,38 @@
             <div class="col-md-8 col-lg-5">
                 <div class="card">
                     <div class="card-header text-center">
-                        Iniciar Sesión <img src="{{ asset('images/JJDAY.png') }}" alt="Logo Tienda Muebles JJDAY" class="navbar-logo"
-                    style="width: 100px;">
+                        Registro de Usuario
                     </div>
                     <div class="card-body">
-                        <form method="POST" action="{{ route('login.store') }}">
+                        <form method="POST" action="action={{ route('login.registerUser') }}">
                             @csrf
 
                             <div class="mb-3">
-                                <label for="email" class="form-label">Correo Electrónico</label>
-                                <input type="email" class="form-control" id="email" name="email" required autofocus>
+                                <label for="name" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="name" name="name" required autofocus>
                             </div>
 
-                            <div class="mb-4">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+
+                            <div class="mb-3">
                                 <label for="password" class="form-label">Contraseña</label>
                                 <input type="password" class="form-control" id="password" name="password" required>
                             </div>
 
-                            <div class="mb-4 form-check">
-                                <input type="checkbox" class="form-check-input" id="remember">
-                                <label class="form-check-label" for="remember">Recordarme</label>
+                            <div class="mb-4">
+                                <label for="password_confirmation" class="form-label">Confirmar Contraseña</label>
+                                <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
                             </div>
 
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg">Acceder</button>
+                                <button type="submit" class="btn btn-primary btn-lg">Registrarse</button>
                             </div>
                         </form>
                         <div class="mt-4 text-center">
-                            <a href="{{ route('login.register') }}" class="btn btn-outline-secondary">Registrarme</a>
+                            <a href="{{ route('login.show') }}" class="text-secondary">¿Ya tienes una cuenta? Inicia Sesión</a>
                         </div>
                     </div>
                 </div>

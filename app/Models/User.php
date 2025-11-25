@@ -57,4 +57,20 @@ class User extends Authenticatable
         // Usamos la relación para comprobar el nombre del rol.
         return $this->role && $this->role->name === $roleName;
     }
+
+    /**
+     * Recupera un usuario de la sesión del servidor usando un ID de sesión de pestaña.
+     *
+     * @param string|null $sesionId El identificador único de la sesión de la pestaña.
+     * @return User|null El objeto User si se encuentra, o null.
+     */
+    public static function activeUserSesion(?string $sesionId): ?User
+    {
+        if (!$sesionId || !Session::has($sesionId)) {
+            return null;
+        }
+
+        // Deserializamos el objeto User que guardamos en el login.
+        return unserialize(Session::get($sesionId));
+    }
 }

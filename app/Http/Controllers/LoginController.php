@@ -51,6 +51,24 @@ class LoginController extends Controller
             $user = Auth::user();
             Auth::logout(); // Cerramos la sesión de Laravel para no usar su cookie.
 
+            // --- Lógica de Cookie de Preferencias (RESTAURADA) ---
+            $cookieName = 'preferencias_' . $user->id;
+            $cookie = null; // Variable para guardar la cookie si la creamos
+
+            // Verificamos si la cookie de preferencias NO existe en la petición.
+            if (!$request->hasCookie($cookieName)) {
+                // Si no existe, la creamos con valores por defecto.
+                $defaultPreferences = [
+                    'tema' => 'claro',
+                    'moneda' => 'EUR',
+                    'tamaño' => 6,
+                ];
+
+                $cookie = Cookie::make(
+                    $cookieName, json_encode($defaultPreferences), config('session.lifetime', 120)
+                );
+            }
+
             // Generamos un ID de sesión único para esta pestaña
             $sesionId = uniqid('sesion_', true);
 
@@ -65,8 +83,15 @@ class LoginController extends Controller
                 $redirectRoute = route('principal', ['sesionId' => $sesionId]);
             }
 
-            // Redirigimos a la ruta correspondiente.
-            return redirect($redirectRoute);
+            // Creamos la respuesta de redirección
+            $response = redirect($redirectRoute);
+
+            // Si hemos creado una cookie de preferencias, la adjuntamos a la respuesta.
+            if ($cookie) {
+                return $response->withCookie($cookie);
+            }
+
+            return $response;
         }
 
         // --- El resto del código para intentos fallidos permanece igual ---

@@ -1,20 +1,19 @@
 @php
-    // El usuario activo se obtiene directamente del sistema de autenticación de Laravel.
-    // La variable $activeUser ya no es necesaria, usaremos auth()->user() directamente.
-    // La variable $activeSesionId queda obsoleta y ya no se usa.
+    // Lógica de sesión por pestaña:
+    // Las variables $user y $sesionId son pasadas por los controladores.
+    // Si no existen, significa que el usuario no ha iniciado sesión en esta pestaña.
 
     // Lógica para las preferencias.
-    // Si un controlador ya las ha definido, se usan esas. Si no, las calculamos aquí.
     if (!isset($preferencias)) {
         $defaultPrefs = [
             'tema' => 'claro',
             'moneda' => 'EUR',
-            'tamaño' => 6,
+            'tamaño' => 4, // Valor por defecto consistente
         ];
 
-        // Si hay un usuario autenticado, intentamos leer su cookie.
-        if (auth()->check()) {
-            $cookieName = 'preferencias_' . auth()->user()->id;
+        // En lugar de auth()->check(), comprobamos si la variable $user existe.
+        if (isset($user) && $user) {
+            $cookieName = 'preferencias_' . $user->id;
             $cookieData = json_decode(request()->cookie($cookieName), true);
 
             if ($cookieData) {
@@ -58,8 +57,9 @@
         <div class="container">
 
             {{-- Código Modificado para Centrar con Clases --}}
+            {{-- El enlace principal también debe llevar el sesionId si existe --}}
             <a class="navbar-brand custom-brand-centered"
-                href="{{ route('principal') }}">
+                href="{{ route('principal', ['sesionId' => $sesionId ?? null]) }}">
                 <span class="brand-text">Tienda Muebles</span>
                 <img src="{{ asset('images/JJDAY.png') }}" alt="Logo Tienda Muebles JJDAY" class="navbar-logo"
                     style="width: 100px;">
@@ -70,42 +70,46 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    {{-- Todos los enlaces de navegación deben incluir el sesionId para mantener la sesión --}}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('categorias.index') }}">Categorías</a>
+                        <a class="nav-link" href="{{ route('categorias.index', ['sesionId' => $sesionId ?? null]) }}">Categorías</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('muebles.index') }}">Todos los Muebles</a>
+                        <a class="nav-link" href="{{ route('muebles.index', ['sesionId' => $sesionId ?? null]) }}">Todos los Muebles</a>
                     </li>
 
-                    @auth
-                        {{-- Si el usuario está logueado, muestra todos los enlaces --}}
+                    {{-- Reemplazamos @auth con una comprobación de la variable $user --}}
+                    @if (isset($user) && $user)
+                        {{-- Si el usuario existe para esta pestaña, muestra sus enlaces --}}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('carrito.show') }}">Carrito</a>
+                            <a class="nav-link" href="{{ route('carrito.show', ['sesionId' => $sesionId]) }}">Carrito</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('preferencias.show') }}">Preferencias</a>
+                            <a class="nav-link" href="{{ route('preferencias.show', ['sesionId' => $sesionId]) }}">Preferencias</a>
                         </li>
 
-                        {{-- También comprobamos el rol de admin aquí --}}
-                        @if (auth()->user()->hasRole('Admin'))
+                        {{-- Comprobamos el rol sobre el objeto $user --}}
+                        @if ($user->hasRole('Admin'))
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('admin.muebles.index') }}">Administración</a>
+                                <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Administración</a>
                             </li>
                         @endif
 
                         <li class="nav-item">
+                            {{-- El formulario de logout debe enviar el sesionId para cerrar la sesión correcta --}}
                             <form action="{{ route('login.logout') }}" method="POST">
                                 @csrf
+                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
                                 <button type="submit" class="btn btn-link nav-link">Logout
-                                    ({{ auth()->user()->email }})</button>
+                                    ({{ $user->email }})</button>
                             </form>
                         </li>
                     @else
-                        {{-- Si no está logueado, solo muestra "Login" --}}
+                        {{-- Si no hay usuario en esta pestaña, solo muestra "Login" --}}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('login.show') }}">Login</a>
                         </li>
-                    @endif
+                    @endif {{-- Fin de la comprobación de $user --}}
                 </ul>
             </div>
         </div>

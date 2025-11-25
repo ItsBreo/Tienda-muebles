@@ -15,8 +15,12 @@ class PreferenciasController extends Controller
      */
     public function show(Request $request)
     {
-        // La vista ya no necesita el sesionId, usaremos la autenticación de Laravel
-        return view('preferencias');
+        // Necesitamos el sesionId para mantener la navegación
+        $sesionId = $request->query('sesionId');
+        if (!User::activeUserSesion($sesionId)) {
+            return redirect()->route('login.show')->withErrors('Debes iniciar sesión para ver tus preferencias.');
+        }
+        return view('preferencias', compact('sesionId'));
     }
 
     /**
@@ -32,13 +36,11 @@ class PreferenciasController extends Controller
             'tamaño' => ['required', 'integer', 'min:6', 'max:24'],
         ]);
 
-        // 1. Comprobamos si el usuario está autenticado
-        if (!auth()->check()) {
+        $sesionId = $request->input('sesionId');
+        $user = User::activeUserSesion($sesionId);
+        if (!$user) {
             return redirect()->route('login.show')->withErrors('Debes iniciar sesión para cambiar tus preferencias.');
         }
-
-        // 2. Obtenemos el usuario y construimos el nombre de la cookie
-        $user = auth()->user();
         $cookieName = 'preferencias_' . $user->id;
 
         // 3. Leemos la cookie actual para no perder otros datos que pudiera tener
@@ -67,7 +69,7 @@ class PreferenciasController extends Controller
 
 
         // Redirigimos a principal (pasando el sesionId) y adjuntamos la cookie
-        return redirect()->route('principal')
+        return redirect()->route('principal', ['sesionId' => $sesionId])
                          ->with('success', 'Preferencias actualizadas correctamente.')
                          ->withCookie($cookie);
     }

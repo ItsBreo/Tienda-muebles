@@ -18,8 +18,7 @@
                     @csrf
 
 
-                    <!-- Esta variable $sesionId la pasa el método 'index' del controlador -->
-                    <input type="hidden" name="sesionId" value="{{ $sesionId }}">
+
 
                     <!-- 1. Tema Visual -->
                     <div class="mb-3">

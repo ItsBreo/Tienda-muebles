@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -44,46 +45,56 @@ class LoginController extends Controller
         // 4. Intentamos autenticar al usuario.
         // El método Auth::attempt se encarga de verificar el email y la contraseña (hasheada).
         if (Auth::attempt($request->only('email', 'password'), $request->filled('remember'))) {
-            // Si el login es exitoso:
-            $request->session()->regenerate(); // Regeneramos la sesión por seguridad.
-
+            // Autenticación correcta
             RateLimiter::clear($throttleKey); // Limpiamos los intentos fallidos.
 
             $user = Auth::user();
+            Auth::logout(); // Cerramos la sesión de Laravel para no usar su cookie.
 
-            // --- Lógica de Cookie de Preferencias ---
+            // --- Lógica de Cookie de Preferencias (RESTAURADA) ---
             $cookieName = 'preferencias_' . $user->id;
-            $cookieRedirect = null;
+            $cookie = null; // Variable para guardar la cookie si la creamos
 
-            // 2. Verificamos si la cookie de preferencias NO existe en la petición.
+            // Verificamos si la cookie de preferencias NO existe en la petición.
             if (!$request->hasCookie($cookieName)) {
-                // 3. Si no existe, la creamos con valores por defecto.
+                // Si no existe, la creamos con valores por defecto.
                 $defaultPreferences = [
                     'tema' => 'claro',
                     'moneda' => 'EUR',
-                    'tamaño' => 6, // Un valor inicial razonable para la paginación
+                    'tamaño' => 6,
                 ];
 
                 $cookie = Cookie::make(
-                    $cookieName,
-                    json_encode($defaultPreferences),
-                    config('session.lifetime', 120) // Duración de la cookie
+                    $cookieName, json_encode($defaultPreferences), config('session.lifetime', 120)
                 );
-
-                // 4. Preparamos una redirección a la página de preferencias adjuntando la nueva cookie.
-                $cookieRedirect = redirect()->route('preferencias.show')->withCookie($cookie);
             }
 
-            // 5. Redirigimos según el rol.
+            // Generamos un ID de sesión único para esta pestaña
+            $sesionId = uniqid('sesion_', true);
+
+            // Guardamos el usuario (serializado) en la sesión del servidor con la clave única.
+            // Usamos serialize para guardar el objeto completo.
+            Session::put($sesionId, serialize($user));
+
+            // Creamos la ruta de redirección con el sesionId
             if ($user->hasRole('Admin')) {
-                // Si es admin, siempre va a su panel. La cookie se enviará si es necesario.
-                $redirect = redirect()->intended(route('admin.muebles.index'));
-                return $cookieRedirect ? $redirect->withCookie($cookieRedirect->headers->getCookies()[0]) : $redirect;
+                $redirectRoute = route('admin.muebles.index', ['sesionId' => $sesionId]);
+            } else {
+                $redirectRoute = route('principal', ['sesionId' => $sesionId]);
             }
 
-            // 6. Si se debe redirigir a preferencias, lo hacemos. Si no, a la página principal.
-            return $cookieRedirect ?? redirect()->intended(route('principal'));
+            // Creamos la respuesta de redirección
+            $response = redirect($redirectRoute);
+
+            // Si hemos creado una cookie de preferencias, la adjuntamos a la respuesta.
+            if ($cookie) {
+                return $response->withCookie($cookie);
+            }
+
+            return $response;
         }
+
+        // --- El resto del código para intentos fallidos permanece igual ---
 
         // 6. Si el login falla, incrementamos el contador de intentos.
         RateLimiter::hit($throttleKey, 300); // Bloqueo de 300 segundos (5 minutos)
@@ -96,12 +107,13 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::logout(); // Cierra la sesión del usuario.
+        // Olvidamos la sesión de la pestaña actual.
+        if ($request->has('sesionId')) {
+            Session::forget($request->input('sesionId'));
+        }
 
-        $request->session()->invalidate(); // Invalida la sesión.
-        $request->session()->regenerateToken(); // Regenera el token CSRF.
-        $request->cookie() ?->forget('preferencias_' . Auth::id());
-
+        // Ya no necesitamos invalidar la sesión global de Laravel.
+        // Simplemente redirigimos a la página de inicio.
         return redirect('/'); // Redirige a la página de inicio.
     }
 

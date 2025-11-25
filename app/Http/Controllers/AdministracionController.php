@@ -17,32 +17,6 @@ class AdministracionController extends Controller
     private $cookieMinutes = 60 * 24 * 7;
 
 
-    private function getMuebles()
-    {
-
-        $muebles = Session::get($this->sessionKey);
-
-
-        if ($muebles instanceof \Illuminate\Support\Collection) {
-            return $muebles;
-        }
-
-        // Si no, carga los datos mock (que ya son Objetos Furniture)
-        $muebles = collect(Furniture::getMockData());
-
-        // Los guarda en la SESIÓN para la próxima vez
-        $this->saveMuebles($muebles);
-        return $muebles;
-    }
-
-    /**
-     * Guarda la colección de muebles en la Sesión.
-     */
-    private function saveMuebles($muebles)
-    {
-        Session::put($this->sessionKey, $muebles);
-    }
-
 
     /**
      * Revisa si el usuario actual es un admin.
@@ -81,7 +55,7 @@ class AdministracionController extends Controller
 
 
         $sesionId = $request->query('sesionId');
-        $muebles = $this->getMuebles();
+        $muebles = Furniture::all(); // <-- ¡AQUÍ ESTÁ EL CAMBIO!
 
         // Pasamos los muebles a la vista del panel de administración
         return view('admin.muebles.index', compact('muebles', 'sesionId'));

@@ -9,137 +9,40 @@ use Illuminate\Database\Eloquent\Model;
 // Clase Mueble
 class Furniture extends model {
 
-    private int $id;
-    private int $categoryId;
-    private string $name;
-    private string $description;
-    private float $price;
-    private int $stock;
-    private string $materials;
-    private string $dimensions;
-    private string $mainColor;
-    private bool $isSalient;
-    private array $images;
+    use HasFactory;
 
-    public function __construct(
-        int $id,
-        int $categoryId,
-        string $name,
-        string $description,
-        float $price,
-        int $stock,
-        string $materials,
-        string $dimensions,
-        string $mainColor,
-        bool $isSalient,
-        array $images
-    ) {
-        $this->id = $id;
-        $this->categoryId = $categoryId;
-        $this->name = $name;
-        $this->description = $description;
-        $this->price = $price;
-        $this->stock = $stock;
-        $this->materials = $materials;
-        $this->dimensions = $dimensions;
-        $this->mainColor = $mainColor;
-        $this->isSalient = $isSalient;
-        // $this->images = $images;
-    }
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'category_id',
+        'name',
+        'description',
+        'price',
+        'stock',
+        'materials',
+        'dimensions',
+        'main_color',
+        'is_salient',
+    ];
 
-    // Getters públicos
-    public function getId(): int {
-        return $this->id;
-    }
-
-    public function getCategoryId(): int {
-        return $this->categoryId;
-    }
-
-    public function getName(): string {
-        return $this->name;
-    }
-
-    public function getDescription(): string {
-        return $this->description;
-    }
-
-    public function getPrice(): float {
-        return $this->price;
-    }
-
-    public function getStock(): int {
-        return $this->stock;
-    }
-
-    public function getMaterials(): string {
-        return $this->materials;
-    }
-
-    public function getDimensions(): string {
-        return $this->dimensions;
-    }
-
-    public function getMainColor(): string {
-        return $this->mainColor;
-    }
-
-    public function isSalient(): bool {
-        return $this->isSalient;
-    }
-
-/*    public function getImages(): array {
-        return $this->images;
-    }
-*/
-    // Setters públicos
-    public function setId(int $id): void {
-        $this->id = $id;
-    }
-
-    public function setCategoryId(int $categoryId): void {
-        $this->categoryId = $categoryId;
-    }
-
-    public function setName(string $name): void {
-        $this->name = $name;
-    }
-
-    public function setDescription(string $description): void {
-        $this->description = $description;
-    }
-
-    public function setPrice(float $price): void {
-        $this->price = $price;
-    }
-
-    public function setStock(int $stock): void {
-        $this->stock = $stock;
-    }
-
-    public function setMaterials(string $materials): void {
-        $this->materials = $materials;
-    }
-
-    public function setDimensions(string $dimensions): void {
-        $this->dimensions = $dimensions;
-    }
-
-    public function setMainColor(string $mainColor): void {
-        $this->mainColor = $mainColor;
-    }
-
-    public function setIsSalient(bool $isSalient): void {
-        $this->isSalient = $isSalient;
-    }
-/*
-    public function setImages(array $images): void {
-        $this->images = $images;
-    }
-*/
     // Método helper para obtener la imagen principal
     public function getMainImage(): string {
-        return $this->images[0] ?? 'default.jpg'; // Retornamos la primera imagen o una imagen por defecto
+        // Assuming you have an 'images' relationship that returns a collection of Image models
+        $mainImage = $this->images()->where('is_main', true)->first();
+        if ($mainImage) {
+            return $mainImage->url;
+        }
+
+        // Fallback to the first image if no main image is set
+        $firstImage = $this->images()->orderBy('order')->first();
+        if ($firstImage) {
+            return $firstImage->url;
+        }
+
+        return 'default.jpg'; // Retornamos una imagen por defecto
     }
 
     /**
@@ -147,18 +50,18 @@ class Furniture extends model {
      */
     public static function getMockData(): array {
         return [
-            new Furniture(1, 1, "Mesa de Centro 'Nórdica'", "Mesa de roble con diseño minimalista.", 149.99, 5, "Madera de roble oscuro", "120cm x 60cm x 45cm", "Roble Oscuro", true, ["images/mesa_nordica_1.png", "images/mesa_nordica_2.png", "images/mesa_nordica_3.png"]),
-            new Furniture(2, 1, "Sofá 'Confort'", "Sofá de 3 plazas, tela gris.", 399.99, 3, "Tela y madera", "200cm x 90cm x 85cm", "Gris", false, ["images/sofa_confort_1.png", "images/sofa_confort_2.png", "images/sofa_confort_3.png"]),
-            new Furniture(3, 1, "Estantería 'Lineal'", "Estantería modular metálica.", 89.50, 10, "Metal", "80cm x 30cm x 180cm", "Negro", false, ["images/estanteria_lineal_1.png", "images/estanteria_lineal_2.png", "images/estanteria_lineal_3.png"]),
-            new Furniture(4, 2, "Cama 'Queen'", "Cama con cabecero tapizado.", 299.00, 2, "Madera y tela", "160cm x 200cm", "Beige", true, ["images/cama_queen_1.png", "images/cama_queen_2.png", "images/cama_queen_3.png"]),
-            new Furniture(5, 3, "Silla de Oficina 'Ergo'", "Silla ergonómica con ruedas.", 120.00, 15, "Plástico y malla", "60cm x 60cm x 110cm", "Negro", true, ["images/silla_ergo_1.png", "images/silla_ergo_2.png", "images/silla_ergo_3.png"]),
-            new Furniture(6, 3, "Escritorio 'Minimal'", "Escritorio de madera clara y metal.", 110.00, 6, "Madera de pino y metal", "140cm x 70cm x 75cm", "Pino Claro", false, ["images/escritorio_minimal_1.png", "images/escritorio_minimal_2.png", "images/escritorio_minimal_3.png"]),
-            new Furniture(7, 4, "Armario de Cocina 'Chef'", "Módulo superior con 2 puertas.", 75.50, 8, "Aglomerado", "80cm x 40cm x 60cm", "Blanco", true, ["images/armario_chef_1.png", "images/armario_chef_2.png", "images/armario_chef_3.png"]),
-            new Furniture(8, 4, "Isla 'Gourmet'", "Isla de cocina con almacenaje.", 350.00, 3, "Granito y madera", "120cm x 80cm x 90cm", "Blanco", true, ["images/isla_gourmet_1.png", "images/isla_gourmet_2.png", "images/isla_gourmet_3.png"]),
-            new Furniture(9, 2, "Mesita de Noche 'Clásica'", "Mesita con 2 cajones.", 60.00, 10, "Madera de pino", "40cm x 30cm x 55cm", "Pino Claro", false, ["images/mesita_clasica_1.png", "images/mesita_clasica_2.png", "images/mesita_clasica_3.png"]),
-            new Furniture(10, 1, "Butaca 'Relax'", "Butaca de lectura color mostaza.", 180.00, 4, "Tela", "70cm x 80cm x 95cm", "Mostaza", false, ["images/butaca_relax_1.png", "images/butaca_relax_2.png", "images/butaca_relax_3.png"]),
-            new Furniture(11, 2, "Cama 'Nido'", "Cama individual con cajones.", 210.00, 7, "Madera de pino", "90cm x 200cm", "Blanco", false, ["images/cama_nido_1.png", "images/cama_nido_2.png", "images/cama_nido_3.png"]),
-            new Furniture(12, 4, "Mesa de Cocina 'Extensible'", "Mesa para 4-6 personas.", 175.00, 3, "Madera y metal", "140cm (ext. 180cm) x 80cm", "Pino Claro", true, ["images/mesa_cocina_1.png", "images/mesa_cocina_2.png", "images/mesa_cocina_3.png"]),
+            new self(['id' => 1, 'category_id' => 1, 'name' => "Mesa de Centro 'Nórdica'", 'description' => "Mesa de roble con diseño minimalista.", 'price' => 149.99, 'stock' => 5, 'materials' => "Madera de roble oscuro", 'dimensions' => "120cm x 60cm x 45cm", 'main_color' => "Roble Oscuro", 'is_salient' => true]),
+            new self(['id' => 2, 'category_id' => 1, 'name' => "Sofá 'Confort'", 'description' => "Sofá de 3 plazas, tela gris.", 'price' => 399.99, 'stock' => 3, 'materials' => "Tela y madera", 'dimensions' => "200cm x 90cm x 85cm", 'main_color' => "Gris", 'is_salient' => false]),
+            new self(['id' => 3, 'category_id' => 1, 'name' => "Estantería 'Lineal'", 'description' => "Estantería modular metálica.", 'price' => 89.50, 'stock' => 10, 'materials' => "Metal", 'dimensions' => "80cm x 30cm x 180cm", 'main_color' => "Negro", 'is_salient' => false]),
+            new self(['id' => 4, 'category_id' => 2, 'name' => "Cama 'Queen'", 'description' => "Cama con cabecero tapizado.", 'price' => 299.00, 'stock' => 2, 'materials' => "Madera y tela", 'dimensions' => "160cm x 200cm", 'main_color' => "Beige", 'is_salient' => true]),
+            new self(['id' => 5, 'category_id' => 3, 'name' => "Silla de Oficina 'Ergo'", 'description' => "Silla ergonómica con ruedas.", 'price' => 120.00, 'stock' => 15, 'materials' => "Plástico y malla", 'dimensions' => "60cm x 60cm x 110cm", 'main_color' => "Negro", 'is_salient' => true]),
+            new self(['id' => 6, 'category_id' => 3, 'name' => "Escritorio 'Minimal'", 'description' => "Escritorio de madera clara y metal.", 'price' => 110.00, 'stock' => 6, 'materials' => "Madera de pino y metal", 'dimensions' => "140cm x 70cm x 75cm", 'main_color' => "Pino Claro", 'is_salient' => false]),
+            new self(['id' => 7, 'category_id' => 4, 'name' => "Armario de Cocina 'Chef'", 'description' => "Módulo superior con 2 puertas.", 'price' => 75.50, 'stock' => 8, 'materials' => "Aglomerado", 'dimensions' => "80cm x 40cm x 60cm", 'main_color' => "Blanco", 'is_salient' => true]),
+            new self(['id' => 8, 'category_id' => 4, 'name' => "Isla 'Gourmet'", 'description' => "Isla de cocina con almacenaje.", 'price' => 350.00, 'stock' => 3, 'materials' => "Granito y madera", 'dimensions' => "120cm x 80cm x 90cm", 'main_color' => "Blanco", 'is_salient' => true]),
+            new self(['id' => 9, 'category_id' => 2, 'name' => "Mesita de Noche 'Clásica'", 'description' => "Mesita con 2 cajones.", 'price' => 60.00, 'stock' => 10, 'materials' => "Madera de pino", 'dimensions' => "40cm x 30cm x 55cm", 'main_color' => "Pino Claro", 'is_salient' => false]),
+            new self(['id' => 10, 'category_id' => 1, 'name' => "Butaca 'Relax'", 'description' => "Butaca de lectura color mostaza.", 'price' => 180.00, 'stock' => 4, 'materials' => "Tela", 'dimensions' => "70cm x 80cm x 95cm", 'main_color' => "Mostaza", 'is_salient' => false]),
+            new self(['id' => 11, 'category_id' => 2, 'name' => "Cama 'Nido'", 'description' => "Cama individual con cajones.", 'price' => 210.00, 'stock' => 7, 'materials' => "Madera de pino", 'dimensions' => "90cm x 200cm", 'main_color' => "Blanco", 'is_salient' => false]),
+            new self(['id' => 12, 'category_id' => 4, 'name' => "Mesa de Cocina 'Extensible'", 'description' => "Mesa para 4-6 personas.", 'price' => 175.00, 'stock' => 3, 'materials' => "Madera y metal", 'dimensions' => "140cm (ext. 180cm) x 80cm", 'main_color' => "Pino Claro", 'is_salient' => true]),
         ];
     }
 
@@ -167,7 +70,7 @@ class Furniture extends model {
      */
     public static function findById(int $id): ?Furniture {
         foreach (self::getMockData() as $furniture) {
-            if ($furniture->getId() === $id) {
+            if ($furniture->id === $id) {
                 return $furniture;
             }
         }
@@ -201,5 +104,10 @@ class Furniture extends model {
     public function images()
     {
         return $this->hasMany(Image::class);
+    }
+
+    public function isSalient(): bool
+    {
+        return (bool) $this->is_salient;
     }
 }

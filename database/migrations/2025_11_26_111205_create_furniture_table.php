@@ -15,17 +15,17 @@ return new class extends Migration
             $table->id();
             // Relación con Categorías
             $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('cascade');
-            
+
             // Campos de la tabla Muebles
             $table->string('name');
             $table->text('description');
             $table->decimal('price', 10, 2);
             $table->integer('stock');
-            $table->string('materials');
-            $table->string('dimensions');
+            $table->string('materials')->nullable();
+            $table->string('dimensions')->nullable();
             $table->string('main_color');
             $table->boolean('is_salient')->default(false);
-            $table->json('images'); // Almacenamos las rutas de las imágenes en formato JSON
+            $table->json('images')->nullable(); // Almacenamos las rutas de las imágenes en formato JSON
             $table->timestamps();
         });
     }

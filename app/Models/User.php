@@ -13,7 +13,7 @@ class User extends Authenticatable
 {
     use HasFactory;
 
-    protected $table = 'usuarios';
+    protected $table = 'users';
 
     /**
      * Los atributos que se pueden asignar masivamente.

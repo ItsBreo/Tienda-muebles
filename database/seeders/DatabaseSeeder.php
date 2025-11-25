@@ -34,5 +34,11 @@ class DatabaseSeeder extends Seeder
 
         // 3. Crear 50 usuarios de prueba (Gestores y Clientes)
         User::factory(50)->create();
+
+        // 4. Ejecutar los seeders de categorías y muebles
+        $this->call([
+            CategorySeeder::class,
+            FurnitureSeeder::class,
+        ]);
     }
 }

@@ -15,10 +15,8 @@ class PreferenciasController extends Controller
      */
     public function show(Request $request)
     {
-        $sesionId = $request->query('sesionId');
-
-        // Pasamos el sesionId a la vista para que pueda incluirlo en el formulario
-        return view('preferencias', ['sesionId' => $sesionId]);
+        // La vista ya no necesita el sesionId, usaremos la autenticación de Laravel
+        return view('preferencias');
     }
 
     /**
@@ -32,35 +30,21 @@ class PreferenciasController extends Controller
             'tema' => ['required', 'string', 'in:claro,oscuro,sistema'],
             'moneda' => ['required', 'string', 'in:USD,EUR,GBP'],
             'tamaño' => ['required', 'integer', 'min:6', 'max:24'],
-            'sesionId' => ['required', 'string'], // El sesionId debe venir del campo oculto
         ]);
 
-        $sesionId = $data['sesionId'];
-        $cookieName = null;
-
-        // Buscamos al usuario en el array de la sesión
-        $allUsers = Session::get('usuarios', []);
-        if (isset($allUsers[$sesionId])) {
-            $activeUser = json_decode($allUsers[$sesionId]);
-            // Obtenemos el nombre de la cookie que le corresponde
-            $cookieName = $activeUser->cookie_name ?? null;
+        // 1. Comprobamos si el usuario está autenticado
+        if (!auth()->check()) {
+            return redirect()->route('login.show')->withErrors('Debes iniciar sesión para cambiar tus preferencias.');
         }
 
-        if (!$cookieName || !$request->hasCookie($cookieName)) {
-            // Si no encontramos al usuario/cookie, volvemos con error
-            return redirect()->route('principal', ['sesionId' => $sesionId])
-                             ->withErrors('No se pudo encontrar la cookie para guardar las preferencias.');
-        }
+        // 2. Obtenemos el usuario y construimos el nombre de la cookie
+        $user = auth()->user();
+        $cookieName = 'preferencias_' . $user->id;
 
-        if (!Session::has('usuarios')) {
-            // Si no encontramos al usuario/cookie, volvemos con error
-            return redirect()->route('principal', ['sesionId' => $sesionId])
-                             ->withErrors('No se pudo encontrar la cookie para guardar las preferencias.');
-        }
+        // 3. Leemos la cookie actual para no perder otros datos que pudiera tener
+        $cookieData = json_decode($request->cookie($cookieName), true) ?? [];
 
 
-        // Leemos la cookie actual para preservar otros datos (email, sesionId original, etc.)
-        $cookieData = json_decode($request->cookie($cookieName), true);
 
         // Actualizamos solo los valores de preferencias
         $cookieData['tema'] = $data['tema'];
@@ -81,13 +65,10 @@ class PreferenciasController extends Controller
             sameSite: config('session.same_site', 'lax')
         );
 
-        $user = User::activeUserSesion($sesionId);
-
 
         // Redirigimos a principal (pasando el sesionId) y adjuntamos la cookie
-        return redirect()
-            ->route('principal', ['sesionId' => $sesionId])
-            ->withCookie($cookie);
+        return redirect()->route('principal')
+                         ->with('success', 'Preferencias actualizadas correctamente.')
+                         ->withCookie($cookie);
     }
 }
-

@@ -98,8 +98,9 @@ class LoginController extends Controller
     {
         Auth::logout(); // Cierra la sesión del usuario.
 
-        $request->session()->invalidate(); // Invalida la sesión actual.
+        $request->session()->invalidate(); // Invalida la sesión.
         $request->session()->regenerateToken(); // Regenera el token CSRF.
+        $request->cookie() ?->forget('preferencias_' . Auth::id());
 
         return redirect('/'); // Redirige a la página de inicio.
     }

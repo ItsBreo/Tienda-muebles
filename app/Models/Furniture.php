@@ -31,15 +31,15 @@ class Furniture extends model {
     // Método helper para obtener la imagen principal
     public function getMainImage(): string {
         // Assuming you have an 'images' relationship that returns a collection of Image models
-        $mainImage = $this->images()->where('is_main', true)->first();
+        $mainImage = $this->images()->where('is_primary', true)->first();
         if ($mainImage) {
-            return $mainImage->url;
+            return $mainImage->image_path;
         }
 
         // Fallback to the first image if no main image is set
-        $firstImage = $this->images()->orderBy('order')->first();
+        $firstImage = $this->images()->orderBy('display_order')->first();
         if ($firstImage) {
-            return $firstImage->url;
+            return $firstImage->image_path;
         }
 
         return 'default.jpg'; // Retornamos una imagen por defecto

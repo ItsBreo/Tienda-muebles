@@ -9,12 +9,14 @@ use Illuminate\Database\Eloquent\Model;
 class Image extends model {
     use HasFactory;
 
+    protected $table = 'furniture_images';
+
     // Define las columnas que se pueden llenar masivamente
     protected $fillable = [
         'furniture_id',
-        'url',
-        'order',
-        'is_main',
+        'image_path',
+        'is_primary',
+        'display_order',
         'alt_text',
     ];
 

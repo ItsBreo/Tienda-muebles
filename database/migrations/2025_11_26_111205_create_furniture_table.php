@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             // Relación con Categorías
             $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('cascade');
-
+            
             // Campos de la tabla Muebles
             $table->string('name');
             $table->text('description');

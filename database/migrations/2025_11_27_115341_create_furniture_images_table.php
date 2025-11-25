@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('furniture_images', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('furniture_id')->constrained()->onDelete('cascade');
+            $table->foreignId('furniture_id')->constrained()->onDelete('cascade'); // FK muebles
             $table->string('image_path');
             $table->boolean('is_primary')->default(false);
             $table->integer('display_order')->default(0);

@@ -1,10 +1,18 @@
 <?php
-public function run(): void{
-        // User::factory(10)->create();
+
+namespace Database\Seeders;
+
+use App\Models\Category;
+use Illuminate\Database\Seeder;
+
+class CategorySeeder extends Seeder
+{
+    public function run(): void{
 
     for ($i = 1; $i < 5; $i++) {
-        Categoria::factory()->create([
+        Category::factory()->create([
             'nombre' => 'Categoria' . $i
         ]);
     }
+}
 }

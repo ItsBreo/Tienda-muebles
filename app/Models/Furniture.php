@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
-use JsonSerializable;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 // Clase Mueble
-class Furniture implements JsonSerializable {
+class Furniture extends model {
 
     private int $id;
     private int $categoryId;
@@ -42,24 +44,7 @@ class Furniture implements JsonSerializable {
         $this->dimensions = $dimensions;
         $this->mainColor = $mainColor;
         $this->isSalient = $isSalient;
-        $this->images = $images;
-    }
-
-    // Implementación de JsonSerializable
-    public function jsonSerialize(): array {
-        return [
-            'id' => $this->id,
-            'category_id' => $this->categoryId,
-            'name' => $this->name,
-            'description' => $this->description,
-            'price' => $this->price,
-            'stock' => $this->stock,
-            'materials' => $this->materials,
-            'dimensions' => $this->dimensions,
-            'main_color' => $this->mainColor,
-            'is_salient' => $this->isSalient,
-            'images' => $this->images,
-        ];
+        // $this->images = $images;
     }
 
     // Getters públicos
@@ -103,10 +88,10 @@ class Furniture implements JsonSerializable {
         return $this->isSalient;
     }
 
-    public function getImages(): array {
+/*    public function getImages(): array {
         return $this->images;
     }
-
+*/
     // Setters públicos
     public function setId(int $id): void {
         $this->id = $id;
@@ -147,11 +132,11 @@ class Furniture implements JsonSerializable {
     public function setIsSalient(bool $isSalient): void {
         $this->isSalient = $isSalient;
     }
-
+/*
     public function setImages(array $images): void {
         $this->images = $images;
     }
-
+*/
     // Método helper para obtener la imagen principal
     public function getMainImage(): string {
         return $this->images[0] ?? 'default.jpg'; // Retornamos la primera imagen o una imagen por defecto
@@ -212,5 +197,9 @@ class Furniture implements JsonSerializable {
 
         // Devolvemos el string final
         return $precioFormateado . ' ' . $simbolo;
+    }
+    public function images()
+    {
+        return $this->hasMany(Image::class);
     }
 }

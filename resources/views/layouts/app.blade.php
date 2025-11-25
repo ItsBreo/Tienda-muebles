@@ -1,18 +1,10 @@
 @php
-    if (!isset($activeSesionId)) {
-        $activeSesionId = request()->query('sesionId');
-    }
+    // El usuario activo se obtiene directamente del sistema de autenticación de Laravel.
+    // La variable $activeUser ya no es necesaria, usaremos auth()->user() directamente.
+    // La variable $activeSesionId queda obsoleta y ya no se usa.
 
-    if (!isset($activeUser)) {
-        if ($activeSesionId) {
-            // Usamos el método estático de tu modelo User
-            $activeUser = \App\Models\User::activeUserSesion($activeSesionId);
-        } else {
-            $activeUser = null;
-        }
-    }
-
-    // (Obtenemos las preferencias, ya que el controlador puede haberlas pre-definido)
+    // Lógica para las preferencias.
+    // Si un controlador ya las ha definido, se usan esas. Si no, las calculamos aquí.
     if (!isset($preferencias)) {
         $defaultPrefs = [
             'tema' => 'claro',
@@ -20,9 +12,9 @@
             'tamaño' => 6,
         ];
 
-        // Usamos el $activeUser que acabamos de definir
-        if ($activeUser) {
-            $cookieName = 'preferencias_' . $activeUser->id;
+        // Si hay un usuario autenticado, intentamos leer su cookie.
+        if (auth()->check()) {
+            $cookieName = 'preferencias_' . auth()->user()->id;
             $cookieData = json_decode(request()->cookie($cookieName), true);
 
             if ($cookieData) {
@@ -31,12 +23,11 @@
                 $preferencias = $defaultPrefs;
             }
         } else {
-            // No hay sesión activa o el sesionId es inválido
+            // Si no hay usuario, usamos las preferencias por defecto.
             $preferencias = $defaultPrefs;
         }
     }
 
-    // !! CORRECCIÓN: Añadida la lógica para el tema del navbar (soluciona el texto oscuro)
     $bsTheme = $preferencias['tema'] === 'oscuro' ? 'dark' : 'light';
     $navbarClass = $preferencias['tema'] === 'oscuro' ? 'navbar-dark' : 'navbar-light';
 @endphp
@@ -68,7 +59,7 @@
 
             {{-- Código Modificado para Centrar con Clases --}}
             <a class="navbar-brand custom-brand-centered"
-                href="{{ route('principal', ['sesionId' => $activeSesionId]) }}">
+                href="{{ route('principal') }}">
                 <span class="brand-text">Tienda Muebles</span>
                 <img src="{{ asset('images/JJDAY.png') }}" alt="Logo Tienda Muebles JJDAY" class="navbar-logo"
                     style="width: 100px;">
@@ -80,39 +71,33 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link"
-                            href="{{ route('categorias.index', ['sesionId' => $activeSesionId]) }}">Categorías</a>
+                        <a class="nav-link" href="{{ route('categorias.index') }}">Categorías</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('muebles.index', ['sesionId' => $activeSesionId]) }}">Todos
-                            los Muebles</a>
+                        <a class="nav-link" href="{{ route('muebles.index') }}">Todos los Muebles</a>
                     </li>
 
-                    @if($activeUser)
+                    @auth
                         {{-- Si el usuario está logueado, muestra todos los enlaces --}}
                         <li class="nav-item">
-                            <a class="nav-link"
-                                href="{{ route('carrito.show', ['sesionId' => $activeSesionId]) }}">Carrito</a>
+                            <a class="nav-link" href="{{ route('carrito.show') }}">Carrito</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link"
-                                href="{{ route('preferencias.show', ['sesionId' => $activeSesionId]) }}">Preferencias</a>
+                            <a class="nav-link" href="{{ route('preferencias.show') }}">Preferencias</a>
                         </li>
 
                         {{-- También comprobamos el rol de admin aquí --}}
-                        @if ($activeUser->rol === 'admin')
+                        @if (auth()->user()->hasRole('Admin'))
                             <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('admin.muebles.index', ['sesionId' => $activeSesionId]) }}">Administración</a>
+                                <a class="nav-link" href="{{ route('admin.muebles.index') }}">Administración</a>
                             </li>
                         @endif
 
                         <li class="nav-item">
                             <form action="{{ route('login.logout') }}" method="POST">
                                 @csrf
-                                <input type="hidden" name="sesionId" value="{{ $activeSesionId }}">
                                 <button type="submit" class="btn btn-link nav-link">Logout
-                                    ({{ $activeUser->email }})</button>
+                                    ({{ auth()->user()->email }})</button>
                             </form>
                         </li>
                     @else

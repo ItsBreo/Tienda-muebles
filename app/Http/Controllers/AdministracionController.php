@@ -50,34 +50,20 @@ class AdministracionController extends Controller
      */
     private function checkAdmin(Request $request)
     {
-
-        $sesionId = $request->input('sesionId') ?? $request->query('sesionId');
-
-        if (!$sesionId) {
-            // Si no hay sesionId, no está autenticado.
-            return redirect()->route('login.show')->with('error', 'Debes iniciar sesión.');
+        // Usamos el sistema de autenticación de Laravel.
+        // 1. Comprueba si hay un usuario autenticado.
+        if (!auth()->check()) {
+            return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
         }
 
-        // Buscamos al usuario en el array de la sesión
-        $usuarios = Session::get('usuarios', []);
-        $userJson = $usuarios[$sesionId] ?? null;
-
-        if (!$userJson) {
-            // Si el sesionId no está en la sesión, se ha invalidado.
-            return redirect()->route('login.show')->with('error', 'Tu sesión ha expirado.');
-        }
-
-        // Si el usuario existe, comprobamos el rol
-        $userData = json_decode($userJson);
-
-
-        if ($userData && $userData->rol === 'admin') {
+        // 2. Comprueba si el usuario autenticado tiene el rol 'Admin'.
+        if (auth()->user()->hasRole('Admin')) {
             return true;
         }
 
         // No es admin. Le redirigimos a la página principal con un error.
-        return redirect()->route('principal', ['sesionId' => $sesionId])
-                         ->with('error-admin', 'Acceso denigado. No tienes permisos de administrador.');
+        return redirect()->route('principal')
+                         ->with('error-admin', 'Acceso denegado. No tienes permisos de administrador.');
     }
 
 
@@ -94,9 +80,7 @@ class AdministracionController extends Controller
         $muebles = $this->getMuebles();
 
         // Pasamos los muebles a la vista del panel de administración
-
-        $sesionId = $request->input('sesionId') ?? $request->query('sesionId');
-        return view('admin.muebles.index', compact('muebles', 'sesionId'));
+        return view('admin.muebles.index', compact('muebles'));
     }
 
     /**
@@ -110,8 +94,7 @@ class AdministracionController extends Controller
 
 
         $categories = Category::getMockData();
-        $sesionId = $request->input('sesionId') ?? $request->query('sesionId');
-        return view('admin.muebles.create', compact('sesionId', 'categories'));
+        return view('admin.muebles.create', compact('categories'));
     }
 
     /**
@@ -176,8 +159,7 @@ if ($request->hasFile('image')) {
         $this->saveMuebles($muebles);
 
 
-        $sesionId = $request->input('sesionId');
-        return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId])->with('success', 'Mueble creado correctamente.');
+        return redirect()->route('admin.muebles.index')->with('success', 'Mueble creado correctamente.');
     }
 
     /**
@@ -200,8 +182,7 @@ if ($request->hasFile('image')) {
         }
 
 
-        $sesionId = $request->input('sesionId') ?? $request->query('sesionId');
-        return view('admin.muebles.show', compact('mueble', 'sesionId'));
+        return view('admin.muebles.show', compact('mueble'));
     }
 
 
@@ -226,8 +207,7 @@ if ($request->hasFile('image')) {
 
 
         $categories = Category::getMockData();
-        $sesionId = $request->input('sesionId') ?? $request->query('sesionId');
-        return view('admin.muebles.edit', compact('mueble', 'sesionId', 'categories'));
+        return view('admin.muebles.edit', compact('mueble', 'categories'));
     }
 
     public function update(Request $request, $id)
@@ -275,8 +255,7 @@ if ($request->hasFile('image')) {
         $muebles[$muebleIndex] = $mueble;
         $this->saveMuebles($muebles);
 
-        $sesionId = $request->input('sesionId');
-        return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId])->with('success', 'Mueble actualizado correctamente.');
+        return redirect()->route('admin.muebles.index')->with('success', 'Mueble actualizado correctamente.');
     }
 
     /**
@@ -297,7 +276,6 @@ if ($request->hasFile('image')) {
 
         $this->saveMuebles($muebles);
 
-        $sesionId = $request->input('sesionId');
-        return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId])->with('success', 'Mueble eliminado correctamente.');
+        return redirect()->route('admin.muebles.index')->with('success', 'Mueble eliminado correctamente.');
     }
 }

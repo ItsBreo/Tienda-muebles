@@ -14,41 +14,12 @@ use App\Models\Category;
 // Controlador de Catálogo
 class CatalogoController extends Controller
 {
-    /**
-     * Carga las preferencias y el usuario activo desde la sesión y las cookies.
-     */
-    private function cargarSesionYPreferencias(Request $request): array
-    {
-        $activeSesionId = $request->query('sesionId');
-        $activeUser = null;
-        $cookieName = null;
-        // Valores por defecto
-        $preferencias = [
-            'tema' => 'claro',
-            'moneda' => 'EUR',
-            'tamaño' => 6, //
-        ];
-
-        if ($activeSesionId && Session::has('usuarios')) {
-            $usuarios = Session::get('usuarios');
-            if (isset($usuarios[$activeSesionId])) {
-                $activeUser = json_decode($usuarios[$activeSesionId]);
-                $cookieName = 'preferencias_' . $activeUser->id;
-            }
-        }
-
-        if ($cookieName && $request->hasCookie($cookieName)) {
-            $preferencias = array_merge($preferencias, json_decode($request->cookie($cookieName), true));
-        }
-
-        return [$activeSesionId, $preferencias];
-    }
-
 
     // Listado de categorías
     public function categorias(Request $request){
-        // Cargar sesión y preferencias para el layout (navbar)
-        list($activeSesionId, $preferencias) = $this->cargarSesionYPreferencias($request);
+        // La vista puede acceder a la sesión directamente con auth()->check() y auth()->user()
+        $preferencias = []; // Puedes añadir la lógica de cookies si es necesario para esta vista
+        $activeSesionId = null; // Ya no se usa
 
         $categories = Category::getMockData();
 
@@ -57,23 +28,18 @@ class CatalogoController extends Controller
 
     // Mostrar muebles por categoría
     public function show(Request $request, $id){
-        // Cargar sesionId para la redirección
-        list($activeSesionId, $preferencias) = $this->cargarSesionYPreferencias($request);
-
         $category = Category::findById((int)$id);
 
         // Si la categoría no existe, redirigir
         if (!$category) {
-            return redirect()->route('principal', ['sesionId' => $activeSesionId]);
+            return redirect()->route('principal');
         }
 
 
         Cookie::queue("categoria_{$category->getId()}", json_encode($category), 60 * 24 * 30);
 
-        // Redirigimos a /muebles propagando el sesionId
         return redirect()->route('muebles.index', [
             'category' => $category->getId(),
-            'sesionId' => $activeSesionId
         ]);
     }
 
@@ -100,8 +66,20 @@ class CatalogoController extends Controller
     // Listado de muebles con filtros, orden y paginación
     public function index(Request $request)
     {
-        // Cargar sesión y preferencias
-        list($activeSesionId, $preferencias) = $this->cargarSesionYPreferencias($request);
+        // Valores por defecto para las preferencias
+        $preferencias = [
+            'tema' => 'claro',
+            'moneda' => 'EUR',
+            'tamaño' => 6,
+        ];
+
+        // Si el usuario está autenticado, intentamos leer su cookie de preferencias.
+        if (auth()->check()) {
+            $cookieName = 'preferencias_' . auth()->user()->id;
+            if ($request->hasCookie($cookieName)) {
+                $preferencias = array_merge($preferencias, json_decode($request->cookie($cookieName), true));
+            }
+        }
 
         // Obtenemos preferencia de paginación desde NUESTRA cookie
         $perPage = max((int) ($preferencias['tamaño'] ?? 6), 6); // Mínimo 6
@@ -185,7 +163,6 @@ class CatalogoController extends Controller
         return view('catalogo.index', [
             'muebles' => $paginator,
             'categories' => $categories,
-            'activeSesionId' => $activeSesionId,
             'preferencias' => $preferencias,
         ]);
     }

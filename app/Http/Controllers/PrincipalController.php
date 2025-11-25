@@ -39,37 +39,25 @@ class PrincipalController extends Controller
 
     public function index(Request $request)
     {
-
-        $activeSesionId = $request->query('sesionId');
-
-
-        $activeUser = null;
-        $cookieName = null;
         $preferencias = [ // Valores por defecto
             'tema' => 'claro',
             'moneda' => 'EUR',
             'tamaño' => 4,
         ];
 
-        if ($activeSesionId && Session::has('usuarios')) {
-            $usuarios = Session::get('usuarios');
-            if (isset($usuarios[$activeSesionId])) {
-                $activeUser = json_decode($usuarios[$activeSesionId]);
-                $cookieName = 'preferencias_' . $activeUser->id;
+        // Si el usuario está autenticado, intentamos leer su cookie de preferencias.
+        if (auth()->check()) {
+            $user = auth()->user();
+            $cookieName = 'preferencias_' . $user->id;
+
+            if ($request->hasCookie($cookieName)) {
+                $preferencias = array_merge($preferencias, json_decode($request->cookie($cookieName), true));
             }
         }
-
-        // Leemos la cookie usando el objeto Request
-        if ($cookieName && $request->hasCookie($cookieName)) {
-            $preferencias = array_merge($preferencias, json_decode($request->cookie($cookieName), true));
-        }
-
         // Obtenemos los datos
         $categories = Category::getMockData();
         $featured = $this->getMuebles()->filter(fn($featured) => $featured->isSalient())->take(6)->values();
 
-
-        // La vista 'principal' ahora recibirá $categories, $featured, $activeSesionId y $preferencias
-        return view('principal', compact('categories', 'featured', 'activeSesionId', 'preferencias'));
+        return view('principal', compact('categories', 'featured', 'preferencias'));
     }
 }

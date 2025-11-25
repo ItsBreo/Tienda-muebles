@@ -9,8 +9,8 @@
         <p class="lead">Catálogo de muebles de ejemplo, sin base de datos — todo con mock, cookies y sesiones.</p>
         <p>
 
-            <a class="btn btn-primary" href="{{ route('muebles.index', ['sesionId' => $activeSesionId]) }}">Ver catálogo completo</a>
-            <a class="btn btn-outline-secondary" href="{{ route('categorias.index', ['sesionId' => $activeSesionId]) }}">Explorar categorías</a>
+            <a class="btn btn-primary" href="{{ route('muebles.index') }}">Ver catálogo completo</a>
+            <a class="btn btn-outline-secondary" href="{{ route('categorias.index') }}">Explorar categorías</a>
         </p>
     </div>
 </div>
@@ -24,7 +24,7 @@
                 <h5 class="card-title">{{ $cat->getName() }}</h5>
                 <p class="card-text">{{ $cat->getDescription() }}</p>
 
-                <a href="{{ route('categorias.show', ['id' => $cat->getId(), 'sesionId' => $activeSesionId]) }}" class="btn btn-sm btn-primary">Ver muebles</a>
+                <a href="{{ route('categorias.show', ['id' => $cat->getId()]) }}" class="btn btn-sm btn-primary">Ver muebles</a>
             </div>
         </div>
     </div>
@@ -45,12 +45,11 @@
                 <p class="mb-1"><strong>{{ $m->getFormattedPrice($preferencias['moneda']) }}</strong></p>
 
 
-                <a href="{{ route('muebles.show', ['id' => $m->getId(), 'sesionId' => $activeSesionId]) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+                <a href="{{ route('muebles.show', ['id' => $m->getId()]) }}" class="btn btn-sm btn-outline-primary">Ver</a>
 
                 @if ($m->getStock() > 0)
-                            <form action="{{ route('carrito.add', ['mueble' => $m->getId(), 'sesionId' => $activeSesionId]) }}" method="POST" class="d-inline ms-1">
+                            <form action="{{ route('carrito.add', ['mueble' => $m->getId()]) }}" method="POST" class="d-inline ms-1">
                                 @csrf
-                                <input type="hidden" name="sesionId" value="{{ $activeSesionId }}">
                                 <input type="hidden" name="quantity" value="1">
                                 <button type="submit" class="btn btn-sm btn-success">Añadir</button>
                             </form>

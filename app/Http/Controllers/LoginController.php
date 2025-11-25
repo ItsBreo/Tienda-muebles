@@ -3,138 +3,117 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Session;
-use App\Models\User;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
     public function show()
     {
-        // Pasamos un sesionId nulo a la vista de login
-        return view('login', ['sesionId' => null]);
+        // Simplemente muestra la vista de login.
+        return view('login');
     }
 
     public function login(Request $request)
     {
-        $data = $request->validate([
+        // 1. Validamos los datos del formulario.
+        $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string', 'min:4'],
         ]);
 
-        $user = User::verifyUser($data['email'], $data['password']);
+        // --- Lógica de bloqueo de intentos (Throttling) manual ---
 
-        if (!$user) {
-            return back()->withErrors(['autenticationError' => 'Las credenciales no son correctas']);
+        // 2. Creamos una "llave" única para identificar este intento de login.
+        $throttleKey = Str::lower($request->input('email')) . '|' . $request->ip();
+
+        // 3. Comprobamos si se han superado los intentos.
+        if (RateLimiter::tooManyAttempts($throttleKey, 3)) { // 3 intentos máximos
+            $seconds = RateLimiter::availableIn($throttleKey);
+            throw ValidationException::withMessages([
+                'email' => trans('auth.throttle', [
+                    'seconds' => $seconds,
+                    'minutes' => ceil($seconds / 60),
+                ]),
+            ]);
         }
 
-        // Creamos un ID único para ESTA instancia de login
-        $sesionId = Session::getId() . "_" . $user->getId() . "_" . time();
-        $id_COOKIE = 'preferencias_' . $user->getId();
+        // 4. Intentamos autenticar al usuario.
+        // El método Auth::attempt se encarga de verificar el email y la contraseña (hasheada).
+        if (Auth::attempt($request->only('email', 'password'), $request->filled('remember'))) {
+            // Si el login es exitoso:
+            $request->session()->regenerate(); // Regeneramos la sesión por seguridad.
 
-        // Obtenemos el array de usuarios de la sesión
-        $users = Session::get('usuarios', []);
+            RateLimiter::clear($throttleKey); // Limpiamos los intentos fallidos.
 
-        // Guardamos los datos
-        $userDataSesion = [
-            'id' => $user->getId(),
-            'email' => $user->getEmail(),
-            'name' => $user->getName(),
-            'rol' => $user->getRol(),
-            'fecha_ingreso' => date('Y-m-d H:i:s'),
-            'sesion_id' => $sesionId,
-            'cookie_name' => $id_COOKIE, // Guardamos el nombre de la cookie a usar
-        ];
+            $user = Auth::user();
 
-        // Añadimos este usuario al array de la sesión
-        $users[$sesionId] = json_encode($userDataSesion);
-        Session::put('usuarios', $users);
+            // --- Lógica de Cookie de Preferencias ---
+            $cookieName = 'preferencias_' . $user->id;
+            $cookieRedirect = null;
 
-        if ($user->getRol() == 'admin') {
-            return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId]);
+            // 2. Verificamos si la cookie de preferencias NO existe en la petición.
+            if (!$request->hasCookie($cookieName)) {
+                // 3. Si no existe, la creamos con valores por defecto.
+                $defaultPreferences = [
+                    'tema' => 'claro',
+                    'moneda' => 'EUR',
+                    'tamaño' => 6, // Un valor inicial razonable para la paginación
+                ];
+
+                $cookie = Cookie::make(
+                    $cookieName,
+                    json_encode($defaultPreferences),
+                    config('session.lifetime', 120) // Duración de la cookie
+                );
+
+                // 4. Preparamos una redirección a la página de preferencias adjuntando la nueva cookie.
+                $cookieRedirect = redirect()->route('preferencias.show')->withCookie($cookie);
+            }
+
+            // 5. Redirigimos según el rol.
+            if ($user->hasRole('Admin')) {
+                // Si es admin, siempre va a su panel. La cookie se enviará si es necesario.
+                $redirect = redirect()->intended(route('admin.muebles.index'));
+                return $cookieRedirect ? $redirect->withCookie($cookieRedirect->headers->getCookies()[0]) : $redirect;
+            }
+
+            // 6. Si se debe redirigir a preferencias, lo hacemos. Si no, a la página principal.
+            return $cookieRedirect ?? redirect()->intended(route('principal'));
         }
 
-        // Comprobamos si la cookie ya existia, si no, la creamos
-        if ($request->cookie($id_COOKIE) == null) {
-            $cookieData = [
-                'sesionId' => $sesionId,
-                'email' => $user->getEmail(),
-                'tema' => '',
-                'moneda' => '',
-                'tamaño' => '',
-            ];
+        // 6. Si el login falla, incrementamos el contador de intentos.
+        RateLimiter::hit($throttleKey, 300); // Bloqueo de 300 segundos (5 minutos)
 
-            $cookieDuration = config('session.lifetime', 120);
-
-            // Creamos la cookie
-            $cookie = Cookie::make(
-                name: $id_COOKIE,
-                value: json_encode($cookieData),
-                minutes: $cookieDuration,
-                path: '/',
-                domain: null,
-                secure: config('session.secure', false),
-                httpOnly: true,
-                sameSite: config('session.same_site', 'lax')
-            );
-
-            // Redirigimos a preferencias (pasando el sesionId) y adjuntamos la cookie
-            return redirect()
-                ->route('preferencias.show', ['sesionId' => $sesionId])
-                ->withCookie($cookie);
-        }
-
-        // Si la cookie ya existía, vamos a principal (pasando el sesionId)
-        if ($user->getRol() == 'admin') {
-            return redirect()->route('admin', ['sesionId' => $sesionId]);
-        } else {
-        return redirect()->route('principal', ['sesionId' => $sesionId]);
-        }
+        // 7. Devolvemos al usuario a la página de login con un error.
+        throw ValidationException::withMessages([
+            'email' => [trans('auth.failed')],
+        ]);
     }
 
     public function logout(Request $request)
     {
-        // El sesionId nos dice que pestaña/usuario cerrar
-        $sesionId = $request->input('sesionId');
+        Auth::logout(); // Cierra la sesión del usuario.
 
-        $users = Session::get('usuarios', []);
-        $cookieToForget = null;
+        $request->session()->invalidate(); // Invalida la sesión actual.
+        $request->session()->regenerateToken(); // Regenera el token CSRF.
 
-        if (isset($users[$sesionId])) {
-            // Obtenemos el nombre de la cookie antes de borrar
-            $userData = json_decode($users[$sesionId]);
-            $cookieToForget = $userData->cookie_name ?? null;
-
-            // Eliminamos solo a este usuario del array
-            unset($users[$sesionId]);
-            Session::put('usuarios', $users);
-        }
-
-        $response = redirect()->route('principal');
-
-        // Olvidamos la cookie asociada si la encontramos
-        if ($cookieToForget) {
-            $response->withCookie(Cookie::forget($cookieToForget));
-        }
-
-        return $response;
+        return redirect('/'); // Redirige a la página de inicio.
     }
 
     public function register()
     {
+        // Muestra la vista de registro.
         return view('registro');
     }
 
     public function registerUser(Request $request)
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'min:3'],
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string', 'min:4'],
-        ]);
-
-        $user = User::createUser($data['name'], $data['email'], $data['password']);
-
-        return redirect()->route('login.show');
+        // Este método ya no es necesario aquí. La lógica de creación de usuarios
+        // la hemos movido al UserController
+        return redirect()->route('login.show')->with('info', 'La funcionalidad de registro ha sido movida.');
     }
 }

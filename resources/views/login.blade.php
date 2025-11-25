@@ -87,9 +87,20 @@
                         <form method="POST" action="{{ route('login.store') }}">
                             @csrf
 
+                            {{-- Bloque para mostrar errores de validación o de credenciales --}}
+                            @if ($errors->any())
+                                <div class="alert alert-danger mb-4">
+                                    <ul class="mb-0">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
                             <div class="mb-3">
                                 <label for="email" class="form-label">Correo Electrónico</label>
-                                <input type="email" class="form-control" id="email" name="email" required autofocus>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" required autofocus>
                             </div>
 
                             <div class="mb-4">
@@ -98,7 +109,7 @@
                             </div>
 
                             <div class="mb-4 form-check">
-                                <input type="checkbox" class="form-check-input" id="remember">
+                                <input type="checkbox" class="form-check-input" id="remember" name="remember">
                                 <label class="form-check-label" for="remember">Recordarme</label>
                             </div>
 

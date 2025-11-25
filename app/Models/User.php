@@ -2,119 +2,59 @@
 
 namespace App\Models;
 
+// 1. Importar las clases necesarias de Eloquent y para autenticación.
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable; // Importamos Authenticatable
 use Illuminate\Support\Facades\Session;
 
-class User
+// 2. Cambiamos la clase para que herede de Authenticatable.
+class User extends Authenticatable
 {
+    use HasFactory;
 
-    private $id;
-    private $email;
-    private $password;
-    private $name;
-    private $rol;
+    protected $table = 'usuarios';
 
+    /**
+     * Los atributos que se pueden asignar masivamente.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'nombre',
+        'apellidos',
+        'email',
+        'password',
+        'role_id', // Cambiamos 'rol' por 'role_id'
+    ];
 
-    public function __construct($id, $email, $password, $name, $rol)
+    /**
+     * Los atributos que deben ocultarse para la serialización.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * Define la relación con el modelo Role.
+     */
+    public function role()
     {
-        $this->id = $id;
-        $this->email = $email;
-        $this->password = $password;
-        $this->name = $name;
-        $this->rol = $rol;
+        return $this->belongsTo(Role::class);
     }
 
-    private static function userData()
+    /**
+     * Comprueba si el usuario tiene un rol específico.
+     *
+     * @param string $roleName
+     * @return bool
+     */
+    public function hasRole(string $roleName): bool
     {
-
-        return [
-            new User(1, 'admin@correo.com', '1234', 'Admin', 'admin'),
-            new User(2, 'jose@correo.com', '1234', 'Jose', 'user'),
-            new User(3, 'pedro@correo.com', '1234', '', 'user'),
-            new User(4, 'juan@correo.com', '1234', '', 'user'),
-        ];
+        // Usamos la relación para comprobar el nombre del rol.
+        return $this->role && $this->role->name === $roleName;
     }
-
-    public static function verifyUser($email, $password):User|null {
-        foreach (User::userData() as $user) {
-            if ($user->email === $email && $user->password === $password) {
-                return $user;
-            }
-        }
-        return null;
-    }
-
-    // Función para verificar que el usuario es admin
-    public function isAdmin(): bool{
-        if ($this->rol === 'admin') {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-    public static function activeUserSesion($sesionId)
-    {
-        if ($sesionId != null) {
-            // listado de uuarios activos
-            $activeUsersList = Session::get('usuarios');
-
-            // user activo
-            if ($activeUsersList) {
-                return $activeUsersList[$sesionId] ? json_decode($activeUsersList[$sesionId]) : null;
-            }
-        }
-        return null;
-    }
-
-
-    // Getters
-
-    public function getId() {
-        return $this->id;
-    }
-
-    public function getName() {
-        return $this->name;
-    }
-
-    public function getEmail() {
-        return $this->email;
-    }
-
-    public function getRol() {
-        return $this->rol;
-    }
-
-    public function getPassword() {
-        return $this->password;
-    }
-
-
-    // Setters
-
-    public function setName($name) {
-        $this->name = $name;
-    }
-
-    public function setEmail($email) {
-        $this->email = $email;
-    }
-
-    public function setPassword($password) {
-        $this->password = $password;
-    }
-
-    public function setRol($rol) {
-        $this->rol = $rol;
-    }
-
-    public function setId($id) {
-        $this->id = $id;
-    }
-
-
-    /*
-
-    */
-
 }

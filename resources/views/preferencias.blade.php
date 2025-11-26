@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+
 @section('title', 'Configurar Preferencias')
 
 @section('content')
@@ -14,11 +15,8 @@
                 </p>
 
 
-                <form action="{{ route('preferencias.update') }}" method="POST">
+                <form action="{{ route('preferencias.update', parameters: ['sesionId' => $sesionId]) }}" method="POST">
                     @csrf
-
-
-
 
                     <!-- 1. Tema Visual -->
                     <div class="mb-3">

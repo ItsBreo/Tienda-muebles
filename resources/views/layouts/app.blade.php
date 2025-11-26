@@ -72,10 +72,10 @@
                 <ul class="navbar-nav ms-auto">
                     {{-- Todos los enlaces de navegación deben incluir el sesionId para mantener la sesión --}}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('categorias.index', ['sesionId' => $sesionId ?? null]) }}">Categorías</a>
+                        <a class="nav-link" href="{{ route('categorias.index', ['sesionId' => $sesionId]) }}">Categorías</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('muebles.index', ['sesionId' => $sesionId ?? null]) }}">Todos los Muebles</a>
+                        <a class="nav-link" href="{{ route('muebles.index', ['sesionId' => $sesionId]) }}">Todos los Muebles</a>
                     </li>
 
                     {{-- Reemplazamos @auth con una comprobación de la variable $user --}}

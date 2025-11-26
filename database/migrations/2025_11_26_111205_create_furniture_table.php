@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('dimensions')->nullable();
             $table->string('main_color');
             $table->boolean('is_salient')->default(false);
-            $table->json('images')->nullable(); // Almacenamos las rutas de las imágenes en formato JSON
+
             $table->timestamps();
         });
     }

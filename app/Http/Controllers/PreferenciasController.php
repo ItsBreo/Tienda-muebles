@@ -20,7 +20,9 @@ class PreferenciasController extends Controller
         if (!User::activeUserSesion($sesionId)) {
             return redirect()->route('login.show')->withErrors('Debes iniciar sesión para ver tus preferencias.');
         }
-        return view('preferencias', compact('sesionId'));
+
+
+        return view('preferencias' , compact('sesionId'));
     }
 
     /**
@@ -29,6 +31,12 @@ class PreferenciasController extends Controller
      */
     public function update(Request $request)
     {
+
+        // Necesitamos el sesionId para mantener la navegación
+        $sesionId = $request->query('sesionId');
+
+        $user = User::activeUserSesion($sesionId);
+
         // Validamos los datos del formulario
         $data = $request->validate([
             'tema' => ['required', 'string', 'in:claro,oscuro,sistema'],
@@ -36,11 +44,12 @@ class PreferenciasController extends Controller
             'tamaño' => ['required', 'integer', 'min:6', 'max:24'],
         ]);
 
-        $sesionId = $request->input('sesionId');
-        $user = User::activeUserSesion($sesionId);
+
         if (!$user) {
             return redirect()->route('login.show')->withErrors('Debes iniciar sesión para cambiar tus preferencias.');
         }
+
+
         $cookieName = 'preferencias_' . $user->id;
 
         // 3. Leemos la cookie actual para no perder otros datos que pudiera tener

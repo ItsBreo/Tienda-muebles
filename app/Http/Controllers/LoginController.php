@@ -81,9 +81,7 @@ class LoginController extends Controller
             }
 
             // 4. Si la cookie ya existía, redirigimos a la página correspondiente.
-            if ($user->hasRole('Admin')) {
-                return redirect()->route('admin.muebles.index', ['sesionId' => 'sesionId']);
-            }
+            // Redirigimos siempre a la página principal, que gestiona el sesionId.
             return redirect()->route('principal', ['sesionId' => $sesionId]);
         }
 

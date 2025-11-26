@@ -24,8 +24,11 @@ class AdministracionController extends Controller
      */
     private function checkAdmin(Request $request)
     {
-        // 1. Obtenemos el sesionId de la petición (puede venir por query string o formulario)
-        $sesionId = $request->query('sesionId') ?? $request->input('sesionId');
+        // 1. Obtenemos el sesionId de la petición.
+        // Lo buscamos en la ruta, en la query string y en los inputs del formulario para no perderlo.
+        $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
+
+
         $user = User::activeUserSesion($sesionId);
 
         // 2. Comprobamos si existe un usuario para esa sesión.

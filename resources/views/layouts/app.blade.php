@@ -5,6 +5,7 @@
 
     // Lógica para las preferencias.
     if (!isset($preferencias)) {
+
         $defaultPrefs = [
             'tema' => 'claro',
             'moneda' => 'EUR',
@@ -25,11 +26,14 @@
             // Si no hay usuario, usamos las preferencias por defecto.
             $preferencias = $defaultPrefs;
         }
+        // TODO: arreglar para que reconozca el array y seleccione la opcion por defecto
+        $bsTheme = $preferencias['tema'] === 'oscuro' ? 'dark' : 'light';
+        $navbarClass = $preferencias['tema'] === 'oscuro' ? 'navbar-dark' : 'navbar-light';
     }
-    // Al acceder al apartado de "Explorar categorías", me da error diciendo que no reconoce el tema
-    // Undefined array key "tema"
-    $bsTheme = $preferencias['tema'] === 'oscuro' ? 'dark' : 'light';
-    $navbarClass = $preferencias['tema'] === 'oscuro' ? 'navbar-dark' : 'navbar-light';
+
+    $bsTheme = 'claro';
+    $navbarClass = 'navbar-light';
+
 @endphp
 <!DOCTYPE html>
 <html lang="es" data-theme="{{ $preferencias['tema'] ?? 'claro' }}">
@@ -72,11 +76,11 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     {{-- Todos los enlaces de navegación deben incluir el sesionId para mantener la sesión --}}
-                    <li class="nav-item"> <!-- Si envio la sesion a los index categorias y muebles da fallo ( , ['sesionId' => $sesionId] ) -->
-                        <a class="nav-link" href="{{ route('categorias.index') }}">Categorías</a>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('categorias.index', ['sesionId' => $sesionId ?? 'null']) }}">Categorías</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('muebles.index') }}">Todos los Muebles</a>
+                        <a class="nav-link" href="{{ route('muebles.index', ['sesionId' => $sesionId ?? 'null']) }}">Todos los Muebles</a>
                     </li>
 
                     {{-- Reemplazamos @auth con una comprobación de la variable $user --}}

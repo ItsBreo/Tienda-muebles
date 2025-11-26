@@ -5,6 +5,7 @@
 
     // Lógica para las preferencias.
     if (!isset($preferencias)) {
+
         $defaultPrefs = [
             'tema' => 'claro',
             'moneda' => 'EUR',
@@ -25,10 +26,14 @@
             // Si no hay usuario, usamos las preferencias por defecto.
             $preferencias = $defaultPrefs;
         }
+        // TODO: arreglar para que reconozca el array y seleccione la opcion por defecto
+        $bsTheme = $preferencias['tema'] === 'oscuro' ? 'dark' : 'light';
+        $navbarClass = $preferencias['tema'] === 'oscuro' ? 'navbar-dark' : 'navbar-light';
     }
 
-    $bsTheme = $preferencias['tema'] === 'oscuro' ? 'dark' : 'light';
-    $navbarClass = $preferencias['tema'] === 'oscuro' ? 'navbar-dark' : 'navbar-light';
+    $bsTheme = 'claro';
+    $navbarClass = 'navbar-light';
+
 @endphp
 <!DOCTYPE html>
 <html lang="es" data-theme="{{ $preferencias['tema'] ?? 'claro' }}">
@@ -72,10 +77,10 @@
                 <ul class="navbar-nav ms-auto">
                     {{-- Todos los enlaces de navegación deben incluir el sesionId para mantener la sesión --}}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('categorias.index', ['sesionId' => $sesionId]) }}">Categorías</a>
+                        <a class="nav-link" href="{{ route('categorias.index', ['sesionId' => $sesionId ?? 'null']) }}">Categorías</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('muebles.index', ['sesionId' => $sesionId]) }}">Todos los Muebles</a>
+                        <a class="nav-link" href="{{ route('muebles.index', ['sesionId' => $sesionId ?? 'null']) }}">Todos los Muebles</a>
                     </li>
 
                     {{-- Reemplazamos @auth con una comprobación de la variable $user --}}
@@ -99,7 +104,6 @@
                             {{-- El formulario de logout debe enviar el sesionId para cerrar la sesión correcta --}}
                             <form action="{{ route('login.logout') }}" method="POST">
                                 @csrf
-                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
                                 <button type="submit" class="btn btn-link nav-link">Logout
                                     ({{ $user->email }})</button>
                             </form>

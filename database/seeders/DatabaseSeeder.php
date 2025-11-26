@@ -32,6 +32,14 @@ class DatabaseSeeder extends Seeder
             'role_id' => $adminRole->id,
         ]);
 
+        User::factory()->create([
+            'nombre' => 'Usuario',
+            'apellidos' => 'Prueba',
+            'email' => 'usuario@tienda.com',
+            'password' => bcrypt('1234'),
+            'role_id' => 3,
+        ]);
+
         // 3. Crear 50 usuarios de prueba (Gestores y Clientes)
         User::factory(50)->create();
 

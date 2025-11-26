@@ -51,13 +51,19 @@ class LoginController extends Controller
             $user = Auth::user();
             Auth::logout(); // Cerramos la sesión de Laravel para no usar su cookie.
 
-            // --- Lógica de Cookie de Preferencias (RESTAURADA) ---
-            $cookieName = 'preferencias_' . $user->id;
-            $cookie = null; // Variable para guardar la cookie si la creamos
+            // Generamos un ID de sesión único para esta pestaña
+            $sesionId = uniqid('sesion_', true);
 
-            // Verificamos si la cookie de preferencias NO existe en la petición.
+            // Guardamos el usuario (serializado) en la sesión del servidor con la clave única.
+            // Usamos serialize para guardar el objeto completo.
+            Session::put($sesionId, serialize($user));
+
+            // --- Lógica de Cookie de Preferencias y Redirección ---
+            $cookieName = 'preferencias_' . $user->id;
+
+            // 1. Verificamos si la cookie de preferencias NO existe.
             if (!$request->hasCookie($cookieName)) {
-                // Si no existe, la creamos con valores por defecto.
+                // 2. Si no existe, la creamos con valores por defecto.
                 $defaultPreferences = [
                     'tema' => 'claro',
                     'moneda' => 'EUR',
@@ -67,31 +73,18 @@ class LoginController extends Controller
                 $cookie = Cookie::make(
                     $cookieName, json_encode($defaultPreferences), config('session.lifetime', 120)
                 );
+
+                // 3. Redirigimos a la página de preferencias adjuntando la nueva cookie.
+                return redirect()
+                    ->route('preferencias.show', ['sesionId' => $sesionId])
+                    ->withCookie($cookie);
             }
 
-            // Generamos un ID de sesión único para esta pestaña
-            $sesionId = uniqid('sesion_', true);
-
-            // Guardamos el usuario (serializado) en la sesión del servidor con la clave única.
-            // Usamos serialize para guardar el objeto completo.
-            Session::put($sesionId, serialize($user));
-
-            // Creamos la ruta de redirección con el sesionId
+            // 4. Si la cookie ya existía, redirigimos a la página correspondiente.
             if ($user->hasRole('Admin')) {
-                $redirectRoute = route('admin.muebles.index', ['sesionId' => $sesionId]);
-            } else {
-                $redirectRoute = route('principal', ['sesionId' => $sesionId]);
+                return redirect()->route('admin.muebles.index', ['sesionId' => 'sesionId']);
             }
-
-            // Creamos la respuesta de redirección
-            $response = redirect($redirectRoute);
-
-            // Si hemos creado una cookie de preferencias, la adjuntamos a la respuesta.
-            if ($cookie) {
-                return $response->withCookie($cookie);
-            }
-
-            return $response;
+            return redirect()->route('principal', ['sesionId' => $sesionId]);
         }
 
         // --- El resto del código para intentos fallidos permanece igual ---

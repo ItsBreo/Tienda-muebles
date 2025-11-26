@@ -6,7 +6,7 @@
 <div class="jumbotron py-4 mb-4">
     <div class="container">
         <h1 class="display-5">Bienvenido a la Tienda de Muebles</h1>
-        <p class="lead">Catálogo de muebles de ejemplo, sin base de datos — todo con mock, cookies y sesiones.</p>
+        <p class="lead">Explora nuestro catálogo de muebles con Base de Datos en Laravel.</p>
         <p>
 
             <a class="btn btn-primary" href="{{ route('muebles.index') }}">Ver catálogo completo</a>
@@ -36,13 +36,13 @@
     @forelse($featured as $m)
     <div class="col-md-4">
         <div class="card mb-3">
-            <img src="{{ asset($m->getMainImage()) }}" class="card-img-top" alt="{{ $m->name }}">
+            <img src="{{ asset($m->main_image) }}" class="card-img-top" alt="{{ $m->name }}">
             <div class="card-body">
                 <h5 class="card-title">{{ $m->name }}</h5>
                 <p class="card-text">{{ \Illuminate\Support\Str::limit($m->description, 90) }}</p>
 
 
-                <p class="mb-1"><strong>{{ $m->getFormattedPrice($preferencias['moneda']) }}</strong></p>
+                <p class="mb-1"><strong>{{ number_format($m->price, 2) }} {{ $preferencias['moneda'] }}</strong></p>
 
 
                 <a href="{{ route('muebles.show', ['id' => $m->id]) }}" class="btn btn-sm btn-outline-primary">Ver</a>

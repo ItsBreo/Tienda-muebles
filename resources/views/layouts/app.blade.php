@@ -26,7 +26,8 @@
             $preferencias = $defaultPrefs;
         }
     }
-
+    // Al acceder al apartado de "Explorar categorías", me da error diciendo que no reconoce el tema
+    // Undefined array key "tema"
     $bsTheme = $preferencias['tema'] === 'oscuro' ? 'dark' : 'light';
     $navbarClass = $preferencias['tema'] === 'oscuro' ? 'navbar-dark' : 'navbar-light';
 @endphp
@@ -71,11 +72,11 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     {{-- Todos los enlaces de navegación deben incluir el sesionId para mantener la sesión --}}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('categorias.index', ['sesionId' => $sesionId]) }}">Categorías</a>
+                    <li class="nav-item"> <!-- Si envio la sesion a los index categorias y muebles da fallo ( , ['sesionId' => $sesionId] ) -->
+                        <a class="nav-link" href="{{ route('categorias.index') }}">Categorías</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('muebles.index', ['sesionId' => $sesionId]) }}">Todos los Muebles</a>
+                        <a class="nav-link" href="{{ route('muebles.index') }}">Todos los Muebles</a>
                     </li>
 
                     {{-- Reemplazamos @auth con una comprobación de la variable $user --}}
@@ -99,7 +100,6 @@
                             {{-- El formulario de logout debe enviar el sesionId para cerrar la sesión correcta --}}
                             <form action="{{ route('login.logout') }}" method="POST">
                                 @csrf
-                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
                                 <button type="submit" class="btn btn-link nav-link">Logout
                                     ({{ $user->email }})</button>
                             </form>

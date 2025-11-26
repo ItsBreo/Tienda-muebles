@@ -14,5 +14,6 @@ class CategorySeeder extends Seeder
         Category::firstOrCreate(['name' => 'Dormitorio', 'description' => 'Productos para el dormitorio']);
         Category::firstOrCreate(['name' => 'Oficina', 'description' => 'Productos para la oficina']);
         Category::firstOrCreate(['name' => 'Cocina', 'description' => 'Productos para la cocina']);
+        Category::firstOrCreate(['name' => 'Baño', 'description' => 'Productos para el baño']);
     }
 }

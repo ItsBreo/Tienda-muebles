@@ -7,7 +7,6 @@
 
     <form class="row g-2 mb-3" method="GET" action="{{ route('muebles.index') }}">
         <div class="col-md-3">
-            <input type="hidden" name="sesionId" value="{{ $activeSesionId }}">
             <input type="text" name="q" value="{{ request('q') }}" class="form-control" placeholder="Buscar...">
         </div>
         <div class="col-md-2">

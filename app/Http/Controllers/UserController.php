@@ -54,14 +54,6 @@ class UserController extends Controller
         return redirect()->route('usuarios.index')->with('success', 'Usuario creado correctamente.');
     }
 
-    // Editar un usuario
-    public function edit(User $usuario)
-    {
-        // Para editar, sí queremos poder cambiar el rol.
-        $roles = Role::all();
-        return view('usuarios.edit', compact('usuario', 'roles'));
-    }
-
     public function update(Request $request, $id)
     {
         $usuario = User::findOrFail($id);
@@ -83,14 +75,6 @@ class UserController extends Controller
 
         $usuario->update($data);
 
-        return redirect()->route('usuarios.index');
-    }
-
-    // Eliminar un usuario
-    public function destroy(User $usuario)
-    {
-        // Gracias al Route Model Binding, $usuario ya es la instancia que queremos eliminar.
-        $usuario->delete();
         return redirect()->route('usuarios.index');
     }
 

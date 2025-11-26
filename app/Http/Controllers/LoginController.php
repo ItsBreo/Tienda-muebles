@@ -97,6 +97,8 @@ class LoginController extends Controller
     }
 
     public function logout(Request $request)
+
+        // TODO: Crear un guardado de la sesión en la base de datos / Borrar la cookie de sesión.
     {
         // Olvidamos la sesión de la pestaña actual.
         if ($request->has('sesionId')) {

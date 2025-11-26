@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Furniture;
 use Illuminate\Http\Request;
+use App\Models\Furniture;
+use App\Models\Cart;
 use Illuminate\Support\Facades\Session;
+use App\Models\User;
 
 class CarritoController extends Controller
 {
@@ -143,5 +144,52 @@ class CarritoController extends Controller
 
         Session::forget('carrito_' . $user->id);
         return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('success', 'Carrito vaciado');
+    }
+
+    public function saveOnBD()
+    {
+        if (!$user) {
+            return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión para guardar el carrito.']);
+        }
+
+        $carritoSesion = Session::get('carrito', []);
+
+        if (empty($carritoSesion)) {
+            return redirect()->route('carrito.index')->with('error', 'El carrito está vacío.');
+        }
+
+        // Creamos el registro de carrito primero, añadimos al usuario actual del carrito utilizando la capa Auth.
+        $carrito = Carrito::create([
+            'user_id' => Auth::id(),
+            'total' => 0
+        ]);
+
+        $total = 0;
+
+        // Agregamos la información de cada uno de los productos en la tabla intermedia:
+        // inserta en la tabla pivote carrito_productos una nueva fila que relaciona:
+        //      el carrito actual (carrito_id)
+        //      el producto (producto_id)
+        //      los datos extra: cantidad, precio_unitario
+        //
+        foreach ($carritoSesion as $id => $item) {
+            $carrito->productos()->attach($id, [
+                'cantidad' => $item['cantidad'],
+                'precio_unitario' => $item['precio']
+            ]);
+
+            // Calculamos el total.
+            $total += $item['cantidad'] * $item['precio'];
+        }
+
+        $carrito->total = $total;
+
+        // Guardamos la información del carrito.
+        $carrito->save();
+
+        // Eliminamos el carrito una vez los datos han sido guardados en la base de datos.
+        Session::forget('carrito');
+
+        return redirect()->route('carrito.index')->with('success', 'Carrito guardado correctamente.');
     }
 }

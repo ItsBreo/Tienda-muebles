@@ -12,11 +12,7 @@ use App\Models\Category;
 class AdministracionController extends Controller
 {
     private $sessionKey = 'muebles_crud_session';
-
-    // ---------------------------------------------------
-    // HELPER FUNCTIONS (Compartidas y Privadas)
-    // ---------------------------------------------------
-
+    
     /**
      * Obtiene los muebles de la sesión o carga los Mock Data.
      * Esta lógica ahora sirve tanto para Admin como para Público.

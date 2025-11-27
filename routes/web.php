@@ -59,7 +59,7 @@ Route::post('/checkout', [CheckoutController::class, 'processCheckout'])->name('
 // Nombres generados:
 // categorias.index|create|store|show|edit|update|destroy
 // Productos (CRUD)
-Route::resource('/admin/muebles', AdministracionController::class) -> name('admin.muebles');
+Route::resource('/admin/muebles', AdministracionController::class) -> names('admin.muebles');
 
 // Nombres generados:
 // productos.index|create|store|show|edit|update|destroy

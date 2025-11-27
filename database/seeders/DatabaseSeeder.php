@@ -24,8 +24,8 @@ class DatabaseSeeder extends Seeder
 
         // 2. Crear un usuario Administrador
         User::factory()->create([
-            'nombre' => 'Admin',
-            'apellidos' => 'User',
+            'name' => 'Admin',
+            'surname' => 'User',
             'email' => 'admin@tienda.com',
             'password' => bcrypt('1234'),
             // Asignamos el ID del rol que acabamos de encontrar.
@@ -33,8 +33,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::factory()->create([
-            'nombre' => 'Usuario',
-            'apellidos' => 'Prueba',
+            'name' => 'Usuario',
+            'surname' => 'Prueba',
             'email' => 'usuario@tienda.com',
             'password' => bcrypt('1234'),
             'role_id' => 3,

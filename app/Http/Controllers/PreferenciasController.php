@@ -4,82 +4,99 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Session;
 use App\Models\User;
 
 class PreferenciasController extends Controller
 {
     /**
-     * Muestra la vista de preferencias.
-     * El sesionId nos lo pasa la plantilla 'app.blade.php' en la URL.
+     * Muestra la vista del formulario de preferencias.
      */
     public function show(Request $request)
     {
-        // Necesitamos el sesionId para mantener la navegación
-        $sesionId = $request->query('sesionId');
-        if (!User::activeUserSesion($sesionId)) {
-            return redirect()->route('login.show')->withErrors('Debes iniciar sesión para ver tus preferencias.');
+        // 1. Obtener el ID de la sesión
+        $sesionId = $request->input('sesionId') ?? $request->query('sesionId');
+
+        // 2. Obtener el usuario activo
+        $user = User::activeUserSesion($sesionId);
+
+        // Si no hay usuario, redirigir al login (seguridad básica)
+        if (!$user) {
+            return redirect()->route('login.show')->withErrors(['error' => 'Debes iniciar sesión para ver tus preferencias.']);
         }
 
+        // 3. Cargar las preferencias actuales de la cookie
+        $cookieName = 'preferencias_' . $user->id;
+        $cookieValue = $request->cookie($cookieName);
 
-        return view('preferencias' , compact('sesionId'));
+        $preferencias = [
+            'tema' => 'claro',
+            'moneda' => 'EUR',
+            'tamaño' => 6,
+        ];
+
+        // Si existe la cookie, fusionamos los datos
+        if ($cookieValue) {
+            // Intentamos decodificar. Si falla, usamos array vacío.
+            $decoded = json_decode($cookieValue, true);
+            if (is_array($decoded)) {
+                $preferencias = array_merge($preferencias, $decoded);
+            }
+        }
+
+        // 4. Pasar todo a la vista
+        return view('preferencias', compact('preferencias', 'sesionId', 'user'));
     }
 
     /**
-     * Actualiza las preferencias del usuario.
-     * Esta es la lógica que sigue el requisito 2.e
+     * Almacena las preferencias seleccionadas en el formulario.
      */
     public function update(Request $request)
     {
+        // 1. Obtener el ID de la sesión (del formulario POST)
+        $sesionId = $request->input('sesionId');
 
-        // Necesitamos el sesionId para mantener la navegación
-        $sesionId = $request->query('sesionId');
-
+        // 2. Obtener el usuario
         $user = User::activeUserSesion($sesionId);
 
-        // Validamos los datos del formulario
-        $data = $request->validate([
-            'tema' => ['required', 'string', 'in:claro,oscuro,sistema'],
-            'moneda' => ['required', 'string', 'in:USD,EUR,GBP'],
-            'tamaño' => ['required', 'integer', 'min:6', 'max:24'],
-        ]);
-
-
         if (!$user) {
-            return redirect()->route('login.show')->withErrors('Debes iniciar sesión para cambiar tus preferencias.');
+            return redirect()->route('login.show')->withErrors(['error' => 'Sesión expirada.']);
         }
 
+        // 3. Validar
+        $validatedData = $request->validate([
+            'tema' => 'required|string|in:claro,oscuro',
+            'moneda' => 'required|string|in:EUR,USD,GBP',
+            'tamaño' => 'required|integer|in:6,12,24,48',
+        ]);
 
+        // 4. Crear la cookie
         $cookieName = 'preferencias_' . $user->id;
 
-        // 3. Leemos la cookie actual para no perder otros datos que pudiera tener
-        $cookieData = json_decode($request->cookie($cookieName), true) ?? [];
+        // Obtenemos los datos viejos para no perder info (si hubiera)
+        $oldCookieValue = $request->cookie($cookieName);
+        $cookieData = $oldCookieValue ? json_decode($oldCookieValue, true) : [];
 
+        if (!is_array($cookieData)) {
+            $cookieData = [];
+        }
 
+        // Sobrescribimos con los nuevos valores
+        $cookieData['tema'] = $validatedData['tema'];
+        $cookieData['moneda'] = $validatedData['moneda'];
+        $cookieData['tamaño'] = $validatedData['tamaño'];
 
-        // Actualizamos solo los valores de preferencias
-        $cookieData['tema'] = $data['tema'];
-        $cookieData['moneda'] = $data['moneda'];
-        $cookieData['tamaño'] = $data['tamaño']; // Guardamos como número
-
-        $cookieDuration = config('session.lifetime', 120);
-
-        // Creamos la nueva cookie actualizada
+        // !! CORRECCIÓN: Usamos la sintaxis simple igual que en LoginController !!
+        // Esto asegura que secure, httpOnly y path sean consistentes.
         $cookie = Cookie::make(
-            name: $cookieName,
-            value: json_encode($cookieData),
-            minutes: $cookieDuration,
-            path: '/',
-            domain: null,
-            secure: config('session.secure', false),
-            httpOnly: true,
-            sameSite: config('session.same_site', 'lax')
+            $cookieName,
+            json_encode($cookieData),
+            60 * 24 * 30 // 30 días
         );
 
-
-        // Redirigimos a principal (pasando el sesionId) y adjuntamos la cookie
-        return redirect()->route('principal', ['sesionId' => $sesionId])
-                         ->with('success', 'Preferencias actualizadas correctamente.')
-                         ->withCookie($cookie);
+        // 5. Redirigir a la principal con la cookie
+        return redirect()
+            ->route('principal', ['sesionId' => $sesionId])
+            ->withCookie($cookie)
+            ->with('success', 'Preferencias actualizadas correctamente.');
     }
 }

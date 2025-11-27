@@ -68,7 +68,7 @@ class CatalogoController extends Controller
         if (method_exists(Category::class, 'getMockData')) {
              $categories = Category::getMockData();
         } else {
-             $categories = Category::all(); // Asumiendo Eloquent
+             $categories = Category::all();
         }
 
         // Pasamos todo a la vista
@@ -94,34 +94,34 @@ class CatalogoController extends Controller
              $categories = Category::all();
              // Si ya migraste Furniture a Eloquent, usa Furniture::all();
              // Si no, mantén el mock.
-             $items = collect(Furniture::getMockData());
+             $items = collect(Furniture::all());
         }
 
         // 3. Lógica de Filtrado
         if ($request->filled('category')) {
-            $items = $items->filter(fn($m) => $m->getCategoryId() == $request->category);
+            $items = $items->filter(fn($m) => $m->category_id == $request->category);
         }
         if ($request->filled('q')) {
             $q = strtolower($request->q);
             $items = $items->filter(fn($m) =>
-                str_contains(strtolower($m->getName()), $q) ||
-                str_contains(strtolower($m->getDescription()), $q)
+                str_contains(strtolower($m->name), $q) ||
+                str_contains(strtolower($m->description), $q)
             );
         }
         if ($request->filled('min_price')) {
-            $items = $items->filter(fn($m) => $m->getPrice() >= $request->min_price);
+            $items = $items->filter(fn($m) => $m->price >= $request->min_price);
         }
         if ($request->filled('max_price')) {
-            $items = $items->filter(fn($m) => $m->getPrice() <= $request->max_price);
+            $items = $items->filter(fn($m) => $m->price <= $request->max_price);
         }
 
         // 4. Lógica de Ordenación
         $sort = $request->input('sort', 'default');
         $items = match ($sort) {
-            'price_asc' => $items->sortBy(fn($m) => $m->getPrice()),
-            'price_desc' => $items->sortByDesc(fn($m) => $m->getPrice()),
-            'name_asc' => $items->sortBy(fn($m) => $m->getName()),
-            'name_desc' => $items->sortByDesc(fn($m) => $m->getName()),
+            'price_asc' => $items->sortBy(fn($m) => $m->price),
+            'price_desc' => $items->sortByDesc(fn($m) => $m->price),
+            'name_asc' => $items->sortBy(fn($m) => $m->name),
+            'name_desc' => $items->sortByDesc(fn($m) => $m->name),
             default => $items,
         };
 

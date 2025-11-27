@@ -2,36 +2,30 @@
 
 namespace App\Models;
 
-// 1. Importar las clases necesarias de Eloquent y para autenticación.
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable; // Importamos Authenticatable
+use Illuminate\Foundation\Auth\User as Authenticatable; // ¡Importante para Auth!
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Session;
 
-// 2. Cambiamos la clase para que herede de Authenticatable.
 class User extends Authenticatable
 {
-    use HasFactory;
-
-    protected $table = 'users';
+    use HasFactory, Notifiable;
 
     /**
      * Los atributos que se pueden asignar masivamente.
-     *
-     * @var array<int, string>
      */
     protected $fillable = [
-        'nombre',
-        'apellidos',
+        'name',
+        'surname',      // Añadido según migración
         'email',
         'password',
-        'role_id', // Cambiamos 'rol' por 'role_id'
+        'role_id',
+        'failed_attempts', // Para el bloqueo de seguridad
+        'locked_until',    // Para el bloqueo de seguridad
     ];
 
     /**
-     * Los atributos que deben ocultarse para la serialización.
-     *
-     * @var array<int, string>
+     * Los atributos ocultos.
      */
     protected $hidden = [
         'password',
@@ -39,38 +33,72 @@ class User extends Authenticatable
     ];
 
     /**
-     * Define la relación con el modelo Role.
+     * Conversión de tipos.
      */
+    protected $casts = [
+        'locked_until' => 'datetime',
+    ];
+
+    // ------------------------------------------------------------------------
+    // RELACIONES
+    // ------------------------------------------------------------------------
+
     public function role()
     {
         return $this->belongsTo(Role::class);
     }
 
+    // ------------------------------------------------------------------------
+    // HELPERS
+    // ------------------------------------------------------------------------
+
     /**
-     * Comprueba si el usuario tiene un rol específico.
-     *
-     * @param string $roleName
-     * @return bool
+     * Comprueba si el usuario es administrador.
      */
-    public function hasRole(string $roleName): bool
+    public function isAdmin(): bool
     {
-        // Usamos la relación para comprobar el nombre del rol.
-        return $this->role && $this->role->name === $roleName;
+        // Usamos optional() por si la relación role no está cargada o es null
+        return optional($this->role)->name === 'Administrador' || optional($this->role)->name === 'admin';
     }
 
     /**
-     * Recupera un usuario de la sesión del servidor usando un ID de sesión de pestaña.
+     * Comprueba si tiene un rol específico por nombre.
+     */
+    public function hasRole(string $roleName): bool
+    {
+        return optional($this->role)->name === $roleName;
+    }
+
+    // ------------------------------------------------------------------------
+    // LÓGICA DE SESIÓN MANUAL (Requisito: Múltiples usuarios en el mismo navegador)
+    // ------------------------------------------------------------------------
+
+    /**
+     * Recupera el usuario activo para una pestaña específica.
+     * Busca en la sesión manual 'usuarios' y luego recupera el User fresco de la BD.
      *
-     * @param string|null $sesionId El identificador único de la sesión de la pestaña.
-     * @return User|null El objeto User si se encuentra, o null.
+     * @param string|null $sesionId El ID único de la pestaña/navegador.
+     * @return User|null
      */
     public static function activeUserSesion(?string $sesionId): ?User
     {
-        if (!$sesionId || !Session::has($sesionId)) {
+        if (!$sesionId) {
             return null;
         }
 
-        // Deserializamos el objeto User que guardamos en el login.
-        return unserialize(Session::get($sesionId));
+        // 1. Obtenemos el array global de usuarios conectados en este navegador
+        $usuariosEnSesion = Session::get('usuarios', []);
+
+        // 2. Buscamos si existe una entrada para este $sesionId
+        if (isset($usuariosEnSesion[$sesionId])) {
+            $userData = json_decode($usuariosEnSesion[$sesionId]);
+
+            // 3. ¡IMPORTANTE! Recuperamos el usuario de la Base de Datos.
+            // Esto asegura que si bloqueamos al usuario o cambiamos su rol,
+            // la aplicación se entere inmediatamente.
+            return User::with('role')->find($userData->id);
+        }
+
+        return null;
     }
 }

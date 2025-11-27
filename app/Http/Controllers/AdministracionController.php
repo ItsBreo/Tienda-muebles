@@ -75,16 +75,26 @@ class AdministracionController extends Controller
      */
     private function checkAdmin(Request $request)
     {
-        if (!auth()->check()) {
-            return redirect()->route('login.show')->with('error', 'Debes iniciar sesión.');
+        // 1. Obtenemos el sesionId de la petición.
+        // Lo buscamos en la ruta, en la query string y en los inputs del formulario para no perderlo.
+        $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
+
+
+        $user = User::activeUserSesion($sesionId);
+
+        // 2. Comprobamos si existe un usuario para esa sesión.
+        if (!$user) {
+            return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
         }
 
-        if (auth()->user()->hasRole('Admin')) {
+        // 3. Comprobamos si el usuario tiene el rol 'Admin'.
+        if ($user->hasRole('Admin')) {
             return true;
         }
 
-        return redirect()->route('principal')
-                         ->with('error-admin', 'Acceso denegado. No tienes permisos.');
+        // No es admin. Le redirigimos a la página principal con un error.
+        return redirect()->route('principal', ['sesionId' => $sesionId])
+                         ->with('error-admin', 'Acceso denegado. No tienes permisos de administrador.');
     }
 
     /**
@@ -122,22 +132,30 @@ class AdministracionController extends Controller
     {
         if (($check = $this->checkAdmin($request)) !== true) return $check;
 
-        $muebles = $this->getMuebles();
-        return view('admin.muebles.index', compact('muebles'));
+        $sesionId = $request->query('sesionId');
+        $muebles = Furniture::all(); // <-- ¡AQUÍ ESTÁ EL CAMBIO!
+
+        // Pasamos los muebles a la vista del panel de administración
+        return view('admin.muebles.index', compact('muebles', 'sesionId'));
     }
 
     public function create(Request $request)
     {
-        if (($check = $this->checkAdmin($request)) !== true) return $check;
+        $check = $this->checkAdmin($request);
+        if ($check !== true) return $check; // Si no es admin, redirige
 
+        $sesionId = $request->query('sesionId');
         $categories = Category::getMockData();
-        return view('admin.muebles.create', compact('categories'));
+        return view('admin.muebles.create', compact('categories', 'sesionId'));
     }
 
     public function store(Request $request)
     {
-        if (($check = $this->checkAdmin($request)) !== true) return $check;
 
+        $check = $this->checkAdmin($request);
+        if ($check !== true) return $check; // Si no es admin, redirige
+
+        $sesionId = $request->input('sesionId');
         $muebles = $this->getMuebles();
         $maxId = $muebles->max(fn($m) => $m->getId()) ?? 0;
 
@@ -168,7 +186,8 @@ class AdministracionController extends Controller
         $muebles->push($newMueble);
         $this->saveMuebles($muebles);
 
-        return redirect()->route('admin.muebles.index')->with('success', 'Mueble creado.');
+
+        return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId])->with('success', 'Mueble creado correctamente.');
     }
 
     /**
@@ -176,33 +195,42 @@ class AdministracionController extends Controller
      */
     public function show(Request $request, $id)
     {
-        if (($check = $this->checkAdmin($request)) !== true) return $check;
+        $check = $this->checkAdmin($request);
+        if ($check !== true) return $check; // Si no es admin, redirige
 
+        $sesionId = $request->query('sesionId');
         $muebles = $this->getMuebles();
         $mueble = $muebles->first(fn($m) => $m->getId() == (int)$id);
 
         if (!$mueble) abort(404);
 
-        return view('admin.muebles.show', compact('mueble'));
+        return view('admin.muebles.show', compact('mueble', 'sesionId'));
     }
 
     public function edit(Request $request, $id)
     {
-        if (($check = $this->checkAdmin($request)) !== true) return $check;
+        $check = $this->checkAdmin($request);
+        if ($check !== true) return $check; // Si no es admin, redirige
 
+        $sesionId = $request->query('sesionId');
         $muebles = $this->getMuebles();
         $mueble = $muebles->first(fn($m) => $m->getId() == (int)$id);
 
-        if (!$mueble) abort(404);
+        if (!$mueble) {
+            abort(404);
+        }
 
         $categories = Category::getMockData();
-        return view('admin.muebles.edit', compact('mueble', 'categories'));
+        return view('admin.muebles.edit', compact('mueble', 'categories', 'sesionId'));
     }
 
     public function update(Request $request, $id)
     {
-        if (($check = $this->checkAdmin($request)) !== true) return $check;
 
+        $check = $this->checkAdmin($request);
+        if ($check !== true) return $check; // Si no es admin, redirige
+
+        $sesionId = $request->input('sesionId');
         $muebles = $this->getMuebles();
         $muebleIndex = $muebles->search(fn($m) => $m->getId() == (int)$id);
 
@@ -231,17 +259,20 @@ class AdministracionController extends Controller
         $muebles[$muebleIndex] = $mueble;
         $this->saveMuebles($muebles);
 
-        return redirect()->route('admin.muebles.index')->with('success', 'Actualizado.');
+        return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId])->with('success', 'Mueble actualizado correctamente.');
     }
 
     public function destroy(Request $request, $id)
     {
-        if (($check = $this->checkAdmin($request)) !== true) return $check;
 
+        $check = $this->checkAdmin($request);
+        if ($check !== true) return $check; // Si no es admin, redirige
+
+        $sesionId = $request->input('sesionId');
         $muebles = $this->getMuebles();
         $muebles = $muebles->reject(fn($m) => $m->getId() == (int)$id)->values();
         $this->saveMuebles($muebles);
 
-        return redirect()->route('admin.muebles.index')->with('success', 'Eliminado.');
+        return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId])->with('success', 'Mueble eliminado correctamente.');
     }
 }

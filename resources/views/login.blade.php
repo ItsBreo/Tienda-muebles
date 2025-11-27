@@ -117,8 +117,8 @@
                                 <button type="submit" class="btn btn-primary btn-lg">Acceder</button>
                             </div>
                         </form>
-                        <div class="mt-4 text-center">
-                            <a href="{{ route('login.register') }}" class="btn btn-outline-secondary">Registrarme</a>
+                        <div class="mt-3 text-center">
+                            <a href="{{ route('register.show') }}" class="btn btn-outline-secondary">¿No tienes una cuenta? Registrate</a>
                         </div>
                     </div>
                 </div>

@@ -24,15 +24,30 @@ class DatabaseSeeder extends Seeder
 
         // 2. Crear un usuario Administrador
         User::factory()->create([
-            'nombre' => 'Admin',
-            'apellidos' => 'User',
+            'name' => 'Admin',
+            'surname' => 'User',
             'email' => 'admin@tienda.com',
             'password' => bcrypt('1234'),
             // Asignamos el ID del rol que acabamos de encontrar.
             'role_id' => $adminRole->id,
         ]);
 
+        User::factory()->create([
+            'name' => 'Usuario',
+            'surname' => 'Prueba',
+            'email' => 'usuario@tienda.com',
+            'password' => bcrypt('1234'),
+            'role_id' => 3,
+        ]);
+
         // 3. Crear 50 usuarios de prueba (Gestores y Clientes)
         User::factory(50)->create();
+
+        // 4. Ejecutar los seeders de categorías y muebles
+        $this->call([
+            CategorySeeder::class,
+            FurnitureSeeder::class,
+            CartSeeder::class
+        ]);
     }
 }

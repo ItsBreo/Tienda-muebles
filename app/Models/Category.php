@@ -12,10 +12,11 @@ class Category extends Model {
 
     protected $table = "categories";
 
+    protected $fillable = ['name', 'description'];
+
     // Relación categoria 1:N productos
     public function furniture(){
         return $this->hasMany(Furniture::class);
     }
-
 
 }

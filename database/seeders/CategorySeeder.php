@@ -9,11 +9,11 @@ class CategorySeeder extends Seeder
 {
     public function run(): void
     {
-        // Usamos firstOrCreate para evitar duplicados si se ejecuta varias veces.
-        Category::firstOrCreate(['name' => 'Categoria 1']);
-        Category::firstOrCreate(['name' => 'Categoria 2']);
-        Category::firstOrCreate(['name' => 'Categoria 3']);
-        Category::firstOrCreate(['name' => 'Categoria 4']);
-        Category::firstOrCreate(['name' => 'Categoria 5']);
+        // Usamos firstOrCreate para evitar duplicados.
+        Category::firstOrCreate(['name' => 'Salón', 'description' => 'Productos para el salón']);
+        Category::firstOrCreate(['name' => 'Dormitorio', 'description' => 'Productos para el dormitorio']);
+        Category::firstOrCreate(['name' => 'Oficina', 'description' => 'Productos para la oficina']);
+        Category::firstOrCreate(['name' => 'Cocina', 'description' => 'Productos para la cocina']);
+        Category::firstOrCreate(['name' => 'Baño', 'description' => 'Productos para el baño']);
     }
 }

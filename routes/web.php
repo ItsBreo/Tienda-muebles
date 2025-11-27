@@ -12,6 +12,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\AdministracionController;
 use App\Http\Controllers\ProductosController;
 use App\Http\Controllers\ProductosGaleriaController;
+use App\Http\Controllers\RegisterController;
 use Illuminate\Http\Request;
 
 // Página Principal
@@ -20,8 +21,12 @@ use Illuminate\Http\Request;
 // Login (Sesiones):
  Route::get('/login', [LoginController::class, 'show'])->name('login.show');
  Route::post('/login', [LoginController::class, 'login'])->name('login.store');
- Route::get('/inscribir', [LoginController::class, 'register'])->name('login.register');
- Route::post('/inscribir', [LoginController::class, 'registerUser'])->name('login.registerUser');
+
+ // Registro
+ Route::get('/inscribir', [RegisterController::class, 'show'])->name('register.show');
+ Route::post('/inscribir', [RegisterController::class, 'store'])->name('register.store');
+
+ // Logout
  Route::post('/logout', [LoginController::class, 'logout'])->name('login.logout');
 
 // Preferencias (Cookies)

@@ -6,23 +6,24 @@ use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Email;
 
 class RegisterController extends Controller
 {
     // Mostrar formulario
     public function show()
     {
-        return view('register');
+        return view('registro');
     }
 
     // Procesar registro
-    public function register(Request $request)
+    public function store(Request $request)
     {
         // 1. Validación
         $request->validate([
-            'name' => 'required|string|max:255',
-            'surname' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'name' => 'required|string|max:30',
+            'surname' => 'required|string|max:30',
+            'email' => 'required|string|email|max:80|unique:users',
             'password' => 'required|string|min:4|confirmed', // requiere campo password_confirmation
         ]);
 

@@ -54,12 +54,12 @@
                         <button type="submit" class="btn btn-primary btn-lg">Registrarse</button>
                     </div>
 
-                    <div class="mt-3 text-center">
-                        <a href="{{ route('login.show') }}" class="text-decoration-none text-muted">
-                            ¿Ya tienes una cuenta? <span class="fw-bold">Inicia Sesión</span>
-                        </a>
-                    </div>
                 </form>
+                <div class="mt-3 text-center">
+                    <a href="{{ route('login.show') }}" class="text-decoration-none text-muted">
+                        ¿Ya tienes una cuenta? <span class="fw-bold">Inicia Sesión</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>

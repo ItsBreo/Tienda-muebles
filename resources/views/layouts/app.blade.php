@@ -123,7 +123,7 @@
                         {{-- Comprobamos rol sobre $activeUser --}}
                         @if ($activeUser->isAdmin())
                             <li class="nav-item">
-                                <a class="nav-link fw-bold" href="{{ route('admin.dashboard', ['sesionId' => $activeSesionId]) }}">Administración</a>
+                                <a class="nav-link fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $activeSesionId]) }}">Administración</a>
                             </li>
                         @endif
 

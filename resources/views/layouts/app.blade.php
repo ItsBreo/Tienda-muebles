@@ -60,6 +60,8 @@
         }
     }
 
+    dump('6. Preferencias:', $preferencias);
+
     $temaActual = $preferencias['tema'] ?? 'claro';
     $bsTheme = ($temaActual === 'oscuro') ? 'dark' : 'light';
     $navbarClass = ($temaActual === 'oscuro') ? 'navbar-dark' : 'navbar-light';

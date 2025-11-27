@@ -3,121 +3,172 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cookie;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Session;
 use App\Models\Furniture;
 use App\Models\Category;
+use App\Models\User;
 
-// Controlador de Catálogo
 class CatalogoController extends Controller
 {
-
-    // Listado de categorías
-    public function categorias(Request $request){
-        // La vista puede acceder a la sesión directamente con auth()->check() y auth()->user()
-        $preferencias = []; // Puedes añadir la lógica de cookies si es necesario para esta vista
-
-        $categories = Category::all();
-
-        return view('catalogo.categorias', compact('categories', 'preferencias'));
-    }
-
-    // Mostrar muebles por categoría
-    public function show(Request $request, $id){
-        $category = Category::find((int)$id);
-
-        // Si la categoría no existe, redirigir
-        if (!$category) {
-            return redirect()->route('principal');
-        }
-
-
-        Cookie::queue("categoria_{$category->id}", json_encode($category), 60 * 24 * 30);
-
-        return redirect()->route('muebles.index', [
-            'category' => $category->id,
-        ]);
-    }
-
-    // Listado de muebles con filtros, orden y paginación
-    public function index(Request $request)
+    /**
+     * Helper privado para cargar sesión y preferencias de forma consistente.
+     */
+    private function getSesionYPreferencias(Request $request)
     {
-        // Valores por defecto para las preferencias
+        // 1. Obtener ID de sesión (URL o Input)
+        $activeSesionId = $request->input('sesionId') ?? $request->query('sesionId');
+
+        $activeUser = null;
+
+        // Valores por defecto
         $preferencias = [
             'tema' => 'claro',
             'moneda' => 'EUR',
             'tamaño' => 6,
         ];
 
-        // Si el usuario está autenticado, intentamos leer su cookie de preferencias.
-        if (auth()->check()) {
-            $cookieName = 'preferencias_' . auth()->user()->id;
-            if ($request->hasCookie($cookieName)) {
-                $preferencias = array_merge($preferencias, json_decode($request->cookie($cookieName), true));
+        // 2. Intentar recuperar el usuario
+        if ($activeSesionId) {
+            $activeUser = User::activeUserSesion($activeSesionId);
+        }
+
+        // 3. Si hay usuario, leer su cookie personalizada
+        if ($activeUser) {
+            $cookieName = 'preferencias_' . $activeUser->id;
+
+            // Laravel desencripta la cookie automáticamente
+            $cookieValue = $request->cookie($cookieName);
+
+            // Decodificamos el JSON si existe
+            if ($cookieValue) {
+                $cookieData = json_decode($cookieValue, true);
+                if (is_array($cookieData)) {
+                    $preferencias = array_merge($preferencias, $cookieData);
+                }
             }
         }
 
-        // Obtenemos preferencia de paginación desde NUESTRA cookie
-        $perPage = max((int) ($preferencias['tamaño'] ?? 6), 6); // Mínimo 6
+        return compact('activeSesionId', 'activeUser', 'preferencias');
+    }
 
-        // Iniciamos la consulta de muebles con Eloquent
-        $query = Furniture::query();
+    /**
+     * Muestra la lista de categorías.
+     */
+    public function categorias(Request $request) {
+        // Cargar datos comunes
+        $data = $this->getSesionYPreferencias($request);
 
-        // Filtrar por categoría
-        if ($request->filled('category')) {
-            $catId = (int)$request->input('category');
-            $query->where('category_id', $catId);
+        // Cargar categorías (Mock o BD)
+        // !! CORRECCIÓN: Usamos el método correcto si ya has migrado a BD, o getMockData si sigues con mocks !!
+        // Si ya tienes el modelo Category con BD, usa Category::all();
+        // Si sigues con el mock, usa Category::getMockData();
+        // Como estamos en transición, usaré una comprobación segura o el mock por defecto que tenías.
+        if (method_exists(Category::class, 'getMockData')) {
+             $categories = Category::getMockData();
+        } else {
+             $categories = Category::all(); // Asumiendo Eloquent
         }
 
-        // Filtrar rango precio: min_price, max_price
+        // Pasamos todo a la vista
+        return view('catalogo.categorias', array_merge($data, [
+            'categories' => $categories
+        ]));
+    }
+
+    /**
+     * Muestra el catálogo principal (index) con filtros y paginación.
+     */
+    public function index(Request $request)
+    {
+        // 1. Cargar preferencias
+        $sesionData = $this->getSesionYPreferencias($request);
+        $preferencias = $sesionData['preferencias'];
+
+        // 2. Cargar datos base
+        if (method_exists(Category::class, 'getMockData')) {
+             $categories = Category::getMockData();
+             $items = collect(Furniture::getMockData());
+        } else {
+             $categories = Category::all();
+             // Si ya migraste Furniture a Eloquent, usa Furniture::all();
+             // Si no, mantén el mock.
+             $items = collect(Furniture::getMockData());
+        }
+
+        // 3. Lógica de Filtrado
+        if ($request->filled('category')) {
+            $items = $items->filter(fn($m) => $m->getCategoryId() == $request->category);
+        }
+        if ($request->filled('q')) {
+            $q = strtolower($request->q);
+            $items = $items->filter(fn($m) =>
+                str_contains(strtolower($m->getName()), $q) ||
+                str_contains(strtolower($m->getDescription()), $q)
+            );
+        }
         if ($request->filled('min_price')) {
-            $min = (float)$request->input('min_price');
-            $query->where('price', '>=', $min);
+            $items = $items->filter(fn($m) => $m->getPrice() >= $request->min_price);
         }
         if ($request->filled('max_price')) {
-            $max = (float)$request->input('max_price');
-            $query->where('price', '<=', $max);
+            $items = $items->filter(fn($m) => $m->getPrice() <= $request->max_price);
         }
 
-        // Filtrar por color
-        if ($request->filled('color')) {
-            $color = strtolower($request->input('color'));
-            $query->whereRaw('LOWER(main_color) LIKE ?', ["%{$color}%"]);
-        }
+        // 4. Lógica de Ordenación
+        $sort = $request->input('sort', 'default');
+        $items = match ($sort) {
+            'price_asc' => $items->sortBy(fn($m) => $m->getPrice()),
+            'price_desc' => $items->sortByDesc(fn($m) => $m->getPrice()),
+            'name_asc' => $items->sortBy(fn($m) => $m->getName()),
+            'name_desc' => $items->sortByDesc(fn($m) => $m->getName()),
+            default => $items,
+        };
 
-        // Filtrar por búsqueda general (nombre y descripción)
-        if ($request->filled('q')) {
-            $searchTerm = strtolower($request->input('q'));
-            $query->where(function ($q) use ($searchTerm) {
-                $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"])
-                  ->orWhereRaw('LOWER(description) LIKE ?', ["%{$searchTerm}%"]);
-            });
-        }
+        // 5. Paginación usando la preferencia
+        // Aseguramos que $perPage sea un entero válido
+        $perPage = (int) ($preferencias['tamaño'] ?? 6);
+        if ($perPage < 1) $perPage = 6;
 
-        // Ordenamos price_asc, price_desc, name_asc, name_desc, new
-        switch ($request->input('sort')) {
-            case 'price_asc':  $query->orderBy('price', 'asc'); break;
-            case 'price_desc': $query->orderBy('price', 'desc'); break;
-            case 'name_asc':   $query->orderBy('name', 'asc'); break;
-            case 'name_desc':  $query->orderBy('name', 'desc'); break;
-            case 'new':
-            default:           $query->orderBy('id', 'desc'); break;
-        }
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
 
-        // Paginar los resultados
-        $paginator = $query->paginate($perPage);
+        $currentItems = $items->slice(($currentPage - 1) * $perPage, $perPage)->values();
 
-        // Añadir los parámetros de la query string a los enlaces de paginación
-        $paginator->appends($request->except('page'));
+        $paginator = new LengthAwarePaginator($currentItems, $items->count(), $perPage, $currentPage, [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]);
 
-
-        // Pasamos categorías para filtros
-        $categories = Category::all();
-
-        // Devolver la vista y pasar las variables
-        return view('catalogo.index', [
+        // 6. Pasar todas las variables a la vista
+        return view('catalogo.index', array_merge($sesionData, [
             'muebles' => $paginator,
             'categories' => $categories,
-            'preferencias' => $preferencias,
+        ]));
+    }
+
+    /**
+     * Redirige al catálogo filtrado por una categoría.
+     */
+    public function show(Request $request, $id){
+        $sesionData = $this->getSesionYPreferencias($request);
+
+        // Intenta encontrar la categoría (Mock o BD)
+        if (method_exists(Category::class, 'findById')) {
+            $category = Category::findById((int)$id);
+        } else {
+            $category = Category::find($id);
+        }
+
+        if (!$category) {
+            return redirect()->route('principal', ['sesionId' => $sesionData['activeSesionId']]);
+        }
+
+        // Usa el getter getId() si existe, o la propiedad id directamente
+        $catId = method_exists($category, 'getId') ? $category->getId() : $category->id;
+
+        return redirect()->route('muebles.index', [
+            'category' => $catId,
+            'sesionId' => $sesionData['activeSesionId']
         ]);
     }
 }

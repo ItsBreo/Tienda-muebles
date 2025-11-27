@@ -138,18 +138,33 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         $sesionId = $request->input('sesionId');
+        $cookieToForget = null;
 
-        // Solo eliminamos la sesión de ESTA pestaña del array
         if ($sesionId) {
             $users = Session::get('usuarios', []);
+
+            // 1. Verificamos si existe la sesión para obtener el ID del usuario
             if (isset($users[$sesionId])) {
+                $userData = json_decode($users[$sesionId]);
+
+                // 2. Preparamos el borrado de la cookie usando el ID del usuario
+                if (isset($userData->id)) {
+                    $cookieName = 'preferencias_' . $userData->id;
+                    $cookieToForget = Cookie::forget($cookieName);
+                }
+
+                // 3. Eliminamos al usuario del array de sesión
                 unset($users[$sesionId]);
                 Session::put('usuarios', $users);
                 Session::save();
             }
         }
 
-        // Redirigimos al login
-        return redirect()->route('login.show');
+        // 4. Redirigimos adjuntando la orden de olvidar la cookie (si aplica)
+        if ($cookieToForget) {
+            return redirect()->route('principal')->withCookie($cookieToForget);
+        }
+
+        return redirect()->route('principal');
     }
 }

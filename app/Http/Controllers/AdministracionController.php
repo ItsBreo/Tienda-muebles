@@ -11,136 +11,148 @@ use App\Models\Category;
 
 class AdministracionController extends Controller
 {
-
     private $sessionKey = 'muebles_crud_session';
 
-    private $cookieMinutes = 60 * 24 * 7;
+    // ---------------------------------------------------
+    // HELPER FUNCTIONS (Compartidas y Privadas)
+    // ---------------------------------------------------
 
-
+    /**
+     * Obtiene los muebles de la sesión o carga los Mock Data.
+     * Esta lógica ahora sirve tanto para Admin como para Público.
+     */
     private function getMuebles()
     {
-
         $muebles = Session::get($this->sessionKey);
-
 
         if ($muebles instanceof \Illuminate\Support\Collection) {
             return $muebles;
         }
 
-        // Si no, carga los datos mock (que ya son Objetos Furniture)
+        // Si no existe sesión, carga Mock Data
         $muebles = collect(Furniture::getMockData());
-
-        // Los guarda en la SESIÓN para la próxima vez
         $this->saveMuebles($muebles);
+
         return $muebles;
     }
 
-    /**
-     * Guarda la colección de muebles en la Sesión.
-     */
     private function saveMuebles($muebles)
     {
         Session::put($this->sessionKey, $muebles);
     }
 
+    /**
+     * Lógica traída de MuebleController para manejar preferencias de usuario/cookies.
+     */
+    private function getSesionYPreferencias(Request $request)
+    {
+        $activeSesionId = $request->query('sesionId');
+        $activeUser = null;
+
+        $defaultPrefs = [
+            'tema' => 'claro',
+            'moneda' => 'EUR',
+            'tamaño' => 6,
+        ];
+
+        if ($activeSesionId) {
+            $activeUser = User::activeUserSesion($activeSesionId);
+        }
+
+        if ($activeUser) {
+            $cookieName = 'preferencias_' . $activeUser->id;
+            $cookieData = json_decode($request->cookie($cookieName), true);
+            $preferencias = $cookieData ? array_merge($defaultPrefs, $cookieData) : $defaultPrefs;
+        } else {
+            $preferencias = $defaultPrefs;
+        }
+
+        return compact('activeSesionId', 'activeUser', 'preferencias');
+    }
 
     /**
-     * Revisa si el usuario actual es un admin.
-     * Devuelve 'true' si es admin, o una Redirección si no lo es.
+     * Middleware manual para proteger rutas de admin.
      */
     private function checkAdmin(Request $request)
     {
-        // Usamos el sistema de autenticación de Laravel.
-        // 1. Comprueba si hay un usuario autenticado.
         if (!auth()->check()) {
-            return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
+            return redirect()->route('login.show')->with('error', 'Debes iniciar sesión.');
         }
 
-        // 2. Comprueba si el usuario autenticado tiene el rol 'Admin'.
         if (auth()->user()->hasRole('Admin')) {
             return true;
         }
 
-        // No es admin. Le redirigimos a la página principal con un error.
         return redirect()->route('principal')
-                         ->with('error-admin', 'Acceso denegado. No tienes permisos de administrador.');
+                         ->with('error-admin', 'Acceso denegado. No tienes permisos.');
     }
 
-
     /**
-     * Muestra el listado de muebles.
+     * Muestra el detalle del mueble al CLIENTE (Público).
+     * Antes: MuebleController@show
+     * Ahora: AdministracionController@showPublic
      */
+    public function showPublic(Request $request, $id)
+    {
+        // 1. Cargamos preferencias (Lógica traída de MuebleController)
+        $sesionData = $this->getSesionYPreferencias($request);
+
+        // 2. Buscamos el mueble usando el helper compartido
+        $muebles = $this->getMuebles();
+        $mueble = $muebles->first(fn($m) => $m->getId() == (int)$id);
+
+        if (!$mueble) {
+            abort(404, 'Mueble no encontrado');
+        }
+
+        // 3. Crear cookie de "Visto recientemente"
+        Cookie::queue("mueble_{$mueble->getId()}", json_encode($mueble), 60 * 24 * 30);
+
+        // 4. Retornamos la vista PÚBLICA
+        return view('muebles.show', array_merge($sesionData, [
+            'mueble' => $mueble,
+        ]));
+    }
+
+    // ---------------------------------------------------
+    // MÉTODOS DE ADMINISTRACIÓN (CRUD)
+    // ---------------------------------------------------
 
     public function index(Request $request)
     {
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
-
+        if (($check = $this->checkAdmin($request)) !== true) return $check;
 
         $muebles = $this->getMuebles();
-
-        // Pasamos los muebles a la vista del panel de administración
         return view('admin.muebles.index', compact('muebles'));
     }
 
-    /**
-     * Muestra el formulario para crear un nuevo mueble.
-     */
-
     public function create(Request $request)
     {
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
-
+        if (($check = $this->checkAdmin($request)) !== true) return $check;
 
         $categories = Category::getMockData();
         return view('admin.muebles.create', compact('categories'));
     }
 
-    /**
-     * Guarda un nuevo mueble en la cookie.
-     */
     public function store(Request $request)
     {
-
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
-
+        if (($check = $this->checkAdmin($request)) !== true) return $check;
 
         $muebles = $this->getMuebles();
-
-
         $maxId = $muebles->max(fn($m) => $m->getId()) ?? 0;
 
         $newMuebleData = $request->all();
-        $newMuebleData['id'] = $maxId + 1;
-
         $imagePath = 'default.jpg';
+
         if ($request->hasFile('image')) {
-            $request->validate([
-                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            ]);
+            $request->validate(['image' => 'image|max:2048']);
             $imageName = time().'.'.$request->image->extension();
             $request->image->move(public_path('images'), $imageName);
             $imagePath = 'images/'.$imageName;
         }
 
-        /*
-if ($request->hasFile('image')) {
-            $request->validate([
-                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            ]);
-            $imageName = time().'.'.$request->image->extension();
-            $request->image->move(public_path('images'), $imageName);
-            $imagePath = 'images/'.$imageName;
-            $mueble->setImages([$imagePath]);
-        }
-
-        */
-
-        // Creamos una instancia de Furniture para mantener la consistencia
         $newMueble = new Furniture(
-            $newMuebleData['id'],
+            $maxId + 1,
             (int)$newMuebleData['category_id'],
             $newMuebleData['name'],
             $newMuebleData['description'],
@@ -153,58 +165,35 @@ if ($request->hasFile('image')) {
             [$imagePath]
         );
 
-
         $muebles->push($newMueble);
-
         $this->saveMuebles($muebles);
 
-
-        return redirect()->route('admin.muebles.index')->with('success', 'Mueble creado correctamente.');
+        return redirect()->route('admin.muebles.index')->with('success', 'Mueble creado.');
     }
 
     /**
-     * Muestra los detalles de un mueble específico.
+     * Muestra el detalle del mueble al ADMIN.
      */
-
     public function show(Request $request, $id)
     {
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
-
+        if (($check = $this->checkAdmin($request)) !== true) return $check;
 
         $muebles = $this->getMuebles();
-
-
         $mueble = $muebles->first(fn($m) => $m->getId() == (int)$id);
 
-        if (!$mueble) {
-            abort(404);
-        }
-
+        if (!$mueble) abort(404);
 
         return view('admin.muebles.show', compact('mueble'));
     }
 
-
-    /**
-     * Muestra el formulario para editar un mueble.
-     */
-
     public function edit(Request $request, $id)
     {
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
-
+        if (($check = $this->checkAdmin($request)) !== true) return $check;
 
         $muebles = $this->getMuebles();
-
-
         $mueble = $muebles->first(fn($m) => $m->getId() == (int)$id);
 
-        if (!$mueble) {
-            abort(404);
-        }
-
+        if (!$mueble) abort(404);
 
         $categories = Category::getMockData();
         return view('admin.muebles.edit', compact('mueble', 'categories'));
@@ -212,23 +201,16 @@ if ($request->hasFile('image')) {
 
     public function update(Request $request, $id)
     {
-
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
-
+        if (($check = $this->checkAdmin($request)) !== true) return $check;
 
         $muebles = $this->getMuebles();
-
-
         $muebleIndex = $muebles->search(fn($m) => $m->getId() == (int)$id);
 
-        if ($muebleIndex === false) {
-            abort(404);
-        }
+        if ($muebleIndex === false) abort(404);
 
         $mueble = $muebles[$muebleIndex];
 
-        // Asignación de todos los campos del formulario
+        // Actualizamos campos (simplificado para lectura)
         $mueble->setName($request->input('name', $mueble->getName()));
         $mueble->setDescription($request->input('description', $mueble->getDescription()));
         $mueble->setPrice((float)$request->input('price', $mueble->getPrice()));
@@ -239,43 +221,27 @@ if ($request->hasFile('image')) {
         $mueble->setMaterials($request->input('materials', $mueble->getMaterials()));
         $mueble->setDimensions($request->input('dimensions', $mueble->getDimensions()));
 
-
         if ($request->hasFile('image')) {
-            $request->validate([
-                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            ]);
+            $request->validate(['image' => 'image|max:2048']);
             $imageName = time().'.'.$request->image->extension();
             $request->image->move(public_path('images'), $imageName);
-            $imagePath = 'images/'.$imageName;
-            $mueble->setImages([$imagePath]);
+            $mueble->setImages(['images/'.$imageName]);
         }
-
-
 
         $muebles[$muebleIndex] = $mueble;
         $this->saveMuebles($muebles);
 
-        return redirect()->route('admin.muebles.index')->with('success', 'Mueble actualizado correctamente.');
+        return redirect()->route('admin.muebles.index')->with('success', 'Actualizado.');
     }
-
-    /**
-     * Elimina un mueble de la cookie.
-     */
 
     public function destroy(Request $request, $id)
     {
-
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
-
+        if (($check = $this->checkAdmin($request)) !== true) return $check;
 
         $muebles = $this->getMuebles();
-
-
         $muebles = $muebles->reject(fn($m) => $m->getId() == (int)$id)->values();
-
         $this->saveMuebles($muebles);
 
-        return redirect()->route('admin.muebles.index')->with('success', 'Mueble eliminado correctamente.');
+        return redirect()->route('admin.muebles.index')->with('success', 'Eliminado.');
     }
 }

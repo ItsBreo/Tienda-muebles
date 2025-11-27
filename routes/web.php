@@ -48,24 +48,13 @@ Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.in
 Route::post('/checkout', [CheckoutController::class, 'processCheckout'])->name('checkout.process');
 
 
-
-// Panel de Administración (Solo usuario rol ADMIN)
-// CRUD de Muebles (con cookies)
-Route::get('/admin/muebles', [AdministracionController::class, 'index'])->name('admin.muebles.index');
-Route::get('/admin/muebles/crear', [AdministracionController::class, 'create'])->name('admin.muebles.create');
-Route::post('/admin/muebles', [AdministracionController::class, 'store'])->name('admin.muebles.store');
-Route::get('/admin/muebles/{id}', [AdministracionController::class, 'show'])->name('admin.muebles.show');
-Route::get('/admin/muebles/{id}/editar', [AdministracionController::class, 'edit'])->name('admin.muebles.edit');
-Route::post('/admin/muebles/{id}', [AdministracionController::class, 'update'])->name('admin.muebles.update');
-Route::delete('/admin/muebles/{id}', [AdministracionController::class, 'destroy'])->name('admin.muebles.destroy');
-
 // Categorías (CRUD)
  //Route::resource('categorias', CatalogoController::class);
 
 // Nombres generados:
 // categorias.index|create|store|show|edit|update|destroy
 // Productos (CRUD)
- Route::resource('productos', ProductosController::class);
+Route::resource('/admin/muebles', AdministracionController::class) -> name('admin.muebles');
 
 // Nombres generados:
 // productos.index|create|store|show|edit|update|destroy
@@ -80,7 +69,7 @@ Route::delete('/admin/muebles/{id}', [AdministracionController::class, 'destroy'
 
 // Panel de Administración de prueba
 // TODO: Borrar esta ruta una vez el CRUD esté hecho
-Route::view('/admin', 'adminPanel')->name('admin.dashboard');
+// Route::view('/admin', 'adminPanel')->name('admin.dashboard');
 
 // Depuración de cookies
 Route::get('/cookiesActivas', function (Request $request) {

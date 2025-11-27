@@ -171,4 +171,28 @@ class CatalogoController extends Controller
             'sesionId' => $sesionData['activeSesionId']
         ]);
     }
+
+    /*
+        public function show(Request $request, $id)
+        {
+        // Carga la sesión y las preferencias
+        $preferencias = $this->getSesionYPreferencias($request);
+
+        // Busca el mueble
+        $mueble = Furniture::find((int)$id);
+
+        if (!$mueble) {
+            abort(404, 'Mueble no encontrado');
+        }
+
+        // Crear cookie para el mueble mostrado (mueble_{id}) por 30 días
+        Cookie::queue("mueble_{$mueble->id}", json_encode($mueble), 60 * 24 * 30);
+
+        return view('muebles.show', [
+            'mueble' => $mueble,
+            'preferencias' => $preferencias,
+        ]);
+    }
+
+    */
 }

@@ -35,21 +35,18 @@ class FurnitureSeeder extends Seeder
             ['id' => 12, 'category_id' => 4, 'name' => "Mesa de Cocina 'Extensible'", 'description' => "Mesa para 4-6 personas.", 'price' => 175.00, 'stock' => 3, 'materials' => "Madera y metal", 'dimensions' => "140cm (ext. 180cm) x 80cm", 'main_color' => "Pino Claro", 'is_salient' => true],
         ];
 
-        // Insertar los datos en la base de datos
-        Furniture::insert($mockData);
+        // Añadimos timestamps (created_at y updated_at) a cada elemento
+        $now = now();
+        $dataWithTimestamps = array_map(function ($item) use ($now) {
+            return array_merge($item, [
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }, $mockData);
 
-        /*
-        TODO: Reemplazar los metodos de Eloquent
+        // Insertamos los datos en la base de datos usando Eloquent
+        Furniture::insert($dataWithTimestamps);
 
-        donde usabas getMuebles(), saveMuebles(), findById(), etc., y reemplazarlos por los métodos de Eloquent correspondientes:
-
-        $this->getMuebles() se convierte en Furniture::all() o Furniture::query()->...->get().
-        $muebles->first(fn($m) => $m->getId() == $id) se convierte en Furniture::find($id).
-        $muebles->push($newMueble) y saveMuebles se convierten en Furniture::create($datosValidados).
-        $mueble->setName(...) y saveMuebles se convierten en $mueble->update($datosValidados).
-        $muebles->reject(...) y saveMuebles se convierten en $mueble->delete()
-
-        */
     }
 }
 

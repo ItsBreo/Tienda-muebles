@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Session;
 use App\Models\Furniture;
 use App\Models\Category;
 use App\Models\User;
+use Illuminate\Support\Facades\Cookie;
 
 class CatalogoController extends Controller
 {
@@ -60,16 +61,8 @@ class CatalogoController extends Controller
         // Cargar datos comunes
         $data = $this->getSesionYPreferencias($request);
 
-        // Cargar categorías (Mock o BD)
-        // !! CORRECCIÓN: Usamos el método correcto si ya has migrado a BD, o getMockData si sigues con mocks !!
-        // Si ya tienes el modelo Category con BD, usa Category::all();
-        // Si sigues con el mock, usa Category::getMockData();
-        // Como estamos en transición, usaré una comprobación segura o el mock por defecto que tenías.
-        if (method_exists(Category::class, 'getMockData')) {
-             $categories = Category::getMockData();
-        } else {
-             $categories = Category::all();
-        }
+        // Cargamos las categorías con DB
+        $categories = Category::all();
 
         // Pasamos todo a la vista
         return view('catalogo.categorias', array_merge($data, [
@@ -78,26 +71,22 @@ class CatalogoController extends Controller
     }
 
     /**
-     * Muestra el catálogo principal (index) con filtros y paginación.
+     * Función para mostrar el catálogo principal (index) con filtros y paginación.
      */
     public function index(Request $request)
     {
-        // 1. Cargar preferencias
+        // Cargamos las preferencias
         $sesionData = $this->getSesionYPreferencias($request);
         $preferencias = $sesionData['preferencias'];
 
-        // 2. Cargar datos base
-        if (method_exists(Category::class, 'getMockData')) {
-             $categories = Category::getMockData();
-             $items = collect(Furniture::getMockData());
-        } else {
-             $categories = Category::all();
-             // Si ya migraste Furniture a Eloquent, usa Furniture::all();
-             // Si no, mantén el mock.
-             $items = collect(Furniture::all());
-        }
+        // Cargamos datos de nuestra DB
+        $categories = Category::all();
+        $items = collect(Furniture::all());
 
-        // 3. Lógica de Filtrado
+        // Recogemos los colores de los muebles
+        $colors = $items->pluck('main_color')->unique()->sort();
+
+        // Lógica de Filtrado
         if ($request->filled('category')) {
             $items = $items->filter(fn($m) => $m->category_id == $request->category);
         }
@@ -114,6 +103,9 @@ class CatalogoController extends Controller
         if ($request->filled('max_price')) {
             $items = $items->filter(fn($m) => $m->price <= $request->max_price);
         }
+        if ($request->filled('color')) {
+            $items = $items->filter(fn($m) => $m->main_color == $request->color);
+        }
 
         // 4. Lógica de Ordenación
         $sort = $request->input('sort', 'default');
@@ -122,6 +114,8 @@ class CatalogoController extends Controller
             'price_desc' => $items->sortByDesc(fn($m) => $m->price),
             'name_asc' => $items->sortBy(fn($m) => $m->name),
             'name_desc' => $items->sortByDesc(fn($m) => $m->name),
+            'date_new' => $items->sortByDesc(fn($m) => $m->created_at ?? 0),
+            'date_old' => $items->sortBy(fn($m) => $m->created_at ?? 0),
             default => $items,
         };
 
@@ -143,6 +137,7 @@ class CatalogoController extends Controller
         return view('catalogo.index', array_merge($sesionData, [
             'muebles' => $paginator,
             'categories' => $categories,
+            'colors' => $colors,
         ]));
     }
 
@@ -172,27 +167,22 @@ class CatalogoController extends Controller
         ]);
     }
 
-    /*
-        public function show(Request $request, $id)
-        {
-        // Carga la sesión y las preferencias
-        $preferencias = $this->getSesionYPreferencias($request);
+    public function showMueble(Request $request, $id){
+        // Cargamos la sesión y las preferencias
+        $sesionData = $this->getSesionYPreferencias($request);
 
-        // Busca el mueble
-        $mueble = Furniture::find((int)$id);
+        // Buscamos el mueble
+        $mueble = Furniture::find($id);
 
         if (!$mueble) {
             abort(404, 'Mueble no encontrado');
         }
 
-        // Crear cookie para el mueble mostrado (mueble_{id}) por 30 días
+        // Creamos cookie para el mueble mostrado (mueble_{id}) por 30 días
         Cookie::queue("mueble_{$mueble->id}", json_encode($mueble), 60 * 24 * 30);
 
-        return view('muebles.show', [
+        return view('muebles.show', array_merge($sesionData, [
             'mueble' => $mueble,
-            'preferencias' => $preferencias,
-        ]);
+        ]));
     }
-
-    */
 }

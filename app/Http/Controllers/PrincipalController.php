@@ -39,7 +39,10 @@ class PrincipalController extends Controller
 
         // Obtenemos los datos
         $categories = Category::all();
-        $featured = Furniture::where('is_salient', true)->take(6)->get();
+        $featured = Furniture::with('images')
+                    ->where('is_salient', true)
+                    ->take(6)
+                    ->get();
 
         // Pasamos todas las variables necesarias a la vista, incluyendo el sesionId
         return view('principal', compact('categories', 'featured', 'preferencias', 'user', 'sesionId'));

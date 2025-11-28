@@ -14,6 +14,7 @@
     <div class="row g-5">
 
         <div class="col-lg-6">
+            {{-- Imagen Principal: Usamos el Accessor main_image que creamos en el modelo --}}
             <img src="{{ asset($mueble->main_image) }}"
                  class="img-fluid rounded shadow-sm w-100 mb-3"
                  alt="{{ $mueble->name }}"
@@ -21,12 +22,14 @@
                  style="height: 450px; object-fit: cover; border: 1px solid #EEE;">
 
             <div class="d-flex flex-wrap">
-                @foreach(json_decode($mueble->images) as $image)
-                    <img src="{{ asset($image) }}"
+                {{-- CORRECCIÓN: Iterar la relación Eloquent directamente --}}
+                @foreach($mueble->images as $image)
+                    <img src="{{ asset($image->image_path) }}"
                          class="img-thumbnail me-2 mb-2"
                          style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;"
                          alt="Miniatura"
-                         onclick="document.getElementById('main-image').src = this.src">
+                         {{-- Actualizamos el src de la imagen principal con JS --}}
+                         onclick="document.getElementById('main-image').src = '{{ asset($image->image_path) }}'">
                 @endforeach
             </div>
         </div>

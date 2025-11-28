@@ -72,8 +72,15 @@ class AdministracionController extends Controller
     private function checkAdmin(Request $request)
     {
         // 1. Obtenemos el sesionId de la petición.
-        // Lo buscamos en la ruta, en la query string y en los inputs del formulario para no perderlo.
+        // Lo buscamos en la ruta, en la query string, en los inputs del formulario o en la sesión de Laravel
         $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
+
+        // Si no lo encontramos en la petición, buscamos en la sesión de Laravel
+        if (!$sesionId) {
+            // Obtenemos el primer sesionId disponible en el array 'usuarios'
+            $usuarios = Session::get('usuarios', []);
+            $sesionId = array_key_first($usuarios);
+        }
 
         $user = User::activeUserSesion($sesionId);
 
@@ -159,10 +166,15 @@ class AdministracionController extends Controller
 
         // 1. Validar
         $data = $request->validate([
-            'name' => 'required',
-            'price' => 'required|numeric',
-            'category_id' => 'required|exists:categories,id', // Valida que la categoría exista
-            // ... añade el resto de tus validaciones ...
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'materials' => 'nullable|string',
+            'dimensions' => 'nullable|string',
+            'main_color' => 'required|string|max:100',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         // 2. Checkbox manual

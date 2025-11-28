@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login con Paleta de Colores</title>
+    <title>Login</title>
 
     {{-- Asumiendo que bootstrap.min.css está en public/resources/ --}}
     <link rel="stylesheet" href="{{ asset('resources/bootstrap.min.css') }}">

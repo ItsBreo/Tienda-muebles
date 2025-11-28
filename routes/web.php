@@ -66,7 +66,7 @@ Route::resource('/admin/muebles', AdministracionController::class) -> names('adm
 // Galería de Productos
  Route::post('productos/{mueble}/galeria', [ProductosGaleriaController::class,'store'])->name('productos.galeria.store');// Subida múltiple
 
- Route::post('productos/{mueble}/galeria/{image}',
+ Route::delete('productos/{mueble}/galeria/{image}',
 [ProductosGaleriaController::class, 'destroy'])->name('productos.galeria.destroy'); // Borrar imagen
 
  Route::post('productos/{mueble}/galeria/{image}/principal',

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('image_path');
             $table->boolean('is_primary')->default(false);
             $table->integer('display_order')->default(0);
+            $table->string('alt_text')->nullable();
             $table->timestamps();
         });
     }

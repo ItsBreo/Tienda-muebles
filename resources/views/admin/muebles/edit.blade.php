@@ -262,7 +262,7 @@
                                             <div class="card-body text-center d-flex align-items-end justify-content-center">
 
                                                 {{-- Formulario BORRAR IMAGEN --}}
-                                                {{-- Pasamos ID mueble e ID imagen --}}
+                                                {{-- Pasamos ID mueble e ID imagen con route binding --}}
                                                 <form action="{{ route('productos.galeria.destroy', ['mueble' => $mueble->id, 'image' => $image->id]) }}"
                                                       method="POST" class="d-inline">
                                                     @csrf

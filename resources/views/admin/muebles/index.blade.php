@@ -7,7 +7,7 @@
     <title>Administración de Muebles - Tienda</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
     <style>
         /* Paleta */
@@ -17,15 +17,12 @@
             --bs-timberwolf: #D0CFCF;
             --bs-snow: #FFFBFE;
             --bs-primary: var(--bs-davys-gray);
-            /* Color principal: Gris Oscuro */
             --bs-secondary: var(--bs-gray-medium);
-            /* Color secundario: Gris Medio */
         }
 
         body {
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background-color: var(--bs-timberwolf);
-            /* Fondo de página gris claro */
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -40,22 +37,18 @@
         .navbar-custom .navbar-brand,
         .navbar-custom .nav-link,
         .navbar-custom .btn-link {
-            /* !! AÑADIDO para el botón de logout !! */
             color: var(--bs-snow) !important;
         }
 
         .navbar-custom .btn-link:hover {
-            /* !! AÑADIDO para el botón de logout !! */
             color: var(--bs-timberwolf) !important;
         }
 
         .sidebar {
             width: 250px;
             background-color: var(--bs-secondary);
-            /* Gris Medio */
             padding-top: 1rem;
             min-height: calc(100vh - 56px);
-            /* 100vh menos altura del navbar */
         }
 
         .sidebar .nav-link {
@@ -74,11 +67,9 @@
 
         .footer-custom {
             background-color: var(--bs-primary);
-            /* Gris Oscuro */
             color: var(--bs-snow);
             padding: 1rem 0;
             margin-top: auto;
-            /* Empuja el footer hacia abajo */
         }
     </style>
 </head>
@@ -89,18 +80,17 @@
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
 
-                <a class="navbar-brand fw-bold"
-                    href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Panel de Control</a>
+                {{-- CAMBIO 1: Eliminado el parámetro sesionId --}}
+                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">
+                    Panel de Control
+                </a>
+
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
-                        {{-- <li class="nav-item">
-                            <a class="nav-link" href="#">Usuario (Admin)</a>
-                        </li> --}}
                         <li class="nav-item">
-
+                            {{-- CAMBIO 2: Eliminado input hidden sesionId --}}
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
-                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
                                 <button type="submit" class="btn btn-link nav-link">Cerrar Sesión</button>
                             </form>
                         </li>
@@ -115,11 +105,10 @@
 
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-
-                    <a class="nav-link" href="#">Dashboard</a>
+                    {{-- CAMBIO 3: Eliminado sesionId del sidebar --}}
+                    <a class="nav-link" href="{{ route('admin.muebles.index') }}">Dashboard</a>
                     <a class="nav-link" href="#">Usuarios</a>
-                    <a class="nav-link active"
-                        href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
+                    <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
                     <a class="nav-link" href="#">Configuración</a>
                 </div>
             </div>
@@ -138,8 +127,10 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="card-title text-primary">Listado de Muebles</h5>
 
-                            <a href="{{ route('admin.muebles.create', ['sesionId' => $sesionId]) }}"
-                                class="btn btn-primary">Crear Nuevo Mueble</a>
+                            {{-- CAMBIO 4: Eliminado sesionId del botón crear --}}
+                            <a href="{{ route('admin.muebles.create') }}" class="btn btn-primary">
+                                Crear Nuevo Mueble
+                            </a>
                         </div>
 
                         <div class="table-responsive mt-3">
@@ -162,8 +153,9 @@
                                             <td>{{ $mueble->stock }}</td>
 
                                             <td>
-                                                <div class="d-flex gap-1"> <a
-                                                        href="{{ route('admin.muebles.show', $mueble) }}"
+                                                <div class="d-flex gap-1">
+                                                    {{-- CAMBIO 5: Eliminado sesionId y uso de objeto $mueble --}}
+                                                    <a href="{{ route('admin.muebles.show', $mueble) }}"
                                                         class="btn btn-sm btn-info text-white">
                                                         Ver
                                                     </a>
@@ -178,10 +170,8 @@
                                                         onsubmit="return confirm('¿Estás seguro de que quieres eliminar este mueble?');">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit"
-                                                            class="btn btn-sm btn-danger">Eliminar</button>
+                                                        <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
                                                     </form>
-
                                                 </div>
                                             </td>
                                         </tr>
@@ -208,7 +198,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
     </script>
 </body>
 

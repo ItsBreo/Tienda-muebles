@@ -28,26 +28,24 @@ class Furniture extends model {
         'is_salient',
     ];
 
-    // Método helper para obtener la imagen principal
-    public function getMainImage(): string {
-        // Assuming you have an 'images' relationship that returns a collection of Image models
-        $mainImage = $this->images()->where('is_primary', true)->first();
-        if ($mainImage) {
-            return $mainImage->image_path;
+    /* Obtenemos imagen principal */
+    public function getMainImageAttribute(): string
+    {
+        // Usamos la colección ($this->images) en lugar del query builder ($this->images())
+        // para aprovechar el Eager Loading y no hacer consultas extra.
+
+        $mainImage = $this->images->firstWhere('is_primary', true);
+
+        if (!$mainImage) {
+            $mainImage = $this->images->sortBy('display_order')->first();
         }
 
-        // Fallback to the first image if no main image is set
-        $firstImage = $this->images()->orderBy('display_order')->first();
-        if ($firstImage) {
-            return $firstImage->image_path;
-        }
-
-        return 'default.jpg'; // Retornamos una imagen por defecto
+        return $mainImage ? $mainImage->image_path : 'images/default.png'; // Ruta por defecto segura
     }
 
     /**
      * Devolvemos un array con los datos de prueba
-     */
+     * Comento todo el mockup
     public static function getMockData(): array {
         return [
             new self(['id' => 1, 'category_id' => 1, 'name' => "Mesa de Centro 'Nórdica'", 'description' => "Mesa de roble con diseño minimalista.", 'price' => 149.99, 'stock' => 5, 'materials' => "Madera de roble oscuro", 'dimensions' => "120cm x 60cm x 45cm", 'main_color' => "Roble Oscuro", 'is_salient' => true]),
@@ -65,9 +63,9 @@ class Furniture extends model {
         ];
     }
 
-    /**
-     * Buscamos un mueble por ID en los datos de prueba
-     */
+
+      Buscamos un mueble por ID en los datos de prueba
+
     public static function findById(int $id): ?Furniture {
         foreach (self::getMockData() as $furniture) {
             if ($furniture->id === $id) {
@@ -76,6 +74,8 @@ class Furniture extends model {
         }
         return null;
     }
+
+    */
 
     /**
      * Formatea el precio del mueble según la moneda (solo simulación).

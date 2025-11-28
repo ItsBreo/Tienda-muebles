@@ -9,8 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
+    public function up(): void{
         Schema::create('furniture_images', function (Blueprint $table) {
             $table->id();
             $table->foreignId('furniture_id')->constrained()->onDelete('cascade'); // FK muebles
@@ -20,7 +19,6 @@ return new class extends Migration
             $table->timestamps();
         });
     }
-
     /**
      * Reverse the migrations.
      */

@@ -30,7 +30,7 @@ class CarritoController extends Controller
 
         // Obtenemos los datos "en vivo"
         // Leemos la lista de muebles que el Admin edita.
-        $allMuebles = collect(Session::get($this->mueblesSessionKey, Furniture::getMockData()));
+        $allMuebles = collect(Session::get($this->mueblesSessionKey, Furniture::all()));
 
         $total = 0;
         $cartWithLiveData = []; // Un nuevo array para la vista
@@ -38,13 +38,13 @@ class CarritoController extends Controller
         if (!empty($cart)) {
             foreach ($cart as $id => $item) {
                 // Encontrar el mueble en la BD de sesión
-                $liveMueble = $allMuebles->first(fn($m) => $m->getId() == $id);
+                $liveMueble = $allMuebles->first(fn($m) => $m->id == $id);
 
                 if ($liveMueble) {
                     // El mueble existe, usamos sus datos
                     $cantidad = (int) $item['cantidad'];
-                    $precioVivo = $liveMueble->getPrice();
-                    $nombreVivo = $liveMueble->getName();
+                    $precioVivo = $liveMueble->price;
+                    $nombreVivo = $liveMueble->name;
 
                     // Re-creamos el array del carrito para la vista
                     $cartWithLiveData[$id] = [
@@ -53,7 +53,7 @@ class CarritoController extends Controller
                         'precio' => $precioVivo,
                         'cantidad' => $cantidad,
                         // Añadimos la imagen para la vista
-                        'imagen' => $liveMueble->getMainImage(),
+                        'imagen' => $liveMueble->getMainImageAttribute(),
                     ];
                     $total += $precioVivo * $cantidad;
                 }
@@ -87,8 +87,8 @@ class CarritoController extends Controller
         }
 
 
-        $allMuebles = collect(Session::get($this->mueblesSessionKey, Furniture::getMockData()));
-        $furniture = $allMuebles->first(fn($m) => $m->getId() == (int)$id);
+        $allMuebles = collect(Session::get($this->mueblesSessionKey, Furniture::all()));
+        $furniture = $allMuebles->first(fn($m) => $m->id == (int)$id);
 
         if (!$furniture) {
             return redirect()->route('muebles.index', ['sesionId' => $sesionId])->withErrors('Mueble no encontrado');
@@ -101,11 +101,11 @@ class CarritoController extends Controller
         } else {
 
             $cart[$id] = [
-                'id' => $furniture->getId(),
-                'nombre' => $furniture->getName(),
-                'precio' => $furniture->getPrice(),
+                'id' => $furniture->id,
+                'nombre' => $furniture->name,
+                'precio' => $furniture->price,
                 'cantidad' => $quantity,
-                'imagen' => $furniture->getMainImage()
+                'imagen' => $furniture->getMainImageAttribute()
             ];
 
         }

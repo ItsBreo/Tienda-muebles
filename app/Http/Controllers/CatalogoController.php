@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Session;
 use App\Models\Furniture;
 use App\Models\Category;
 use App\Models\User;
+use Illuminate\Support\Facades\Cookie;
 
 class CatalogoController extends Controller
 {
@@ -170,5 +171,24 @@ class CatalogoController extends Controller
             'category' => $catId,
             'sesionId' => $sesionData['activeSesionId']
         ]);
+    }
+
+    public function showMueble(Request $request, $id){
+        // Cargamos la sesión y las preferencias
+        $sesionData = $this->getSesionYPreferencias($request);
+
+        // Buscamos el mueble
+        $mueble = Furniture::find($id);
+
+        if (!$mueble) {
+            abort(404, 'Mueble no encontrado');
+        }
+
+        // Creamos cookie para el mueble mostrado (mueble_{id}) por 30 días
+        Cookie::queue("mueble_{$mueble->id}", json_encode($mueble), 60 * 24 * 30);
+
+        return view('muebles.show', array_merge($sesionData, [
+            'mueble' => $mueble,
+        ]));
     }
 }

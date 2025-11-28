@@ -35,7 +35,7 @@ use Illuminate\Http\Request;
 
 // Catálogo: muebles (listado + detalle)
  Route::get('/muebles', [CatalogoController::class, 'index'])->name('muebles.index');
- Route::get('/mueble/{id}', [MuebleController::class, 'show'])->name('muebles.show');
+ Route::get('/mueble/{id}', [CatalogoController::class, 'showMueble'])->name('muebles.show');
 
  // Catálogo: categorías
  Route::get('/categorias', [CatalogoController::class, 'categorias'])->name('categorias.index');

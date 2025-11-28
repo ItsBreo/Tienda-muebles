@@ -44,7 +44,7 @@
         @foreach ($muebles as $m)
             <div class="col-md-4">
                 <div class="card mb-3 @if (request()->cookie('pref_theme') === 'dark') dark @endif">
-                    <img src="{{ asset($m->getMainImage()) }}" class="card-img-top" alt="{{ $m->name }}">
+                    <img src="{{ asset($m->getMainImageAttribute()) }}" class="card-img-top" alt="{{ $m->name }}">
                     <div class="card-body">
                         <h5 class="card-title">{{ $m->name }}</h5>
                         <p class="card-text">{{ \Illuminate\Support\Str::limit($m->description, 100) }}</p>

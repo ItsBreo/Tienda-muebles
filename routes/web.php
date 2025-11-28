@@ -47,10 +47,7 @@ Route::post('/carrito/insertar/{mueble}', [CarritoController::class, 'add'])->na
 Route::post('/carrito/actualizar/{mueble}', [CarritoController::class, 'update'])->name('carrito.update');
 Route::post('/carrito/eliminar/{mueble}', [CarritoController::class, 'remove'])->name('carrito.remove');
 Route::post('/carrito/vaciar', [CarritoController::class, 'clear'])->name('carrito.clear');
-
-// Checkout (página de resumen/pago):
-Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-Route::post('/checkout', [CheckoutController::class, 'processCheckout'])->name('checkout.process');
+Route::post('/carrito/guardar', [CarritoController::class, 'saveOnBD'])->name('carrito.save');
 
 
 // Categorías (CRUD)

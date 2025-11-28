@@ -39,25 +39,24 @@ class Furniture extends Model // Nota: Model con mayúscula
      * ADVERTENCIA: Para que esto funcione, tu tabla 'images' debe tener
      * columnas 'is_primary' (booleano) y 'url' (string).
      */
-    public function getMainImage(): string
-    {
-        // Intenta buscar una imagen marcada como primaria
-        // Nota: Si en tu DB la columna es 'url', cambia 'image_path' por 'url'
-        $mainImage = $this->images()->where('is_primary', true)->first();
+    public function getMainImage(): string{
 
+        // Encontramos la imagen principal
+        $mainImage = $this->images()->firstwhere('is_primary', true);
+
+        // Si existe retornamos la ruta donde está la imagen
         if ($mainImage) {
-            return $mainImage->url; // O $mainImage->image_path según tu DB
+            return $mainImage->image_path;
         }
 
         // Si no hay primaria, toma la primera que encuentre
         $firstImage = $this->images()->first();
-
         if ($firstImage) {
-            return $firstImage->url;
+            return $firstImage->image_path;
         }
 
         // Si no tiene ninguna foto subida, devuelve la default
-        return 'default.jpg';
+        return 'images/default.jpeg';
     }
 
     /**

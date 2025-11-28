@@ -7,6 +7,9 @@ use App\Models\Furniture;
 use App\Models\Cart;
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\Auth;
+use Illuminate\Facades\Auth as FacadesAuth;
 
 class CarritoController extends Controller
 {
@@ -53,7 +56,7 @@ class CarritoController extends Controller
                         'precio' => $precioVivo,
                         'cantidad' => $cantidad,
                         // Añadimos la imagen para la vista
-                        'imagen' => $liveMueble->getMainImageAttribute(),
+                        'imagen' => $liveMueble->getMainImage(),
                     ];
                     $total += $precioVivo * $cantidad;
                 }
@@ -105,7 +108,7 @@ class CarritoController extends Controller
                 'nombre' => $furniture->name,
                 'precio' => $furniture->price,
                 'cantidad' => $quantity,
-                'imagen' => $furniture->getMainImageAttribute()
+                'imagen' => $furniture->getMainImage(),
             ];
 
         }
@@ -146,8 +149,11 @@ class CarritoController extends Controller
         return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('success', 'Carrito vaciado');
     }
 
-    public function saveOnBD()
+
+    public function saveOnBD(Request $request, int $id)
     {
+        $user = User::activeUserSesion($id);
+
         if (!$user) {
             return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión para guardar el carrito.']);
         }
@@ -159,8 +165,8 @@ class CarritoController extends Controller
         }
 
         // Creamos el registro de carrito primero, añadimos al usuario actual del carrito utilizando la capa Auth.
-        $carrito = Carrito::create([
-            'user_id' => Auth::id(),
+        $carrito = Cart::create([
+            'user_id' => $user->id,
             'total' => 0
         ]);
 

@@ -10,12 +10,13 @@
 
     <div class="row g-4">
         @forelse ($categories as $category)
+
             <div class="col-md-6 col-lg-3">
                 <div class="card h-100 shadow-sm border-0">
                     <div class="card-body text-center d-flex flex-column">
                         <h5 class="card-title">{{ $category->name }}</h5>
                         <p class="card-text small">{{ $category->description }}</p>
-                        <a href="{{ route('categorias.show', $category->id) }}" class="btn btn-primary mt-auto">
+                        <a href="{{ route('categorias.show', [$category->id])   }}" class="btn btn-primary mt-auto">
                             Ver Muebles
                         </a>
                     </div>

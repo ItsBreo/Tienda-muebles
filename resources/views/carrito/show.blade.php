@@ -86,10 +86,12 @@
                         {{-- @method('DELETE') COMENTO ESTA LINEA TAMBIEN --}}
                         <button class="btn btn-outline-warning" type="submit">Vaciar Carrito</button>
                     </form>
-
-                    <a href="{{ route('checkout.index', ['sesionId' => $sesionId]) }}" class="btn btn-success btn-lg">
-                        Finalizar Compra &rarr;
-                    </a>
+                    <form method="POST" action="{{ route('carrito.save', ['sesionId' => $sesionId]) }}" class="d-inline}}" >
+                        @csrf
+                        <a href="{{ route('carrito.save', ['sesionId' => $sesionId]) }}" class="btn btn-success btn-lg">
+                            Finalizar Compra &rarr;
+                        </a>
+                    </form>
                 </div>
             </div>
         @endif

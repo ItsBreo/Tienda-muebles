@@ -37,6 +37,8 @@
         }
     }
 
+    dump('5. Usuario Activo:', $activeUser);
+
     // 3. Obtener Preferencias
     if (!isset($preferencias)) {
         $defaultPrefs = [

@@ -139,11 +139,22 @@ class LoginController extends Controller
 
         // TODO: Crear un guardado de la sesión en la base de datos / Borrar la cookie de sesión.
     {
-        $sesionId = $request->input('sesionId');
+        $sesionId = $request->input('sesionId'); // Para clientes
         $cookieToForget = null;
+        $users = Session::get('usuarios', []);
+
+        // Si no hay sesionId (caso del admin), buscamos la primera sesión activa
+        if (!$sesionId && !empty($users)) {
+            // array_key_first() obtiene la clave del primer elemento del array 'usuarios'
+            $sesionId = array_key_first($users);
+        }
 
         if ($sesionId) {
-            $users = Session::get('usuarios', []);
+            // Volvemos a cargar los usuarios por si se asignó en el if anterior.
+            // Aunque en este flujo no es estrictamente necesario, es una buena práctica.
+            if (empty($users)) {
+                $users = Session::get('usuarios', []);
+            }
 
             // 1. Verificamos si existe la sesión para obtener el ID del usuario
             if (isset($users[$sesionId])) {

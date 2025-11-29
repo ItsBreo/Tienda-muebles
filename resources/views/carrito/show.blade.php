@@ -88,9 +88,11 @@
                     </form>
                     <form method="POST" action="{{ route('carrito.save', ['sesionId' => $sesionId]) }}" class="d-inline}}" >
                         @csrf
-                        <a href="{{ route('carrito.save', ['sesionId' => $sesionId]) }}" class="btn btn-success btn-lg">
+                        <input type="hidden" name="sesionId" value="{{ $sesionId }}">
+
+                        <button type="submit" class="btn btn-success btn-lg">
                             Finalizar Compra &rarr;
-                        </a>
+                        </button>
                     </form>
                 </div>
             </div>

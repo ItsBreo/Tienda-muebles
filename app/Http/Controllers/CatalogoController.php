@@ -168,21 +168,49 @@ class CatalogoController extends Controller
     }
 
     public function showMueble(Request $request, $id){
-        // Cargamos la sesión y las preferencias
+        // 1. Cargamos la sesión y las preferencias (Helper existente)
         $sesionData = $this->getSesionYPreferencias($request);
 
-        // Buscamos el mueble
+        // 2. Buscamos el mueble
         $mueble = Furniture::find($id);
 
         if (!$mueble) {
             abort(404, 'Mueble no encontrado');
         }
 
-        // Creamos cookie para el mueble mostrado (mueble_{id}) por 30 días
+        // 3. LÓGICA DE STOCK (Movida desde la Vista al Controlador)
+        $activeSesionId = $sesionData['activeSesionId'];
+        $stockTotal = $mueble->stock;
+        $enCarrito = 0;
+
+        if ($activeSesionId) {
+            // Usamos el helper del modelo User para buscar al usuario de esta sesión
+            $u = User::activeUserSesion($activeSesionId);
+
+            if ($u) {
+                // Obtenemos el carrito de la sesión
+                $carritoSesion = Session::get('carrito_' . $u->id, []);
+
+                // Verificamos si este mueble específico está en el carrito
+                if (isset($carritoSesion[$mueble->id])) {
+                    $enCarrito = (int) $carritoSesion[$mueble->id]['cantidad'];
+                }
+            }
+        }
+
+        // Calculamos lo que queda realmente disponible para comprar
+        $stockDisponible = max(0, $stockTotal - $enCarrito);
+
+
+        // 4. Creamos cookie de historial (mantenemos tu lógica existente)
         Cookie::queue("mueble_{$mueble->id}", json_encode($mueble), 60 * 24 * 30);
 
+        // 5. Enviamos TODOS los datos calculados a la vista
         return view('muebles.show', array_merge($sesionData, [
             'mueble' => $mueble,
+            'stockTotal' => $stockTotal,       // Total en BD
+            'enCarrito' => $enCarrito,         // Lo que ya tiene el user
+            'stockDisponible' => $stockDisponible // Lo que puede comprar ahora
         ]));
     }
 }

@@ -6,8 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Cookie;
+use App\Models\SessionLog;
 use App\Models\User;
-use Carbon\Carbon; // Necesario para manejar fechas y horas
+use Carbon\Carbon;
 
 class LoginController extends Controller
 {
@@ -24,23 +25,21 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-        // 1. Validar los datos del formulario
+
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        // 2. Buscar el usuario en la Base de Datos
-        // (No usamos Auth::attempt porque necesitamos controlar el bloqueo manualmente)
+
         $user = User::where('email', $credentials['email'])->first();
 
-        // Si no existe el usuario, devolvemos error genérico por seguridad
+        // Si no existe el usuario, devolvemos error
         if (!$user) {
             return back()->withErrors(['autenticationError' => 'Credenciales incorrectas.']);
         }
 
-        // 3. Verificar si la cuenta está BLOQUEADA
-        // Si tiene fecha de bloqueo y esa fecha es futura...
+        // Verificar si la cuenta está BLOQUEADA
         if ($user->locked_until && Carbon::now()->lessThan($user->locked_until)) {
             $minutosRestantes = Carbon::now()->diffInMinutes($user->locked_until) + 1;
             return back()->withErrors([
@@ -48,18 +47,17 @@ class LoginController extends Controller
             ]);
         }
 
-        // 4. Verificar la Contraseña
+        // Verificar la Contraseña
         if (!Hash::check($credentials['password'], $user->password)) {
-            // ¡Contraseña incorrecta!
 
             // Incrementamos el contador de fallos en la BD
             $user->increment('failed_attempts');
 
-            // Si llega a 3 fallos, bloqueamos la cuenta
+            // Si llega a 3 fallos, bloqueamos la cuenta 5 min
             if ($user->failed_attempts >= 3) {
                 $user->update([
-                    'locked_until' => Carbon::now()->addMinutes(5), // Bloqueo de 5 minutos
-                    'failed_attempts' => 0 // Opcional: resetear contador tras bloquear
+                    'locked_until' => Carbon::now()->addMinutes(5),
+                    'failed_attempts' => 0
                 ]);
 
                 return back()->withErrors([
@@ -74,27 +72,31 @@ class LoginController extends Controller
             ]);
         }
 
-        // 5. ¡LOGIN EXITOSO!
-
-        // Reseteamos los contadores de seguridad
+        // Reseteamos los contadores de seguridad si la autenticación es exitosa
         $user->update([
             'failed_attempts' => 0,
             'locked_until' => null
         ]);
 
-        // ---------------------------------------------------------
-        // LÓGICA DE SESIÓN MANUAL (Requisito 2.5: Multi-pestaña)
-        // ---------------------------------------------------------
+        $request->session()->regenerate();
 
         // Generamos un ID único para esta pestaña/sesión
         $sesionId = session()->getId() . "_" . $user->id . "_" . time();
 
-        // Datos mínimos para guardar en la sesión (sin password)
+        // Creamos el registro en logs.
+        SessionLog::create([
+            'session_id' => $sesionId,
+            'user_id' => $user->id,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'login_at' => Carbon::now(),
+        ]);
+
+        // Guardamos los datos del usuario en la sesión
         $userDataSesion = [
             'id' => $user->id,
             'email' => $user->email,
             'name' => $user->name,
-            // Asumimos que tienes la relación 'role' definida en el modelo User
             'rol_name' => $user->role ? $user->role->name : 'Cliente',
             'sesion_id' => $sesionId,
         ];
@@ -105,9 +107,6 @@ class LoginController extends Controller
         Session::put('usuarios', $users);
         Session::save(); // Forzamos el guardado
 
-        // ---------------------------------------------------------
-        // GESTIÓN DE PREFERENCIAS (Cookie)
-        // ---------------------------------------------------------
         $cookieName = 'preferencias_' . $user->id;
 
         // Si el usuario no tiene cookie de preferencias, creamos una por defecto
@@ -115,13 +114,13 @@ class LoginController extends Controller
             $defaultPreferences = [
                 'tema' => 'claro',
                 'moneda' => 'EUR',
-                'tamaño' => 6, // 6/12/24 según PDF
+                'tamaño' => 6,
             ];
 
             $cookie = Cookie::make(
                 $cookieName,
                 json_encode($defaultPreferences),
-                60 * 24 * 30 // 30 días
+                60 * 24 * 30
             );
 
             // Redirigimos adjuntando la cookie
@@ -137,32 +136,48 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
 
-        // TODO: Crear un guardado de la sesión en la base de datos / Borrar la cookie de sesión.
     {
         $sesionId = $request->input('sesionId');
         $cookieToForget = null;
+        $users = Session::get('usuarios', []);
+
+        // Si no hay sesionId (caso del admin), buscamos la primera sesión activa
+        if (!$sesionId && !empty($users)) {
+            // array_key_first() obtiene la clave del primer elemento del array 'usuarios'
+            // el admin siempre será la ID 1, por lo que es suficiente
+            $sesionId = array_key_first($users);
+        }
 
         if ($sesionId) {
-            $users = Session::get('usuarios', []);
+            if (empty($users)) {
+                $users = Session::get('usuarios', []);
+            }
 
-            // 1. Verificamos si existe la sesión para obtener el ID del usuario
+            // Verificamos si existe la sesión para obtener el ID del usuario
             if (isset($users[$sesionId])) {
                 $userData = json_decode($users[$sesionId]);
 
-                // 2. Preparamos el borrado de la cookie usando el ID del usuario
                 if (isset($userData->id)) {
                     $cookieName = 'preferencias_' . $userData->id;
                     $cookieToForget = Cookie::forget($cookieName);
                 }
 
-                // 3. Eliminamos al usuario del array de sesión
+                // Buscamos el log de sesión correspondiente y lo actualizamos.
+                $log = SessionLog::where('session_id', $sesionId)->whereNull('logout_at')->first();
+                if ($log) {
+                    $log->update([
+                        'logout_at' => Carbon::now()
+                    ]);
+                }
+
+                // Eliminamos al usuario del array de sesión
                 unset($users[$sesionId]);
                 Session::put('usuarios', $users);
                 Session::save();
             }
         }
 
-        // 4. Redirigimos adjuntando la orden de olvidar la cookie (si aplica)
+        // Redirigimos adjuntando la orden de olvidar la cookie
         if ($cookieToForget) {
             return redirect()->route('principal')->withCookie($cookieToForget);
         }

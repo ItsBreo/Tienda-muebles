@@ -14,8 +14,7 @@
     <div class="row g-5">
 
         <div class="col-lg-6">
-            {{-- Imagen Principal: Usamos el Accessor main_image que creamos en el modelo --}}
-            <img src="{{ asset($mueble->main_image) }}"
+            <img src="{{ asset($mueble->getMainImage()) }}"
                  class="img-fluid rounded shadow-sm w-100 mb-3"
                  alt="{{ $mueble->name }}"
                  id="main-image"

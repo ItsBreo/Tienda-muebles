@@ -66,7 +66,7 @@
             <hr>
 
             @if($mueble->stock > 0)
-                <form action="{{ route('carrito.add', ['mueble' => $mueble->id]) }}" method="POST">
+                <form action="{{ route('carrito.add', ['mueble' => $mueble->id, 'sesionId' => $activeSesionId]) }}" method="POST">
                     @csrf
                     <div class="row g-2">
                         <div class="col-md-4">

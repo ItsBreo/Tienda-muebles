@@ -85,10 +85,10 @@
                         <h5 class="card-title">{{ $m->name }}</h5>
                         <p class="card-text">{{ \Illuminate\Support\Str::limit($m->description, 100) }}</p>
                         <p class="mb-1"><strong>{{ number_format($m->price) }} €</strong></p>
-                        <a href="{{ route('muebles.show', ['id' => $m->id]) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+                        <a href="{{ route('muebles.show', ['id' => $m->id, 'sesionId' => $activeSesionId]) }}" class="btn btn-sm btn-outline-primary">Ver</a>
 
                         @if ($m->stock > 0)
-                            <form action="{{ route('carrito.add', ['mueble' => $m->id]) }}" method="POST" class="d-inline ms-1">
+                            <form action="{{ route('carrito.add', ['mueble' => $m->id, 'sesionId' => $activeSesionId]) }}" method="POST" class="d-inline ms-1">
                                 @csrf
                                 <input type="hidden" name="quantity" value="1">
                                 <button type="submit" class="btn btn-sm btn-success">Añadir</button>

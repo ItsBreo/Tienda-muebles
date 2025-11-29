@@ -56,7 +56,7 @@ class Furniture extends Model // Nota: Model con mayúscula
         }
 
         // Si no tiene ninguna foto subida, devuelve la default
-        return 'images/default.jpeg';
+        return 'images/default.png';
     }
 
     /**

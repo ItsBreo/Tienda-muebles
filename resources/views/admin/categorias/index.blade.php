@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administración de Muebles - Tienda</title>
+    <title>Gestión de Categorías - Tienda</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
@@ -79,19 +79,18 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-
-                {{-- CAMBIO 1: Eliminado el parámetro sesionId --}}
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">
-                    Panel de Control
-                </a>
+                {{-- Enlace al Dashboard --}}
+                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">Panel de Control</a>
 
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            {{-- CAMBIO 2: Eliminado input hidden sesionId --}}
+                            <span class="nav-link">Usuario (Admin)</span>
+                        </li>
+                        <li class="nav-item">
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
-                                <button type="submit" class="btn btn-link nav-link">Cerrar Sesión</button>
+                                <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">Cerrar Sesión</button>
                             </form>
                         </li>
                     </ul>
@@ -106,14 +105,15 @@
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
                     <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
-                    <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
-                    <a class="nav-link" href="{{ route('admin.categorias.index') }}">Categorias</a>
+                    <a class="nav-link" href="{{ route('admin.muebles.index') }}">Muebles</a>
+                    <a class="nav-link active" href="{{ route('admin.categorias.index') }}">Categorías</a>
                 </div>
             </div>
 
             <div class="col-md-9 col-lg-10 p-4">
-                <h1 class="mb-4 text-primary">Gestión de Muebles</h1>
+                <h1 class="mb-4 text-primary">Gestión de Categorías</h1>
 
+                {{-- Mensajes de feedback --}}
                 @if (session('success'))
                     <div class="alert alert-success shadow-sm">
                         {{ session('success') }}
@@ -122,61 +122,59 @@
 
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="card-title text-primary">Listado de Muebles</h5>
 
-                            {{-- CAMBIO 4: Eliminado sesionId del botón crear --}}
-                            <a href="{{ route('admin.muebles.create') }}" class="btn btn-primary">
-                                Crear Nuevo Mueble
+                        {{-- Encabezado con botón de Crear --}}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title text-primary m-0">Listado de Categorías</h5>
+                            <a href="{{ route('admin.categorias.create') }}" class="btn btn-primary">
+                                Nueva Categoría
                             </a>
                         </div>
 
-                        <div class="table-responsive mt-3">
-                            <table class="table table-hover">
+                        {{-- Tabla de Categorías --}}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>ID</th>
+                                        <th style="width: 50px;">ID</th>
                                         <th>Nombre</th>
-                                        <th>Precio</th>
-                                        <th>Stock</th>
-                                        <th>Acciones</th>
+                                        <th>Descripción</th>
+                                        <th class="text-end">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse ($muebles as $mueble)
+                                    @forelse ($categorias as $categoria)
                                         <tr>
-                                            <td>{{ $mueble->id }}</td>
-                                            <td>{{ $mueble->name }}</td>
-                                            <td>{{ number_format($mueble->price, 2) }} €</td>
-                                            <td>{{ $mueble->stock }}</td>
+                                            <td>{{ $categoria->id }}</td>
+                                            <td class="fw-bold">{{ $categoria->name }}</td>
+                                            <td>{{ Str::limit($categoria->description, 50) }}</td> {{-- Limita texto largo --}}
 
-                                            <td>
-                                                <div class="d-flex gap-1">
-                                                    {{-- CAMBIO 5: Eliminado sesionId y uso de objeto $mueble --}}
-                                                    <a href="{{ route('admin.muebles.show', $mueble) }}"
-                                                        class="btn btn-sm btn-info text-white">
-                                                        Ver
-                                                    </a>
+                                            <td class="text-end">
+                                                <div class="d-flex justify-content-end gap-1">
 
-                                                    <a href="{{ route('admin.muebles.edit', $mueble) }}"
-                                                        class="btn btn-sm btn-secondary">
+                                                    {{-- Botón Editar --}}
+                                                    <a href="{{ route('admin.categorias.edit', $categoria) }}"
+                                                       class="btn btn-sm btn-secondary">
                                                         Editar
                                                     </a>
 
-                                                    <form action="{{ route('admin.muebles.destroy', $mueble) }}"
-                                                        method="POST" class="d-inline"
-                                                        onsubmit="return confirm('¿Estás seguro de que quieres eliminar este mueble?');">
+                                                    {{-- Formulario Eliminar --}}
+                                                    <form action="{{ route('admin.categorias.destroy', $categoria) }}"
+                                                          method="POST" class="d-inline"
+                                                          onsubmit="return confirm('¿Estás seguro? Al borrar la categoría podrías afectar a los muebles asociados.');">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            Eliminar
+                                                        </button>
                                                     </form>
                                                 </div>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="text-center text-secondary">
-                                                No hay muebles para mostrar.
+                                            <td colspan="4" class="text-center text-muted py-4">
+                                                No hay categorías registradas.
                                             </td>
                                         </tr>
                                     @endforelse

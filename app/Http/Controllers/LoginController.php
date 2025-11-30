@@ -75,7 +75,8 @@ class LoginController extends Controller
         // Reseteamos los contadores de seguridad si la autenticación es exitosa
         $user->update([
             'failed_attempts' => 0,
-            'locked_until' => null
+            'locked_until' => null,
+            'last_login_at' => Carbon::now(),
         ]);
 
         $request->session()->regenerate();

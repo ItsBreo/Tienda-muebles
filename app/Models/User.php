@@ -20,6 +20,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role_id',
+        'last_login_at',
         'failed_attempts', // Para el bloqueo de seguridad
         'locked_until',    // Para el bloqueo de seguridad
     ];
@@ -37,6 +38,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'locked_until' => 'datetime',
+        'last_login_at' => 'datetime',
     ];
 
     // ------------------------------------------------------------------------

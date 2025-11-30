@@ -25,9 +25,10 @@ class CreateUsersTable extends Migration
 
             $table->integer('failed_attempts')->default(0);
             $table->timestamp('locked_until')->nullable();
-
+            $table->timestamp('last_login_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
+
         });
     }
 

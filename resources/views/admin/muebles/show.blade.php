@@ -98,10 +98,9 @@
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
 
-                    <a class="nav-link" href="{{ route('admin.muebles.index') }}">Dashboard</a>
-                    <a class="nav-link" href="#">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.categorias.index') }}">Categorias</a>
                     <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
-                    <a class="nav-link" href="#">Configuración</a>
                 </div>
             </div>
 

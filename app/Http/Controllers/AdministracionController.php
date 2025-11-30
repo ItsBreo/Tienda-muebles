@@ -76,7 +76,7 @@ class AdministracionController extends Controller
         $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
 
         // Si no lo encontramos en la petición, buscamos en la sesión de Laravel
-        if (!$sesionId) {
+        if (! $sesionId) {
             // Obtenemos el primer sesionId disponible en el array 'usuarios'
             $usuarios = Session::get('usuarios', []);
             $sesionId = array_key_first($usuarios);

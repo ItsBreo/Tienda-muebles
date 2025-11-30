@@ -13,6 +13,8 @@ use App\Http\Controllers\AdministracionController;
 use App\Http\Controllers\ProductosController;
 use App\Http\Controllers\ProductosGaleriaController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\UsuarioController;
 use Illuminate\Http\Request;
 
 // Página Principal
@@ -57,6 +59,10 @@ Route::post('/carrito/guardar', [CarritoController::class, 'saveOnBD'])->name('c
 // categorias.index|create|store|show|edit|update|destroy
 // Productos (CRUD)
 Route::resource('/admin/muebles', AdministracionController::class) -> names('admin.muebles');
+
+Route::resource('/admin/categorias', CategoriaController::class) -> names('admin.categorias');
+
+Route::get('/admin/usuarios', [UsuarioController::class, 'index'])->name('admin.usuarios.index');
 
 // Nombres generados:
 // productos.index|create|store|show|edit|update|destroy

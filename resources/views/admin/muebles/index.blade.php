@@ -80,7 +80,7 @@
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
 
-                {{-- CAMBIO 1: Eliminado el parámetro sesionId --}}
+
                 <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">
                     Panel de Control
                 </a>
@@ -88,7 +88,7 @@
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            {{-- CAMBIO 2: Eliminado input hidden sesionId --}}
+
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-link nav-link">Cerrar Sesión</button>
@@ -125,7 +125,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="card-title text-primary">Listado de Muebles</h5>
 
-                            {{-- CAMBIO 4: Eliminado sesionId del botón crear --}}
+
                             <a href="{{ route('admin.muebles.create') }}" class="btn btn-primary">
                                 Crear Nuevo Mueble
                             </a>
@@ -152,7 +152,7 @@
 
                                             <td>
                                                 <div class="d-flex gap-1">
-                                                    {{-- CAMBIO 5: Eliminado sesionId y uso de objeto $mueble --}}
+
                                                     <a href="{{ route('admin.muebles.show', $mueble) }}"
                                                         class="btn btn-sm btn-info text-white">
                                                         Ver

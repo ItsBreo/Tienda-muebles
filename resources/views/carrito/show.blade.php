@@ -22,7 +22,7 @@
             </div>
         @endif
 
-        {{-- 🛑 Usamos $cart, la variable que pasaste desde el CarritoController --}}
+
         @if (empty($cart))
             <div class="alert alert-info" role="alert">
                 <p class="lead mb-0">No tienes muebles en el carrito.</p>
@@ -46,7 +46,7 @@
                                 <tbody>
                                     @foreach ($cart as $id => $item)
                                         <tr>
-                                            {{-- Usamos la clave 'nombre' que definiste en el controlador --}}
+
                                             <td>
                                                 <h6 class="mb-0">{{ $item['nombre'] }}</h6>
                                             </td>

@@ -73,73 +73,91 @@ class CatalogoController extends Controller
     /**
      * Función para mostrar el catálogo principal (index) con filtros y paginación.
      */
-    public function index(Request $request)
-    {
-        // Cargamos las preferencias
-        $sesionData = $this->getSesionYPreferencias($request);
-        $preferencias = $sesionData['preferencias'];
+  public function index(Request $request)
+{
+    // 1. Preferencias (Igual que tenías)
+    $sesionData = $this->getSesionYPreferencias($request);
+    $preferencias = $sesionData['preferencias'];
+    $perPage = (int) ($preferencias['tamaño'] ?? 6);
+    if (!in_array($perPage, [6, 12, 24])) $perPage = 6;
 
-        // Cargamos datos de nuestra DB
-        $categories = Category::all();
-        $items = collect(Furniture::all());
+    // 2. Query Builder
+    $query = Furniture::query();
 
-        // Recogemos los colores de los muebles
-        $colors = $items->pluck('main_color')->unique()->sort();
+    // --- DEPURACIÓN RÁPIDA (Descomenta si falla para ver qué llega) ---
+    // dd($request->all());
+    // ------------------------------------------------------------------
 
-        // Lógica de Filtrado
-        if ($request->filled('category')) {
-            $items = $items->filter(fn($m) => $m->category_id == $request->category);
-        }
-        if ($request->filled('q')) {
-            $q = strtolower($request->q);
-            $items = $items->filter(fn($m) =>
-                str_contains(strtolower($m->name), $q) ||
-                str_contains(strtolower($m->description), $q)
-            );
-        }
-        if ($request->filled('min_price')) {
-            $items = $items->filter(fn($m) => $m->price >= $request->min_price);
-        }
-        if ($request->filled('max_price')) {
-            $items = $items->filter(fn($m) => $m->price <= $request->max_price);
-        }
-        if ($request->filled('color')) {
-            $items = $items->filter(fn($m) => $m->main_color == $request->color);
-        }
+    // 3. Filtros
 
-        // 4. Lógica de Ordenación
-        $sort = $request->input('sort', 'default');
-        $items = match ($sort) {
-            'price_asc' => $items->sortBy(fn($m) => $m->price),
-            'price_desc' => $items->sortByDesc(fn($m) => $m->price),
-            'name_asc' => $items->sortBy(fn($m) => $m->name),
-            'name_desc' => $items->sortByDesc(fn($m) => $m->name),
-            'date_new' => $items->sortByDesc(fn($m) => $m->created_at ?? 0),
-            'date_old' => $items->sortBy(fn($m) => $m->created_at ?? 0),
-            default => $items,
-        };
-
-        // 5. Paginación usando la preferencia
-        // Aseguramos que $perPage sea un entero válido
-        $perPage = (int) ($preferencias['tamaño'] ?? 6);
-        if ($perPage < 1) $perPage = 6;
-
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
-
-        $currentItems = $items->slice(($currentPage - 1) * $perPage, $perPage)->values();
-
-        $paginator = new LengthAwarePaginator($currentItems, $items->count(), $perPage, $currentPage, [
-            'path' => $request->url(),
-            'query' => $request->query(),
-        ]);
-
-        // 6. Pasar todas las variables a la vista
-        return view('catalogo.index', array_merge($sesionData, [
-            'muebles' => $paginator,
-            'categories' => $categories,
-            'colors' => $colors,
-        ]));
+    // Categoría (Dices que este funciona, así que 'category_id' es correcto)
+    if ($request->filled('category')) {
+        $query->where('category_id', $request->category);
     }
+
+    // Búsqueda (q)
+    if ($request->filled('q')) {
+        $term = $request->q;
+        $query->where(function ($q) use ($term) {
+            // ASEGÚRATE: ¿Tus columnas en la BD se llaman 'name' y 'description'?
+            $q->where('name', 'LIKE', "%{$term}%")
+              ->orWhere('description', 'LIKE', "%{$term}%");
+        });
+    }
+
+    // Precio Mínimo
+    if ($request->filled('min_price')) {
+        // Forzamos a que sea número para evitar errores de string vacíos raros
+        $min = (float) $request->min_price;
+        // ASEGÚRATE: ¿La columna en la BD se llama 'price'?
+        $query->where('price', '>=', $min);
+    }
+
+    // Precio Máximo
+    if ($request->filled('max_price')) {
+        $max = (float) $request->max_price;
+        $query->where('price', '<=', $max);
+    }
+
+    // Color
+    if ($request->filled('color')) {
+        // ASEGÚRATE: ¿La columna en la BD se llama 'main_color'?
+        // Si en la BD se llama 'color' o 'color_id', cámbialo aquí.
+        $query->where('main_color', 'LIKE', $request->color);
+    }
+
+    // 4. Ordenación
+    $sort = $request->input('sort', 'default');
+    match ($sort) {
+        'price_asc'  => $query->orderBy('price', 'asc'),
+        'price_desc' => $query->orderBy('price', 'desc'),
+        'name_asc'   => $query->orderBy('name', 'asc'),
+        'name_desc'  => $query->orderBy('name', 'desc'),
+        'date_new'   => $query->orderBy('created_at', 'desc'),
+        'date_old'   => $query->orderBy('created_at', 'asc'),
+        default      => $query->orderBy('id', 'desc'),
+    };
+
+    // 5. Paginación
+    $muebles = $query->paginate($perPage)->withQueryString();
+
+    // 6. Datos Auxiliares
+    $categories = Category::all();
+
+    // IMPORTANTE: Para los colores, sacamos solo los que existen REALMENTE en la columna 'main_color'
+    $colors = Furniture::query()
+                ->select('main_color')
+                ->whereNotNull('main_color')
+                ->distinct()
+                ->orderBy('main_color')
+                ->pluck('main_color');
+
+    return view('catalogo.index', array_merge($sesionData, [
+        'muebles'    => $muebles,
+        'categories' => $categories,
+        'colors'     => $colors
+    ]));
+}
 
     /**
      * Redirige al catálogo filtrado por una categoría.

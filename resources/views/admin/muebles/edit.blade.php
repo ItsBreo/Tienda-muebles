@@ -149,7 +149,7 @@
                         {{-- Ruta UPDATE: Pasamos el objeto $mueble --}}
                         <form action="{{ route('admin.muebles.update', $mueble) }}" method="POST" enctype="multipart/form-data">
                             @csrf
-                            @method('PUT') {{-- Importante: Laravel usa PUT/PATCH para actualizar --}}
+                            @method('PUT')
 
                             <div class="row g-3">
                                 <div class="col-md-6">
@@ -181,7 +181,7 @@
                                         <option value="">Seleccione una categoría...</option>
                                         @foreach ($categories as $category)
                                             <option value="{{ $category->id }}"
-                                                {{-- Lógica corregida para DB --}}
+
                                                 @if (old('category_id', $mueble->category_id) == $category->id) selected @endif>
                                                 {{ $category->name }}
                                             </option>
@@ -214,7 +214,7 @@
 
                                 <div class="col-md-6 d-flex align-items-end">
                                     <div class="form-check">
-                                        {{-- is_salient: lógica para booleanos --}}
+
                                         <input class="form-check-input" type="checkbox" id="is_salient"
                                             name="is_salient" value="1"
                                             @if (old('is_salient', $mueble->is_salient)) checked @endif>

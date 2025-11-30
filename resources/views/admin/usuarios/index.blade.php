@@ -6,7 +6,7 @@
     <title>Gestión de Usuarios - Tienda</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    {{-- Estilos copiados de tu panel --}}
+
     <style>
         :root { --bs-primary: #565254; --bs-secondary: #7A7D7D; --bs-timberwolf: #D0CFCF; --bs-snow: #FFFBFE; }
         body { background-color: var(--bs-timberwolf); min-height: 100vh; display: flex; flex-direction: column; }

@@ -3,20 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Furniture; // Usamos el modelo Furniture real
-use App\Models\Cart; // Usamos el modelo Cart
+use App\Models\Furniture; 
+use App\Models\Cart; 
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB; // Necesario para transacciones de BD
-use Illuminate\Support\Facades\Log; // Para diagnóstico
+use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\Log; 
 
 class CarritoController extends Controller
 {
-	// Tasa de impuesto simulada (10%)
 	private const TAX_RATE = 0.10;
 
-	// La clave de sesión $mueblesSessionKey se mantiene pero se ignora, ya no es necesaria.
 	private $mueblesSessionKey = 'muebles_crud_session';
 
 	/**
@@ -32,7 +30,7 @@ class CarritoController extends Controller
 			return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
 		}
 
-		// 1. Obtener el carrito de la sesión específica del usuario
+		// Obtener el carrito de la sesión específica del usuario
 		$cart = Session::get('carrito_' . $user->id, []);
 
 		$subtotal = 0;
@@ -41,17 +39,16 @@ class CarritoController extends Controller
 		if (!empty($cart)) {
 			$idsInCart = array_keys($cart);
 
-			// 2. CONSULTA A LA BD: Obtener la información "en vivo" de Furniture
+			// CONSULTA A LA BD: Obtener la información  de Furniture
 			$allFurniture = Furniture::whereIn('id', $idsInCart)->get()->keyBy('id');
 
 			foreach ($cart as $id => $item) {
 				$liveFurniture = $allFurniture->get($id);
 
 				if ($liveFurniture) {
-					// El mueble existe. Usamos sus propiedades reales: 'name' y 'price'.
 					$cantidad = (int) $item['cantidad'];
-					$precioVivo = $liveFurniture->price; // Propiedad 'price'
-					$nombreVivo = $liveFurniture->name;   // Propiedad 'name'
+					$precioVivo = $liveFurniture->price; 
+					$nombreVivo = $liveFurniture->name;   
 
 					$lineTotal = $precioVivo * $cantidad;
 					$subtotal += $lineTotal;
@@ -62,14 +59,13 @@ class CarritoController extends Controller
 						'nombre' => $nombreVivo,
 						'precio' => $precioVivo,
 						'cantidad' => $cantidad,
-						'imagen' => $liveFurniture->getMainImage(), // Usamos el helper
+						'imagen' => $liveFurniture->getMainImage(), 
 						'line_total' => $lineTotal,
 					];
 				}
 			}
 		}
 
-		// Cálculo de impuestos y total (Requisito 4)
 		$impuestos = $subtotal * self::TAX_RATE;
 		$total = $subtotal + $impuestos;
 
@@ -83,9 +79,7 @@ class CarritoController extends Controller
 		]);
 	}
 
-	/**
-	 * Agrega un producto (Furniture) al carrito de la sesión, incluyendo validación de stock.
-	 */
+
 	public function add(Request $request, int $id)
 	{
 		$sesionId = $request->input('sesionId');
@@ -111,7 +105,7 @@ class CarritoController extends Controller
 		$currentQuantity = isset($cart[$id]) ? (int)$cart[$id]['cantidad'] : 0;
 		$newQuantity = $currentQuantity + $quantity;
 
-		// Validacion de Stock (Requisito 4)
+		// Validacion de Stock
 		if ($newQuantity > $furniture->stock) {
 			return redirect()->back()->withErrors(['stockError' => "Stock insuficiente. Solo quedan {$furniture->stock} unidades."]);
 		}
@@ -191,7 +185,7 @@ class CarritoController extends Controller
             return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('error', 'El carrito está vacío.');
         }
 
-        // 2. Preparar datos y validar stock ANTES de abrir transacción
+        // Preparar datos y validar stock ANTES de abrir transacción
         $subtotal = 0;
         $itemsToStore = [];
         $idsInCart = array_keys($carritoSesion);
@@ -202,7 +196,6 @@ class CarritoController extends Controller
             if ($liveFurniture) {
                 $cantidad = (int) $item['cantidad'];
 
-                // VALIDACIÓN DE ÚLTIMO MINUTO
                 if ($liveFurniture->stock < $cantidad) {
                     return redirect()->route('carrito.show', ['sesionId' => $sesionId])
                         ->withErrors("No hay suficiente stock para '{$liveFurniture->name}'. Quedan {$liveFurniture->stock}.");
@@ -215,7 +208,7 @@ class CarritoController extends Controller
                     'producto_id' => $id,
                     'cantidad' => $cantidad,
                     'precio_unitario' => $precioUnitario,
-                    'modelo' => $liveFurniture // <--- IMPORTANTE: Pasamos el modelo para restarlo luego
+                    'modelo' => $liveFurniture // Pasamos el modelo para restarlo luego
                 ];
             }
         }
@@ -223,7 +216,7 @@ class CarritoController extends Controller
         $impuestos = $subtotal * self::TAX_RATE;
         $total = $subtotal + $impuestos;
 
-        // 3. Transacción de BD
+        // Transacción de BD
         try {
             Log::info('--- INICIO TRANSACCION SAVE ON BD --- User ID: ' . Auth::id());
 
@@ -238,14 +231,11 @@ class CarritoController extends Controller
 
             // Guardar Detalles y RESTAR STOCK
             foreach ($itemsToStore as $item) {
-                // 1. Guardar relación
                 $newCart->productos()->attach($item['producto_id'], [
                     'quantity' => $item['cantidad'],
                     'unit_price' => $item['precio_unitario']
                 ]);
 
-                // 2. RESTAR STOCK (La línea clave que faltaba)
-                // Esto ejecuta: UPDATE furniture SET stock = stock - X WHERE id = Y
                 $item['modelo']->decrement('stock', $item['cantidad']);
             }
 
@@ -259,7 +249,7 @@ class CarritoController extends Controller
                 ->withErrors('Error de base de datos al finalizar la compra. Mensaje: ' . $e->getMessage());
         }
 
-        // 7. Vaciar el carrito actual de la sesión
+        // Vaciar el carrito actual de la sesión
         Session::forget('carrito_' . $user->id);
 
         return redirect()->route('carrito.show', ['sesionId' => $sesionId])

@@ -22,6 +22,12 @@ class Furniture extends Model
         'is_salient',
     ];
 
+    // Relaciones: Un mueble pertenece a una categoría
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
     // Relaciones: Un mueble tiene muchas imágenes 1:N
     public function images()
     {

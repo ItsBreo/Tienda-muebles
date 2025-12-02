@@ -10,16 +10,16 @@
         if ($activeSesionId) {
 
             $todosLosUsuarios = \Illuminate\Support\Facades\Session::get('usuarios', []);
-            dump('2. Array de Usuarios en Sesión:', $todosLosUsuarios);
+
 
 
             $datosUsuarioJson = $todosLosUsuarios[$activeSesionId] ?? null;
-            dump('3. Datos JSON para mi ID:', $datosUsuarioJson);
+
 
             if ($datosUsuarioJson) {
                 // Intentamos buscar en BD
 
-                dump('4. Buscando en BD el ID:', $datos->id);
+
                 $activeUser = \App\Models\User::activeUserSesion($activeSesionId);
 
             } else {

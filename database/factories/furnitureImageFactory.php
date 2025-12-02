@@ -36,7 +36,7 @@ class furnitureImageFactory extends Factory
             'image_path' => $this->faker->url(), // URL falsa
 
             // 4. Atributos Numéricos (float, int)
-           'order' => $this->faker->numberBetween(1, 3),
+           'display_order' => $this->faker->numberBetween(1, 3),
 
             // 5. Atributo Booleano (bool)
             'is_primary' => $this->faker->boolean(25), // 25% de probabilidad de ser "primaria" (TRUE)

@@ -20,6 +20,10 @@ class ProductosGaleriaController extends Controller
         $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
 
         if (!$sesionId) {
+            $sesionId = $request->cookie('current_sesionId');
+        }
+
+        if (!$sesionId) {
             return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
         }
 

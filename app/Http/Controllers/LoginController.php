@@ -108,6 +108,8 @@ class LoginController extends Controller
         Session::put('usuarios', $users);
         Session::save(); // Forzamos el guardado
 
+        Cookie::queue('current_sesionId', $sesionId, 60 * 24 * 30); // 30 días
+
         $cookieName = 'preferencias_' . $user->id;
 
         // Si el usuario no tiene cookie de preferencias, creamos una por defecto

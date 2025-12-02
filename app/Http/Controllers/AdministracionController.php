@@ -75,8 +75,10 @@ class AdministracionController extends Controller
         // Lo buscamos en la ruta, en la query string, en los inputs del formulario
         $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
 
-        // ❌ IMPORTANTE: No buscamos en la sesión global
-        // Si viene sin sesionId, significa que intenta acceder sin autenticación
+        if (!$sesionId) {
+            $sesionId = $request->cookie('current_sesionId');
+        }
+
         if (!$sesionId) {
             return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
         }

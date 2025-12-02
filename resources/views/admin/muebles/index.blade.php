@@ -80,17 +80,18 @@
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
 
-
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">
+                {{-- CAMBIO 1: Agregado parámetro sesionId --}}
+                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">
                     Panel de Control
                 </a>
 
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-
+                            {{-- CAMBIO 2: Agregado input hidden sesionId --}}
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
+                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
                                 <button type="submit" class="btn btn-link nav-link">Cerrar Sesión</button>
                             </form>
                         </li>
@@ -105,9 +106,9 @@
 
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-                    <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
-                    <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
-                    <a class="nav-link" href="{{ route('admin.categorias.index') }}">Categorias</a>
+                    <a class="nav-link" href="{{ route('admin.usuarios.index', ['sesionId' => $sesionId]) }}">Usuarios</a>
+                    <a class="nav-link active" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
+                    <a class="nav-link" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorias</a>
                 </div>
             </div>
 
@@ -125,8 +126,8 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="card-title text-primary">Listado de Muebles</h5>
 
-
-                            <a href="{{ route('admin.muebles.create') }}" class="btn btn-primary">
+                            {{-- CAMBIO 4: Agregado sesionId del botón crear --}}
+                            <a href="{{ route('admin.muebles.create', ['sesionId' => $sesionId]) }}" class="btn btn-primary">
                                 Crear Nuevo Mueble
                             </a>
                         </div>
@@ -152,18 +153,18 @@
 
                                             <td>
                                                 <div class="d-flex gap-1">
-
-                                                    <a href="{{ route('admin.muebles.show', $mueble) }}"
+                                                    {{-- CAMBIO 5: Agregado sesionId --}}
+                                                    <a href="{{ route('admin.muebles.show', ['sesionId' => $sesionId, 'mueble' => $mueble->id]) }}"
                                                         class="btn btn-sm btn-info text-white">
                                                         Ver
                                                     </a>
 
-                                                    <a href="{{ route('admin.muebles.edit', $mueble) }}"
+                                                    <a href="{{ route('admin.muebles.edit', ['sesionId' => $sesionId, 'mueble' => $mueble->id]) }}"
                                                         class="btn btn-sm btn-secondary">
                                                         Editar
                                                     </a>
 
-                                                    <form action="{{ route('admin.muebles.destroy', $mueble) }}"
+                                                    <form action="{{ route('admin.muebles.destroy', ['sesionId' => $sesionId, 'mueble' => $mueble->id]) }}"
                                                         method="POST" class="d-inline"
                                                         onsubmit="return confirm('¿Estás seguro de que quieres eliminar este mueble?');">
                                                         @csrf

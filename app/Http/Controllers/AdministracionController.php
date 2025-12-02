@@ -72,14 +72,15 @@ class AdministracionController extends Controller
     private function checkAdmin(Request $request)
     {
         // 1. Obtenemos el sesionId de la petición.
-        // Lo buscamos en la ruta, en la query string, en los inputs del formulario o en la sesión de Laravel
+        // Lo buscamos en la ruta, en la query string, en los inputs del formulario
         $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
 
-        // Si no lo encontramos en la petición, buscamos en la sesión de Laravel
-        if (! $sesionId) {
-            // Obtenemos el primer sesionId disponible en el array 'usuarios'
-            $usuarios = Session::get('usuarios', []);
-            $sesionId = array_key_first($usuarios);
+        if (!$sesionId) {
+            $sesionId = $request->cookie('current_sesionId');
+        }
+
+        if (!$sesionId) {
+            return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
         }
 
         $user = User::activeUserSesion($sesionId);
@@ -89,8 +90,8 @@ class AdministracionController extends Controller
             return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
         }
 
-        // 3. Comprobamos si el usuario tiene el rol 'Admin'.
-        if ($user->hasRole('Admin')) {
+        // 3. Comprobamos si el usuario es admin usando la función dedicada
+        if ($user->isAdmin()) {
             return true;
         }
 
@@ -141,10 +142,13 @@ class AdministracionController extends Controller
             return $check;
         }
 
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->query('sesionId');
+
         // DB: Traemos todos (paginados si fueran muchos, pero all() vale por ahora)
         $muebles = Furniture::all();
 
-        return view('admin.muebles.index', compact('muebles'));
+        return view('admin.muebles.index', compact('muebles', 'sesionId'));
     }
 
     public function create(Request $request)
@@ -153,9 +157,12 @@ class AdministracionController extends Controller
             return $check;
         }
 
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->query('sesionId');
+
         $categories = Category::all();
 
-        return view('admin.muebles.create', compact('categories'));
+        return view('admin.muebles.create', compact('categories', 'sesionId'));
     }
 
     public function store(Request $request)
@@ -210,8 +217,11 @@ class AdministracionController extends Controller
             return $check;
         }
 
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->query('sesionId');
+
         // Laravel ya buscó el mueble por ti. Si no existe, da error 404 solo.
-        return view('admin.muebles.show', compact('mueble'));
+        return view('admin.muebles.show', compact('mueble', 'sesionId'));
     }
 
     public function edit(Request $request, Furniture $mueble)
@@ -220,9 +230,12 @@ class AdministracionController extends Controller
             return $check;
         }
 
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->query('sesionId');
+
         $categories = Category::all();
 
-        return view('admin.muebles.edit', compact('mueble', 'categories'));
+        return view('admin.muebles.edit', compact('mueble', 'categories', 'sesionId'));
     }
 
     public function update(Request $request, Furniture $mueble)
@@ -231,13 +244,23 @@ class AdministracionController extends Controller
             return $check;
         }
 
-        // 1. Recogemos datos
-        $data = $request->all();
+        // 1. Validar
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'materials' => 'nullable|string',
+            'dimensions' => 'nullable|string',
+            'main_color' => 'required|string|max:100',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
 
         // 2. Checkbox
         $data['is_salient'] = $request->has('is_salient');
 
-        // 3. Actualizamos (¡Una sola línea!)
+        // 3. Actualizamos
         $mueble->update($data);
 
         // 4. Imagen nueva (opcional)

@@ -31,14 +31,14 @@ class furnitureImageFactory extends Factory
 
             'furnitureId' => Furniture::inRandomOrder()->first()->id, // Eleccion aleatoria de id de muebles
 
-            // 3. Atributos de Cadena (string)
+            // Atributos de Cadena (string)
             'alt_text' => 'Imagen ' . $this->faker->words(2, true), // Genera nombres como "Mesa de Roble Moderna"
             'url' => $this->faker->url(), // URL falsa
 
-            // 4. Atributos Numéricos (float, int)
+            // Atributos Numéricos (float, int)
            'order' => $this->faker->numberBetween(1, 3),
 
-            // 5. Atributo Booleano (bool)
+            // Atributo Booleano (bool)
             'is_main' => $this->faker->boolean(25), // 25% de probabilidad de ser "primaria" (TRUE)
         ];
     }

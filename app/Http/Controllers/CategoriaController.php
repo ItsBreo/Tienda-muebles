@@ -54,12 +54,21 @@ class CategoriaController extends Controller
         }
 
         // Si pasamos checkAdmin, el sesionId debe estar presente
-        $sesionId = $request->query('sesionId');
+        $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
+        if (!$sesionId) {
+            $sesionId = $request->cookie('current_sesionId');
+        }
 
-        // DB: Traemos todas las categorías
-        $categorias = Category::all();
+        $search = $request->input('search');
 
-        return view('admin.categorias.index', compact('categorias', 'sesionId'));
+        $query = Category::query();
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+        $categorias = $query->get();
+
+        return view('admin.categorias.index', compact('categorias', 'sesionId', 'search'));
     }
 
     /**

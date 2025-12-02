@@ -121,6 +121,16 @@
                     </div>
                 @endif
 
+                {{-- Formulario de Búsqueda --}}
+                <form action="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}" method="GET" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" placeholder="Buscar por nombre..." value="{{ $search ?? '' }}">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="submit">Buscar</button>
+                        </div>
+                    </div>
+                </form>
+
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-body">
 

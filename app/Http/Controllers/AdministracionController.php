@@ -143,12 +143,23 @@ class AdministracionController extends Controller
         }
 
         // Si pasamos checkAdmin, el sesionId debe estar presente
-        $sesionId = $request->query('sesionId');
+        $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
+        if (!$sesionId) {
+            $sesionId = $request->cookie('current_sesionId');
+        }
+
+        $search = $request->input('search');
 
         // DB: Traemos todos (paginados si fueran muchos, pero all() vale por ahora)
-        $muebles = Furniture::all();
+        $query = Furniture::query();
 
-        return view('admin.muebles.index', compact('muebles', 'sesionId'));
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+        }
+        $muebles = $query->get();
+
+        return view('admin.muebles.index', compact('muebles', 'sesionId', 'search'));
     }
 
     public function create(Request $request)
@@ -292,5 +303,33 @@ class AdministracionController extends Controller
         $mueble->delete();
 
         return redirect()->route('admin.muebles.index')->with('success', 'Mueble eliminado correctamente.');
+    }
+
+    // ---------------------------------------------------
+    // MÉTODOS DE ADMINISTRACIÓN (CATEGORÍAS)
+    // ---------------------------------------------------
+
+    public function indexCategorias(Request $request)
+    {
+        if (($check = $this->checkAdmin($request)) !== true) {
+            return $check;
+        }
+
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
+        if (!$sesionId) {
+            $sesionId = $request->cookie('current_sesionId');
+        }
+
+        $search = $request->input('search');
+
+        $query = Category::query();
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+        $categorias = $query->get();
+
+        return view('admin.categorias.index', compact('categorias', 'sesionId', 'search'));
     }
 }

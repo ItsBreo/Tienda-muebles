@@ -5,13 +5,17 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
 use App\Models\Furniture;
 use App\Models\Category;
 
-class Test extends TestCase
+class FeatureTest extends TestCase
 {
+    // ¡IMPORTANTE! Esto crea las tablas y reinicia la BD en cada test
+    use RefreshDatabase;
+
     /**
      * ¡Función Helper Clave!
      * Simula nuestro flujo de login manual y devuelve el sesionId.
@@ -21,25 +25,50 @@ class Test extends TestCase
      */
     private function loginAs($role = 'user')
     {
-        // 1. Obtenemos los datos del mock de usuario
+        // 0. Crear Roles si no existen (necesario porque la BD se vacía)
+        if (\App\Models\Role::count() === 0) {
+            \App\Models\Role::create(['id' => 1, 'name' => 'Admin']);
+            \App\Models\Role::create(['id' => 2, 'name' => 'Gestor']);
+            \App\Models\Role::create(['id' => 3, 'name' => 'Cliente']);
+        }
+
+        // 1. Configurar datos según el rol
+        $roleId = ($role === 'admin') ? 1 : 3;
         $email = ($role === 'admin') ? 'admin@correo.com' : 'jose@correo.com';
         $password = '1234';
-        $user = User::verifyUser($email, $password); // Obtenemos la instancia del User
 
-        // 2. Simulamos el post de login
+        // 2. CREAR el usuario en la BD usando Factory
+        $user = User::factory()->create([
+            'email' => $email,
+            'password' => Hash::make($password), // Encriptamos la contraseña
+            'role_id' => $roleId,
+            'name' => ($role === 'admin') ? 'Admin' : 'Jose',
+        ]);
+
+        // 3. Simulamos el post de login
         $response = $this->post(route('login.store'), [
             'email' => $email,
             'password' => $password,
         ]);
 
-        // 3. Capturamos el sesionId de la URL de redirección
-        // (Ej: http://localhost/principal?sesionId=... )
+        // 4. Capturamos el sesionId de la URL de redirección
         $location = $response->headers->get('Location');
-        parse_str(parse_url($location, PHP_URL_QUERY), $query);
-        $sesionId = $query['sesionId'];
-        $cookieName = 'preferencias_' . $user->getId();
+        $sesionId = null;
 
-        // 4. Devolvemos el sesionId y el usuario para usarlo en los tests
+        // Extraemos sesionId de la URL
+        if ($location) {
+            parse_str(parse_url($location, PHP_URL_QUERY), $query);
+            $sesionId = $query['sesionId'] ?? null;
+        }
+
+        // Si falló el login, el test explotará aquí, lo cual es bueno para depurar
+        if (!$sesionId) {
+            throw new \Exception("Login fallido en el helper loginAs. Revisa las credenciales o el controlador.");
+        }
+
+        $cookieName = 'preferencias_' . $user->id;
+
+        // 5. Devolvemos los datos necesarios
         return [$sesionId, $user, $cookieName];
     }
 
@@ -49,6 +78,9 @@ class Test extends TestCase
 
     public function test_login_fallido_credenciales_invalidas()
     {
+        // Necesitamos crear roles para que no falle ninguna relación interna, aunque falle el login
+        \App\Models\Role::create(['id' => 3, 'name' => 'Cliente']);
+
         $response = $this->post(route('login.store'), [
             'email' => 'usuario@incorrecto.com',
             'password' => 'mala',
@@ -62,6 +94,17 @@ class Test extends TestCase
 
     public function test_login_exitoso_redirige_y_crea_sesion_de_usuario()
     {
+        // 1. Crear usuario previo (Arrange)
+        $role = new \App\Models\Role();
+        $role->id = 3;
+        $role->name = 'Cliente';
+        $role->save();
+
+        User::factory()->create([
+            'email' => 'jose@correo.com',
+            'password' => Hash::make('1234'),
+            'role_id' => 3
+        ]);
         $response = $this->post(route('login.store'), [
             'email' => 'jose@correo.com',
             'password' => '1234',
@@ -159,6 +202,10 @@ class Test extends TestCase
         // 1. Iniciamos sesión
         [$sesionId, $user, $cookieName] = $this->loginAs('user');
 
+        // Crear muebles para paginar
+        Category::factory()->create();
+        Furniture::factory()->count(15)->create();
+
         // 2. Creamos una cookie de preferencia con 12 por página
         $preferencias = json_encode(['tamaño' => 12]);
 
@@ -180,18 +227,23 @@ class Test extends TestCase
     {
         [$sesionId, $user] = $this->loginAs('user');
 
-        // 1. Pedimos la categoría 1
+        // 1. Crear datos
+        $cat1 = Category::factory()->create();
+        $cat2 = Category::factory()->create();
+        Furniture::factory()->create(['category_id' => $cat1->id]);
+        Furniture::factory()->create(['category_id' => $cat2->id]);
+
+        // 2. Pedimos la categoría 1
         $response = $this->get(route('muebles.index', [
             'sesionId' => $sesionId,
-            'category' => 1
+            'category' => $cat1->id
         ]));
 
         $response->assertStatus(200);
-
-        // 2. Comprobamos que todos los muebles en la vista son de esa categoría
+        // 3. Comprobamos que todos los muebles en la vista son de esa categoría
         $muebles = $response->viewData('muebles');
         foreach ($muebles as $mueble) {
-            $this->assertEquals(1, $mueble->getCategoryId());
+            $this->assertEquals($cat1->id, $mueble->category_id);
         }
     }
 
@@ -199,7 +251,12 @@ class Test extends TestCase
     {
         [$sesionId, $user] = $this->loginAs('user');
 
-        // 1. Pedimos ordenar por precio ascendente
+        Category::factory()->create();
+        // 1. Crear muebles con precios conocidos
+        Furniture::factory()->create(['price' => 100]);
+        Furniture::factory()->create(['price' => 50]);
+        Furniture::factory()->create(['price' => 200]);
+        // 2. Pedimos ordenar por precio ascendente
         $response = $this->get(route('muebles.index', [
             'sesionId' => $sesionId,
             'sort' => 'price_asc'
@@ -207,10 +264,10 @@ class Test extends TestCase
 
         $response->assertStatus(200);
 
-        // 2. Comprobamos que los precios están en orden
+        // 3. Comprobamos que los precios están en orden
         $muebles = $response->viewData('muebles')->items();
-        $this->assertGreaterThanOrEqual($muebles[0]->getPrice(), $muebles[1]->getPrice());
-        $this->assertGreaterThanOrEqual($muebles[1]->getPrice(), $muebles[2]->getPrice());
+        $this->assertTrue($muebles[0]->price <= $muebles[1]->price);
+        $this->assertTrue($muebles[1]->price <= $muebles[2]->price);
     }
 
     // =================================================================
@@ -220,24 +277,28 @@ class Test extends TestCase
     public function test_carrito_anadir_producto()
     {
         [$sesionId, $user] = $this->loginAs('user');
-        $cartKey = 'carrito_' . $user->getId();
+        $cartKey = 'carrito_' . $user->id;
 
-        // 1. Hacemos POST para añadir el mueble ID 3
-        $response = $this->post(route('carrito.add', ['mueble' => 3]), [
+        // 1. Necesitamos un mueble real en BD
+        Category::factory()->create();
+        $mueble = Furniture::factory()->create(['stock' => 10]); // Aseguramos que haya stock
+
+        // 2. Hacemos POST para añadir el mueble
+        $response = $this->post(route('carrito.add', ['mueble' => $mueble->id]), [
             'sesionId' => $sesionId,
             'quantity' => 1,
         ]);
 
-        // 2. Comprobamos la redirección y que la sesión del carrito tiene el item
+        // 3. Comprobamos la redirección y que la sesión del carrito tiene el item
         $response->assertRedirect(route('carrito.show', ['sesionId' => $sesionId]));
-        $this->assertNotNull(Session::get($cartKey)[3]);
-        $this->assertEquals(1, Session::get($cartKey)[3]['cantidad']);
+        $this->assertNotNull(Session::get($cartKey)[$mueble->id]);
+        $this->assertEquals(1, Session::get($cartKey)[$mueble->id]['cantidad']);
     }
 
     public function test_carrito_eliminar_item()
     {
         [$sesionId, $user] = $this->loginAs('user');
-        $cartKey = 'carrito_' . $user->getId();
+        $cartKey = 'carrito_' . $user->id;
 
         // 1. "Sembramos" el carrito con un item
         Session::put($cartKey, [
@@ -246,9 +307,7 @@ class Test extends TestCase
         $this->assertCount(1, Session::get($cartKey));
 
         // 2. Hacemos DELETE (vía POST con _method) para eliminar el mueble 3
-        // !! CORRECCIÓN: La ruta es POST (con _method: DELETE), no un DELETE nativo !!
         $response = $this->post(route('carrito.remove', ['mueble' => 3]), [
-            '_method' => 'DELETE',
             'sesionId' => $sesionId,
         ]);
 
@@ -259,54 +318,51 @@ class Test extends TestCase
 
     // =================================================================
     // Pruebas de Admin CRUD (Requisito 5)
-    // (Estas usan la "BD de sesión" muebles_crud_session)
+    // (Estas usan la BD real)
     // =================================================================
 
     public function test_admin_puede_crear_un_mueble()
     {
         [$sesionId, $user] = $this->loginAs('admin');
 
-        // 1. Sembramos la BD de sesión con los mocks (12 muebles)
-        $mueblesMock = collect(Furniture::getMockData());
-        Session::put('muebles_crud_session', $mueblesMock);
-        $this->assertCount(12, Session::get('muebles_crud_session'));
+        // 1. Crear una categoría para que la validación no falle
+        $categoria = Category::factory()->create();
 
-        // 2. Hacemos POST para crear un nuevo mueble
+        // 2. Hacemos POST para crear un nuevo mueble (esto usa la sesión, no la BD)
         $response = $this->post(route('admin.muebles.store'), [
             'sesionId' => $sesionId,
             'name' => 'Mueble de Prueba',
-            'category_id' => 1,
+            'category_id' => $categoria->id,
             'description' => 'Desc',
             'price' => 99,
-            'stock' => 10,
+            'stock' => 10, // Corregido: 'stock' en lugar de 'strock'
             'main_color' => 'Rojo',
         ]);
 
-        // 3. Comprobamos que la BD de sesión ahora tiene 13 muebles
-        $response->assertRedirect(route('admin.muebles.index', ['sesionId' => $sesionId]));
-        $this->assertCount(13, Session::get('muebles_crud_session'));
-        // 4. Comprobamos que el último mueble es el que creamos
-        $this->assertEquals('Mueble de Prueba', Session::get('muebles_crud_session')->last()->getName());
+        // 3. Comprobamos que redirige al index y que el mueble existe en la BD
+        $response->assertRedirect(route('admin.muebles.index'));
+        $this->assertDatabaseHas('furniture', [
+            'name' => 'Mueble de Prueba',
+            'price' => 99
+        ]);
     }
 
     public function test_admin_puede_eliminar_un_mueble()
     {
         [$sesionId, $user] = $this->loginAs('admin');
 
-        // 1. Sembramos la BD de sesión con los mocks (12 muebles)
-        $mueblesMock = collect(Furniture::getMockData());
-        Session::put('muebles_crud_session', $mueblesMock);
-        $this->assertCount(12, Session::get('muebles_crud_session'));
+        // 1. Crear una categoría y un mueble para poder borrarlo
+        Category::factory()->create();
+        $mueble = Furniture::factory()->create();
+        $this->assertDatabaseHas('furniture', ['id' => $mueble->id]);
 
-        // 2. Hacemos DELETE para eliminar el mueble ID 5
-        $response = $this->delete(route('admin.muebles.destroy', ['id' => 5]), [
-            'sesionId' => $sesionId,
+        // 2. Hacemos DELETE para eliminar el mueble
+        $response = $this->delete(route('admin.muebles.destroy', ['mueble' => $mueble->id]), [
+            'sesionId' => $sesionId // Añadimos el sesionId para el middleware checkAdmin
         ]);
 
-        // 3. Comprobamos que la BD de sesión ahora tiene 11 muebles
-        $response->assertRedirect(route('admin.muebles.index', ['sesionId' => $sesionId]));
-        $this->assertCount(11, Session::get('muebles_crud_session'));
-        // 4. Comprobamos que el mueble 5 ya no existe
-        $this->assertNull(Session::get('muebles_crud_session')->firstWhere('id', 5));
+        // 3. Comprobamos que redirige y que el mueble ya no está en la BD
+        $response->assertRedirect(route('admin.muebles.index')); // La ruta de redirección no lleva sesionId
+        $this->assertDatabaseMissing('furniture', ['id' => $mueble->id]);
     }
 }

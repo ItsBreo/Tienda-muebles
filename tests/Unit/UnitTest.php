@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Unit;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -12,7 +12,7 @@ use App\Models\Role;
 use App\Models\Furniture;
 use App\Models\Category;
 
-class Test extends TestCase
+class UnitTest extends TestCase
 {
     // ¡IMPORTANTE! Esto crea las tablas y reinicia la BD en cada test
     use RefreshDatabase;
@@ -95,7 +95,12 @@ class Test extends TestCase
     public function test_login_exitoso_redirige_y_crea_sesion_de_usuario()
     {
         // 1. Crear usuario previo (Arrange)
-        Role::create(['id' => 3, 'name' => 'Cliente']);
+        // Usamos una instancia para forzar el ID 3, ya que create() podría filtrar el ID si no está en fillable
+        $role = new Role();
+        $role->id = 3;
+        $role->name = 'Cliente';
+        $role->save();
+
         User::factory()->create([
             'email' => 'jose@correo.com',
             'password' => Hash::make('1234'),
@@ -278,7 +283,6 @@ class Test extends TestCase
         ]);
 
         $response = $this->post(route('carrito.remove', ['mueble' => 3]), [
-            '_method' => 'DELETE',
             'sesionId' => $sesionId,
         ]);
 
@@ -287,40 +291,34 @@ class Test extends TestCase
     }
 
     // =================================================================
-    // Pruebas de Admin CRUD (Sesión)
+    // Pruebas de Admin CRUD (BD)
     // =================================================================
 
     public function test_admin_puede_crear_un_mueble()
     {
-        // Nota: Si usas mocks en Session::put, asegúrate de que Furniture::getMockData()
-        // devuelva objetos que tu controlador entienda.
-
         [$sesionId, $user] = $this->loginAs('admin');
 
-        // Inicializar sesión vacía o mockeada
-        Session::put('muebles_crud_session', collect([]));
+        // 1. Crear una categoría para que la validación no falle
+        $categoria = Category::factory()->create();
 
+        // 2. Hacemos POST para crear un nuevo mueble en la BD
         $response = $this->post(route('admin.muebles.store'), [
             'sesionId' => $sesionId,
             'name' => 'Mueble de Prueba',
-            'category_id' => 1,
+            'category_id' => $categoria->id,
             'description' => 'Desc',
             'price' => 99,
             'stock' => 10,
             'main_color' => 'Rojo',
         ]);
 
-        $response->assertRedirect(route('admin.muebles.index', ['sesionId' => $sesionId]));
+        // 3. Comprobamos que redirige al index y que el mueble existe en la BD
+        $response->assertRedirect(route('admin.muebles.index'));
 
-        // Verificamos que se haya añadido
-        $this->assertCount(1, Session::get('muebles_crud_session'));
-        $ultimoMueble = Session::get('muebles_crud_session')->last();
-
-        // Ajusta esto dependiendo de si guardas Arrays u Objetos en la sesión
-        // Si es array: $ultimoMueble['name']
-        // Si es objeto: $ultimoMueble->name o $ultimoMueble->getName()
-        // Asumo Objeto o Array, usaré data_get para seguridad
-        $nombre = is_object($ultimoMueble) ? $ultimoMueble->name : $ultimoMueble['name'];
-        $this->assertEquals('Mueble de Prueba', $nombre);
+        // Verificamos que el mueble se ha creado en la base de datos
+        $this->assertDatabaseHas('furniture', [
+            'name' => 'Mueble de Prueba',
+            'price' => 99
+        ]);
     }
 }

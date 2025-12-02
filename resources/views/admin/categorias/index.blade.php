@@ -80,7 +80,7 @@
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
                 {{-- Enlace al Dashboard --}}
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">Panel de Control</a>
+                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Panel de Control</a>
 
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
@@ -90,6 +90,7 @@
                         <li class="nav-item">
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
+                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
                                 <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">Cerrar Sesión</button>
                             </form>
                         </li>
@@ -104,9 +105,9 @@
 
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-                    <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
-                    <a class="nav-link" href="{{ route('admin.muebles.index') }}">Muebles</a>
-                    <a class="nav-link active" href="{{ route('admin.categorias.index') }}">Categorías</a>
+                    <a class="nav-link" href="{{ route('admin.usuarios.index', ['sesionId' => $sesionId]) }}">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
+                    <a class="nav-link active" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorías</a>
                 </div>
             </div>
 
@@ -120,13 +121,23 @@
                     </div>
                 @endif
 
+                {{-- Formulario de Búsqueda --}}
+                <form action="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}" method="GET" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" placeholder="Buscar por nombre..." value="{{ $search ?? '' }}">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="submit">Buscar</button>
+                        </div>
+                    </div>
+                </form>
+
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-body">
 
                         {{-- Encabezado con botón de Crear --}}
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="card-title text-primary m-0">Listado de Categorías</h5>
-                            <a href="{{ route('admin.categorias.create') }}" class="btn btn-primary">
+                            <a href="{{ route('admin.categorias.create', ['sesionId' => $sesionId]) }}" class="btn btn-primary">
                                 Nueva Categoría
                             </a>
                         </div>
@@ -153,13 +164,13 @@
                                                 <div class="d-flex justify-content-end gap-1">
 
                                                     {{-- Botón Editar --}}
-                                                    <a href="{{ route('admin.categorias.edit', $categoria) }}"
+                                                    <a href="{{ route('admin.categorias.edit', ['sesionId' => $sesionId, 'categoria' => $categoria->id]) }}"
                                                        class="btn btn-sm btn-secondary">
                                                         Editar
                                                     </a>
 
                                                     {{-- Formulario Eliminar --}}
-                                                    <form action="{{ route('admin.categorias.destroy', $categoria) }}"
+                                                    <form action="{{ route('admin.categorias.destroy', ['sesionId' => $sesionId, 'categoria' => $categoria->id]) }}"
                                                           method="POST" class="d-inline"
                                                           onsubmit="return confirm('¿Estás seguro? Al borrar la categoría podrías afectar a los muebles asociados.');">
                                                         @csrf

@@ -16,13 +16,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Ejecutar el seeder de roles primero
+        // Ejecutar el seeder de roles primero
         $this->call(RoleSeeder::class);
 
         // Buscamos el rol 'Admin' para obtener su ID dinámicamente.
         $adminRole = Role::where('name', 'Admin')->first();
 
-        // 2. Crear un usuario Administrador
+        // Crear un usuario Administrador
         User::factory()->create([
             'name' => 'Admin',
             'surname' => 'User',
@@ -40,10 +40,10 @@ class DatabaseSeeder extends Seeder
             'role_id' => 3,
         ]);
 
-        // 3. Crear 50 usuarios de prueba (Gestores y Clientes)
+        // Crear 50 usuarios de prueba (Gestores y Clientes)
         User::factory(50)->create();
 
-        // 4. Ejecutar los seeders de categorías y muebles
+        // Ejecutar los seeders de categorías y muebles
         $this->call([
             CategorySeeder::class,
             FurnitureSeeder::class,

@@ -73,7 +73,7 @@
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
 
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">Panel de Control</a>
+                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Panel de Control</a>
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
@@ -83,6 +83,7 @@
 
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
+                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
                                 <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">Cerrar Sesión</button>
                             </form>
                         </li>
@@ -98,9 +99,9 @@
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
 
-                    <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
-                    <a class="nav-link" href="{{ route('admin.categorias.index') }}">Categorias</a>
-                    <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
+                    <a class="nav-link" href="{{ route('admin.usuarios.index', ['sesionId' => $sesionId]) }}">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorias</a>
+                    <a class="nav-link active" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
                 </div>
             </div>
 
@@ -113,8 +114,8 @@
                             <h5 class="card-title text-primary mb-0">{{ $mueble->name}}</h5>
                             <div>
 
-                                <a href="{{ route('admin.muebles.edit', $mueble) }}" class="btn btn-secondary">Editar</a>
-                                <a href="{{ route('admin.muebles.index') }}" class="btn btn-outline-secondary">Volver al listado</a>
+                                <a href="{{ route('admin.muebles.edit', ['sesionId' => $sesionId, 'mueble' => $mueble->id]) }}" class="btn btn-secondary">Editar</a>
+                                <a href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}" class="btn btn-outline-secondary">Volver al listado</a>
                             </div>
                         </div>
                         <hr>

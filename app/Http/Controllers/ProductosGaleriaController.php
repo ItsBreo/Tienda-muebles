@@ -19,10 +19,12 @@ class ProductosGaleriaController extends Controller
         // 1. Obtenemos el sesionId de la petición.
         $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
 
-        // Si no lo encontramos en la petición, buscamos en la sesión de Laravel
         if (!$sesionId) {
-            $usuarios = Session::get('usuarios', []);
-            $sesionId = array_key_first($usuarios);
+            $sesionId = $request->cookie('current_sesionId');
+        }
+
+        if (!$sesionId) {
+            return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
         }
 
         $user = User::activeUserSesion($sesionId);
@@ -32,8 +34,8 @@ class ProductosGaleriaController extends Controller
             return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
         }
 
-        // 3. Comprobamos si el usuario tiene el rol 'Admin'.
-        if ($user->hasRole('Admin')) {
+        // 3. Comprobamos si el usuario es admin
+        if ($user->isAdmin()) {
             return true;
         }
 

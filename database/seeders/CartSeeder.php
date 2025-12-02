@@ -13,7 +13,6 @@ class CartSeeder extends Seeder
 	 */
 	public function run()
 	{
-		// Esto ahora usa la CartFactory actualizada con 'sesion_id'
 		Cart::factory()->count(5)->create();
 	}
 }

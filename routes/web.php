@@ -12,6 +12,9 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\AdministracionController;
 use App\Http\Controllers\ProductosController;
 use App\Http\Controllers\ProductosGaleriaController;
+use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\UsuarioController;
 use Illuminate\Http\Request;
 
 // Página Principal
@@ -20,6 +23,12 @@ use Illuminate\Http\Request;
 // Login (Sesiones):
  Route::get('/login', [LoginController::class, 'show'])->name('login.show');
  Route::post('/login', [LoginController::class, 'login'])->name('login.store');
+
+ // Registro
+ Route::get('/inscribir', [RegisterController::class, 'show'])->name('register.show');
+ Route::post('/inscribir', [RegisterController::class, 'store'])->name('register.store');
+
+ // Logout
  Route::post('/logout', [LoginController::class, 'logout'])->name('login.logout');
 
 // Preferencias (Cookies)
@@ -28,7 +37,7 @@ use Illuminate\Http\Request;
 
 // Catálogo: muebles (listado + detalle)
  Route::get('/muebles', [CatalogoController::class, 'index'])->name('muebles.index');
- Route::get('/mueble/{id}', [MuebleController::class, 'show'])->name('muebles.show');
+ Route::get('/mueble/{id}', [CatalogoController::class, 'showMueble'])->name('muebles.show');
 
  // Catálogo: categorías
  Route::get('/categorias', [CatalogoController::class, 'categorias'])->name('categorias.index');
@@ -40,45 +49,32 @@ Route::post('/carrito/insertar/{mueble}', [CarritoController::class, 'add'])->na
 Route::post('/carrito/actualizar/{mueble}', [CarritoController::class, 'update'])->name('carrito.update');
 Route::post('/carrito/eliminar/{mueble}', [CarritoController::class, 'remove'])->name('carrito.remove');
 Route::post('/carrito/vaciar', [CarritoController::class, 'clear'])->name('carrito.clear');
+Route::post('/carrito/guardar', [CarritoController::class, 'saveOnBD'])->name('carrito.save');
 
-// Checkout (página de resumen/pago):
-Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-Route::post('/checkout', [CheckoutController::class, 'processCheckout'])->name('checkout.process');
-
-
-
-// Panel de Administración (Solo usuario rol ADMIN)
-// CRUD de Muebles (con cookies)
-Route::get('/admin/muebles', [AdministracionController::class, 'index'])->name('admin.muebles.index');
-Route::get('/admin/muebles/crear', [AdministracionController::class, 'create'])->name('admin.muebles.create');
-Route::post('/admin/muebles', [AdministracionController::class, 'store'])->name('admin.muebles.store');
-Route::get('/admin/muebles/{id}', [AdministracionController::class, 'show'])->name('admin.muebles.show');
-Route::get('/admin/muebles/{id}/editar', [AdministracionController::class, 'edit'])->name('admin.muebles.edit');
-Route::post('/admin/muebles/{id}', [AdministracionController::class, 'update'])->name('admin.muebles.update');
-Route::delete('/admin/muebles/{id}', [AdministracionController::class, 'destroy'])->name('admin.muebles.destroy');
 
 // Categorías (CRUD)
  //Route::resource('categorias', CatalogoController::class);
 
-// Nombres generados:
+
 // categorias.index|create|store|show|edit|update|destroy
 // Productos (CRUD)
- Route::resource('productos', ProductosController::class);
+Route::resource('/admin/muebles', AdministracionController::class) -> names('admin.muebles');
 
-// Nombres generados:
+Route::resource('/admin/categorias', CategoriaController::class) -> names('admin.categorias');
+
+Route::get('/admin/usuarios', [UsuarioController::class, 'index'])->name('admin.usuarios.index');
+
+
 // productos.index|create|store|show|edit|update|destroy
 // Galería de Productos
  Route::post('productos/{mueble}/galeria', [ProductosGaleriaController::class,'store'])->name('productos.galeria.store');// Subida múltiple
 
- Route::post('productos/{mueble}/galeria/{image}',
+ Route::delete('productos/{mueble}/galeria/{image}',
 [ProductosGaleriaController::class, 'destroy'])->name('productos.galeria.destroy'); // Borrar imagen
 
  Route::post('productos/{mueble}/galeria/{image}/principal',
 [ProductosGaleriaController::class, 'setMain'])->name('productos.galeria.principal'); // Establecer imagen principal
 
-// Panel de Administración de prueba
-// TODO: Borrar esta ruta una vez el CRUD esté hecho
-Route::view('/admin', 'adminPanel')->name('admin.dashboard');
 
 // Depuración de cookies
 Route::get('/cookiesActivas', function (Request $request) {

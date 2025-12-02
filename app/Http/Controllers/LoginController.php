@@ -3,120 +3,188 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Cookie;
+use App\Models\SessionLog;
 use App\Models\User;
+use Carbon\Carbon;
 
 class LoginController extends Controller
 {
+    /**
+     * Muestra la vista de login.
+     */
     public function show()
     {
-        // Pasamos un sesionId nulo a la vista de login
-        return view('login', ['sesionId' => null]);
+        return view('login');
     }
 
+    /**
+     * Procesa el intento de login.
+     */
     public function login(Request $request)
     {
-        $data = $request->validate([
+
+        $credentials = $request->validate([
             'email' => ['required', 'email'],
-            'password' => ['required', 'string', 'min:4'],
+            'password' => ['required', 'string'],
         ]);
 
-        $user = User::verifyUser($data['email'], $data['password']);
 
+        $user = User::where('email', $credentials['email'])->first();
+
+        // Si no existe el usuario, devolvemos error
         if (!$user) {
-            return back()->withErrors(['autenticationError' => 'Las credenciales no son correctas']);
+            return back()->withErrors(['autenticationError' => 'Credenciales incorrectas.']);
         }
 
-        // Creamos un ID único para ESTA instancia de login
-        $sesionId = Session::getId() . "_" . $user->getId() . "_" . time();
-        $id_COOKIE = 'preferencias_' . $user->getId();
+        // Verificar si la cuenta está BLOQUEADA
+        if ($user->locked_until && Carbon::now()->lessThan($user->locked_until)) {
+            $minutosRestantes = Carbon::now()->diffInMinutes($user->locked_until) + 1;
+            return back()->withErrors([
+                'autenticationError' => "Cuenta bloqueada temporalmente. Inténtalo de nuevo en $minutosRestantes minutos."
+            ]);
+        }
 
-        // Obtenemos el array de usuarios de la sesión
-        $users = Session::get('usuarios', []);
+        // Verificar la Contraseña
+        if (!Hash::check($credentials['password'], $user->password)) {
 
-        // Guardamos los datos
+            // Incrementamos el contador de fallos en la BD
+            $user->increment('failed_attempts');
+
+            // Si llega a 3 fallos, bloqueamos la cuenta 5 min
+            if ($user->failed_attempts >= 3) {
+                $user->update([
+                    'locked_until' => Carbon::now()->addMinutes(5),
+                    'failed_attempts' => 0
+                ]);
+
+                return back()->withErrors([
+                    'autenticationError' => 'Has excedido el número de intentos. Tu cuenta ha sido bloqueada por 5 minutos.'
+                ]);
+            }
+
+            // Si no ha llegado al límite, mostramos error y los intentos restantes
+            $intentosRestantes = 3 - $user->failed_attempts;
+            return back()->withErrors([
+                'autenticationError' => "Contraseña incorrecta. Te quedan $intentosRestantes intentos."
+            ]);
+        }
+
+        // Reseteamos los contadores de seguridad si la autenticación es exitosa
+        $user->update([
+            'failed_attempts' => 0,
+            'locked_until' => null,
+            'last_login_at' => Carbon::now(),
+        ]);
+
+        $request->session()->regenerate();
+
+        // Generamos un ID único para esta pestaña/sesión
+        $sesionId = session()->getId() . "_" . $user->id . "_" . time();
+
+        // Creamos el registro en logs.
+        SessionLog::create([
+            'session_id' => $sesionId,
+            'user_id' => $user->id,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'login_at' => Carbon::now(),
+        ]);
+
+        // Guardamos los datos del usuario en la sesión
         $userDataSesion = [
-            'id' => $user->getId(),
-            'email' => $user->getEmail(),
-            'name' => $user->getName(),
-            'rol' => $user->getRol(),
-            'fecha_ingreso' => date('Y-m-d H:i:s'),
+            'id' => $user->id,
+            'email' => $user->email,
+            'name' => $user->name,
+            'rol_name' => $user->role ? $user->role->name : 'Cliente',
             'sesion_id' => $sesionId,
-            'cookie_name' => $id_COOKIE, // Guardamos el nombre de la cookie a usar
         ];
 
-        // Añadimos este usuario al array de la sesión
+        // Guardamos en el array global de 'usuarios' dentro de la sesión de Laravel
+        $users = Session::get('usuarios', []);
         $users[$sesionId] = json_encode($userDataSesion);
         Session::put('usuarios', $users);
+        Session::save(); // Forzamos el guardado
 
-        if ($user->getRol() == 'admin') {
-            return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId]);
-        }
+        Cookie::queue('current_sesionId', $sesionId, 60 * 24 * 30); // 30 días
 
-        // Comprobamos si la cookie ya existia, si no, la creamos
-        if ($request->cookie($id_COOKIE) == null) {
-            $cookieData = [
-                'sesionId' => $sesionId,
-                'email' => $user->getEmail(),
-                'tema' => '',
-                'moneda' => '',
-                'tamaño' => '',
+        $cookieName = 'preferencias_' . $user->id;
+
+        // Si el usuario no tiene cookie de preferencias, creamos una por defecto
+        if ($request->cookie($cookieName) == null) {
+            $defaultPreferences = [
+                'tema' => 'claro',
+                'moneda' => 'EUR',
+                'tamaño' => 6,
             ];
 
-            $cookieDuration = config('session.lifetime', 120);
-
-            // Creamos la cookie
             $cookie = Cookie::make(
-                name: $id_COOKIE,
-                value: json_encode($cookieData),
-                minutes: $cookieDuration,
-                path: '/',
-                domain: null,
-                secure: config('session.secure', false),
-                httpOnly: true,
-                sameSite: config('session.same_site', 'lax')
+                $cookieName,
+                json_encode($defaultPreferences),
+                60 * 24 * 30
             );
 
-            // Redirigimos a preferencias (pasando el sesionId) y adjuntamos la cookie
-            return redirect()
-                ->route('preferencias.show', ['sesionId' => $sesionId])
-                ->withCookie($cookie);
+            // Redirigimos adjuntando la cookie
+            return redirect()->route('principal', ['sesionId' => $sesionId])->withCookie($cookie);
         }
 
-        // Si la cookie ya existía, vamos a principal (pasando el sesionId)
-        if ($user->getRol() == 'admin') {
-            return redirect()->route('admin', ['sesionId' => $sesionId]);
-        } else {
+        // Redirigimos normalmente
         return redirect()->route('principal', ['sesionId' => $sesionId]);
-        }
     }
 
+    /**
+     * Cierra la sesión de la pestaña actual.
+     */
     public function logout(Request $request)
+
     {
-        // El sesionId nos dice que pestaña/usuario cerrar
         $sesionId = $request->input('sesionId');
-
-        $users = Session::get('usuarios', []);
         $cookieToForget = null;
+        $users = Session::get('usuarios', []);
 
-        if (isset($users[$sesionId])) {
-            // Obtenemos el nombre de la cookie antes de borrar
-            $userData = json_decode($users[$sesionId]);
-            $cookieToForget = $userData->cookie_name ?? null;
-
-            // Eliminamos solo a este usuario del array
-            unset($users[$sesionId]);
-            Session::put('usuarios', $users);
+        // Si no hay sesionId (caso del admin), buscamos la primera sesión activa
+        if (!$sesionId && !empty($users)) {
+            // array_key_first() obtiene la clave del primer elemento del array 'usuarios'
+            // el admin siempre será la ID 1, por lo que es suficiente
+            $sesionId = array_key_first($users);
         }
 
-        $response = redirect()->route('principal');
+        if ($sesionId) {
+            if (empty($users)) {
+                $users = Session::get('usuarios', []);
+            }
 
-        // Olvidamos la cookie asociada si la encontramos
+            // Verificamos si existe la sesión para obtener el ID del usuario
+            if (isset($users[$sesionId])) {
+                $userData = json_decode($users[$sesionId]);
+
+                if (isset($userData->id)) {
+                    $cookieName = 'preferencias_' . $userData->id;
+                    $cookieToForget = Cookie::forget($cookieName);
+                }
+
+                // Buscamos el log de sesión correspondiente y lo actualizamos.
+                $log = SessionLog::where('session_id', $sesionId)->whereNull('logout_at')->first();
+                if ($log) {
+                    $log->update([
+                        'logout_at' => Carbon::now()
+                    ]);
+                }
+
+                // Eliminamos al usuario del array de sesión
+                unset($users[$sesionId]);
+                Session::put('usuarios', $users);
+                Session::save();
+            }
+        }
+
+        // Redirigimos adjuntando la orden de olvidar la cookie
         if ($cookieToForget) {
-            $response->withCookie(Cookie::forget($cookieToForget));
+            return redirect()->route('principal')->withCookie($cookieToForget);
         }
 
-        return $response;
+        return redirect()->route('principal');
     }
 }

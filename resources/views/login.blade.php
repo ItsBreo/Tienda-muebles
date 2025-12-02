@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login con Paleta de Colores</title>
+    <title>Login</title>
 
     {{-- Asumiendo que bootstrap.min.css está en public/resources/ --}}
     <link rel="stylesheet" href="{{ asset('resources/bootstrap.min.css') }}">
@@ -87,9 +87,20 @@
                         <form method="POST" action="{{ route('login.store') }}">
                             @csrf
 
+                            {{-- Bloque para mostrar errores de validación o de credenciales --}}
+                            @if ($errors->any())
+                                <div class="alert alert-danger mb-4">
+                                    <ul class="mb-0">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
                             <div class="mb-3">
                                 <label for="email" class="form-label">Correo Electrónico</label>
-                                <input type="email" class="form-control" id="email" name="email" required autofocus>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" required autofocus>
                             </div>
 
                             <div class="mb-4">
@@ -98,7 +109,7 @@
                             </div>
 
                             <div class="mb-4 form-check">
-                                <input type="checkbox" class="form-check-input" id="remember">
+                                <input type="checkbox" class="form-check-input" id="remember" name="remember">
                                 <label class="form-check-label" for="remember">Recordarme</label>
                             </div>
 
@@ -106,6 +117,9 @@
                                 <button type="submit" class="btn btn-primary btn-lg">Acceder</button>
                             </div>
                         </form>
+                        <div class="mt-3 text-center">
+                            <a href="{{ route('register.show') }}" class="btn btn-outline-secondary">¿No tienes una cuenta? Registrate</a>
+                        </div>
                     </div>
                 </div>
             </div>

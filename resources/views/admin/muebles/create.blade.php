@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Nuevo Mueble - Tienda</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
     <style>
         /* Paleta */
@@ -14,13 +14,13 @@
             --bs-gray-medium: #7A7D7D;
             --bs-timberwolf: #D0CFCF;
             --bs-snow: #FFFBFE;
-            --bs-primary: var(--bs-davys-gray); /* Color principal: Gris Oscuro */
-            --bs-secondary: var(--bs-gray-medium); /* Color secundario: Gris Medio */
+            --bs-primary: var(--bs-davys-gray);
+            --bs-secondary: var(--bs-gray-medium);
         }
 
         body {
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bs-timberwolf); /* Fondo de página gris claro */
+            background-color: var(--bs-timberwolf);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -38,9 +38,9 @@
 
         .sidebar {
             width: 250px;
-            background-color: var(--bs-secondary); /* Gris Medio */
+            background-color: var(--bs-secondary);
             padding-top: 1rem;
-            min-height: calc(100vh - 56px); /* 100vh menos altura del navbar */
+            min-height: calc(100vh - 56px);
         }
         .sidebar .nav-link {
             color: var(--bs-snow);
@@ -56,10 +56,10 @@
         }
 
         .footer-custom {
-            background-color: var(--bs-primary); /* Gris Oscuro */
+            background-color: var(--bs-primary);
             color: var(--bs-snow);
             padding: 1rem 0;
-            margin-top: auto; /* Empuja el footer hacia abajo */
+            margin-top: auto;
         }
     </style>
 </head>
@@ -68,18 +68,15 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Panel de Control</a>
+                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">Panel de Control</a>
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
                             <a class="nav-link" href="#">Usuario (Admin)</a>
                         </li>
                         <li class="nav-item">
-
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
-                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
                                 <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">Cerrar Sesión</button>
                             </form>
                         </li>
@@ -94,11 +91,9 @@
 
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-
-                    <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Dashboard</a>
-                    <a class="nav-link" href="#">Usuarios</a>
-                    <a class="nav-link active" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
-                    <a class="nav-link" href="#">Configuración</a>
+                    <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.categorias.index') }}">Categorias</a>
+                    <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
                 </div>
             </div>
 
@@ -112,13 +107,9 @@
                         <form action="{{ route('admin.muebles.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
 
-
-                            <input type="hidden" name="sesionId" value="{{ $sesionId }}">
-
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="name" class="form-label">Nombre del Mueble</label>
-
                                     <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required>
                                 </div>
                                 <div class="col-md-3">
@@ -134,14 +125,13 @@
                                     <textarea class="form-control" id="description" name="description" rows="3" required>{{ old('description') }}</textarea>
                                 </div>
 
-
                                 <div class="col-md-4">
                                     <label for="category_id" class="form-label">Categoría</label>
                                     <select class="form-select" id="category_id" name="category_id" required>
                                         <option value="">Seleccione una categoría...</option>
                                         @foreach ($categories as $category)
-                                            <option value="{{ $category->getId() }}" @if(old('category_id') == $category->getId()) selected @endif>
-                                                {{ $category->getName() }}
+                                            <option value="{{ $category->id }}" @if(old('category_id') == $category->id) selected @endif>
+                                                {{ $category->name }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -160,7 +150,6 @@
                                     <input type="text" class="form-control" id="main_color" name="main_color" value="{{ old('main_color') }}" required>
                                 </div>
 
-
                                 <div class="col-md-4">
                                     <label for="image" class="form-label">Imagen</label>
                                     <input type="file" class="form-control" id="image" name="image">
@@ -174,8 +163,7 @@
                                 </div>
                                 <div class="col-12 mt-4">
                                     <button type="submit" class="btn btn-primary">Guardar Mueble</button>
-
-                                    <a href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}" class="btn btn-secondary">Cancelar</a>
+                                    <a href="{{ route('admin.muebles.index') }}" class="btn btn-secondary">Cancelar</a>
                                 </div>
                             </div>
                         </form>
@@ -195,7 +183,6 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>
-

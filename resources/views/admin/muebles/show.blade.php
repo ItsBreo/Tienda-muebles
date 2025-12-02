@@ -99,10 +99,9 @@
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
 
-                    <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Dashboard</a>
-                    <a class="nav-link" href="#">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.usuarios.index', ['sesionId' => $sesionId]) }}">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorias</a>
                     <a class="nav-link active" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
-                    <a class="nav-link" href="#">Configuración</a>
                 </div>
             </div>
 
@@ -112,28 +111,33 @@
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="card-title text-primary mb-0">{{ $mueble->getName() }}</h5>
+                            <h5 class="card-title text-primary mb-0">{{ $mueble->name}}</h5>
                             <div>
 
-                                <a href="{{ route('admin.muebles.edit', ['id' => $mueble->getId(), 'sesionId' => $sesionId]) }}" class="btn btn-secondary">Editar</a>
+                                <a href="{{ route('admin.muebles.edit', ['sesionId' => $sesionId, 'mueble' => $mueble->id]) }}" class="btn btn-secondary">Editar</a>
                                 <a href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}" class="btn btn-outline-secondary">Volver al listado</a>
                             </div>
                         </div>
                         <hr>
                         <div class="row g-3">
-                            <div class="col-md-6"><p><span class="detail-label">ID:</span> {{ $mueble->getId() }}</p></div>
-                            <div class="col-md-6"><p><span class="detail-label">Categoría ID:</span> {{ $mueble->getCategoryId() }}</p></div>
-                            <div class="col-md-6"><p><span class="detail-label">Precio:</span> {{ number_format($mueble->getPrice(), 2) }} €</p></div>
-                            <div class="col-md-6"><p><span class="detail-label">Stock:</span> {{ $mueble->getStock() }}</p></div>
-                            <div class="col-12"><p><span class="detail-label">Descripción:</span><br>{{ $mueble->getDescription() }}</p></div>
-                            <div class="col-md-6"><p><span class="detail-label">Materiales:</span> {{ $mueble->getMaterials() ?: 'No especificado' }}</p></div>
-                            <div class="col-md-6"><p><span class="detail-label">Dimensiones:</span> {{ $mueble->getDimensions() ?: 'No especificado' }}</p></div>
-                            <div class="col-md-6"><p><span class="detail-label">Color Principal:</span> {{ $mueble->getMainColor() }}</p></div>
-                            <div class="col-md-6"><p><span class="detail-label">Destacado:</span> {{ $mueble->isSalient() ? 'Sí' : 'No' }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">ID:</span> {{ $mueble->id}}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Categoría ID:</span> {{ $mueble->category_id }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Precio:</span> {{ number_format($mueble->price, 2) }} €</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Stock:</span> {{ $mueble->stock }}</p></div>
+                            <div class="col-12"><p><span class="detail-label">Descripción:</span><br>{{ $mueble->description }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Materiales:</span> {{ $mueble->materials ?: 'No especificado' }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Dimensiones:</span> {{ $mueble->dimensions ?: 'No especificado' }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Color Principal:</span> {{ $mueble->main_color }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Destacado:</span> {{ $mueble->is_salient ? 'Sí' : 'No' }}</p></div>
                             <div class="col-12">
                                 <p class="detail-label">Imágenes:</p>
-                                @forelse ($mueble->getImages() as $image)
-                                    <span class="badge bg-light text-dark">{{ $image }}</span>
+                                @forelse ($mueble->images as $image)
+                                    <div class="mb-2">
+                                        <img src="{{ asset($image->image_path) }}" alt="{{ $image->alt_text ?? 'Imagen' }}" style="max-width: 150px; max-height: 150px; object-fit: cover;">
+                                        @if($image->is_primary)
+                                            <span class="badge bg-success ms-2">Principal</span>
+                                        @endif
+                                    </div>
                                 @empty
                                     <span class="text-muted">No hay imágenes asociadas.</span>
                                 @endforelse

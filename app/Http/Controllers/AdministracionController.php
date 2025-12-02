@@ -2,302 +2,325 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Furniture;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session;
-use App\Models\User;
-use App\Models\Category;
 
 class AdministracionController extends Controller
 {
-
     private $sessionKey = 'muebles_crud_session';
 
-    private $cookieMinutes = 60 * 24 * 7;
-
-
+    /**
+     * Obtiene los muebles de la sesión o carga los Mock Data.
+     * Esta lógica ahora sirve tanto para Admin como para Público.
+     */
     private function getMuebles()
     {
-
         $muebles = Session::get($this->sessionKey);
-
 
         if ($muebles instanceof \Illuminate\Support\Collection) {
             return $muebles;
         }
 
-        // Si no, carga los datos mock (que ya son Objetos Furniture)
+        // Si no existe sesión, carga Mock Data
         $muebles = collect(Furniture::getMockData());
-
-        // Los guarda en la SESIÓN para la próxima vez
         $this->saveMuebles($muebles);
+
         return $muebles;
     }
 
-    /**
-     * Guarda la colección de muebles en la Sesión.
-     */
     private function saveMuebles($muebles)
     {
         Session::put($this->sessionKey, $muebles);
     }
 
+    /**
+     * Lógica traída de MuebleController para manejar preferencias de usuario/cookies.
+     */
+    private function getSesionYPreferencias(Request $request)
+    {
+        $activeSesionId = $request->query('sesionId');
+        $activeUser = null;
+
+        $defaultPrefs = [
+            'tema' => 'claro',
+            'moneda' => 'EUR',
+            'tamaño' => 6,
+        ];
+
+        if ($activeSesionId) {
+            $activeUser = User::activeUserSesion($activeSesionId);
+        }
+
+        if ($activeUser) {
+            $cookieName = 'preferencias_'.$activeUser->id;
+            $cookieData = json_decode($request->cookie($cookieName), true);
+            $preferencias = $cookieData ? array_merge($defaultPrefs, $cookieData) : $defaultPrefs;
+        } else {
+            $preferencias = $defaultPrefs;
+        }
+
+        return compact('activeSesionId', 'activeUser', 'preferencias');
+    }
 
     /**
-     * Revisa si el usuario actual es un admin.
-     * Devuelve 'true' si es admin, o una Redirección si no lo es.
+     * Middleware manual para proteger rutas de admin.
      */
     private function checkAdmin(Request $request)
     {
-
-        $sesionId = $request->input('sesionId') ?? $request->query('sesionId');
+        // 1. Obtenemos el sesionId de la petición.
+        // Lo buscamos en la ruta, en la query string, en los inputs del formulario
+        $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
 
         if (!$sesionId) {
-            // Si no hay sesionId, no está autenticado.
-            return redirect()->route('login.show')->with('error', 'Debes iniciar sesión.');
+            $sesionId = $request->cookie('current_sesionId');
         }
 
-        // Buscamos al usuario en el array de la sesión
-        $usuarios = Session::get('usuarios', []);
-        $userJson = $usuarios[$sesionId] ?? null;
-
-        if (!$userJson) {
-            // Si el sesionId no está en la sesión, se ha invalidado.
-            return redirect()->route('login.show')->with('error', 'Tu sesión ha expirado.');
+        if (!$sesionId) {
+            return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
         }
 
-        // Si el usuario existe, comprobamos el rol
-        $userData = json_decode($userJson);
+        $user = User::activeUserSesion($sesionId);
 
+        // 2. Comprobamos si existe un usuario para esa sesión.
+        if (! $user) {
+            return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
+        }
 
-        if ($userData && $userData->rol === 'admin') {
+        // 3. Comprobamos si el usuario es admin usando la función dedicada
+        if ($user->isAdmin()) {
             return true;
         }
 
         // No es admin. Le redirigimos a la página principal con un error.
         return redirect()->route('principal', ['sesionId' => $sesionId])
-                         ->with('error-admin', 'Acceso denigado. No tienes permisos de administrador.');
+            ->with('error-admin', 'Acceso denegado. No tienes permisos de administrador.');
     }
 
-
     /**
-     * Muestra el listado de muebles.
+     * Muestra el detalle del mueble al CLIENTE (Público).
+     * Antes: MuebleController@show
+     * Ahora: AdministracionController@showPublic
      */
+    public function showPublic(Request $request, $id)
+    {
+        // 1. Cargamos preferencias (Lógica traída de MuebleController)
+        $sesionData = $this->getSesionYPreferencias($request);
 
+        // 2. Buscamos el mueble usando el helper compartido
+        $muebles = $this->getMuebles();
+        $mueble = $muebles->first(fn ($m) => $m->getId() == (int) $id);
+
+        if (! $mueble) {
+            abort(404, 'Mueble no encontrado');
+        }
+
+        // 3. Crear cookie de "Visto recientemente"
+        Cookie::queue("mueble_{$mueble->getId()}", json_encode($mueble), 60 * 24 * 30);
+
+        // 4. Retornamos la vista PÚBLICA
+        return view('muebles.show', array_merge($sesionData, [
+            'mueble' => $mueble,
+        ]));
+    }
+
+    // ---------------------------------------------------
+    // MÉTODOS DE ADMINISTRACIÓN (CRUD)
+    // ---------------------------------------------------
+
+    // ---------------------------------------------------
+    // CAMBIOS EN GENERAL:
+    // Ahora en base de datos solo se pasa el mueble y Laravel ya encuentra el indicado para el CRUD.
+    // Ya no hace falta buscarlo en cada función
+    // ---------------------------------------------------
     public function index(Request $request)
     {
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
+        if (($check = $this->checkAdmin($request)) !== true) {
+            return $check;
+        }
 
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
+        if (!$sesionId) {
+            $sesionId = $request->cookie('current_sesionId');
+        }
 
-        $muebles = $this->getMuebles();
+        $search = $request->input('search');
 
-        // Pasamos los muebles a la vista del panel de administración
+        // DB: Traemos todos (paginados si fueran muchos, pero all() vale por ahora)
+        $query = Furniture::query();
 
-        $sesionId = $request->input('sesionId') ?? $request->query('sesionId');
-        return view('admin.muebles.index', compact('muebles', 'sesionId'));
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+        }
+        $muebles = $query->get();
+
+        return view('admin.muebles.index', compact('muebles', 'sesionId', 'search'));
     }
-
-    /**
-     * Muestra el formulario para crear un nuevo mueble.
-     */
 
     public function create(Request $request)
     {
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
+        if (($check = $this->checkAdmin($request)) !== true) {
+            return $check;
+        }
 
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->query('sesionId');
 
-        $categories = Category::getMockData();
-        $sesionId = $request->input('sesionId') ?? $request->query('sesionId');
-        return view('admin.muebles.create', compact('sesionId', 'categories'));
+        $categories = Category::all();
+
+        return view('admin.muebles.create', compact('categories', 'sesionId'));
     }
 
-    /**
-     * Guarda un nuevo mueble en la cookie.
-     */
     public function store(Request $request)
     {
+        if (($check = $this->checkAdmin($request)) !== true) {
+            return $check;
+        }
 
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
+        // 1. Validar
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'materials' => 'nullable|string',
+            'dimensions' => 'nullable|string',
+            'main_color' => 'required|string|max:100',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
 
+        // 2. Checkbox manual
+        $data['is_salient'] = $request->has('is_salient');
 
-        $muebles = $this->getMuebles();
+        // 3. Crear Mueble (El ID se genera solo en la DB, no calculamos MaxId)
+        $mueble = Furniture::create($data);
 
-
-        $maxId = $muebles->max(fn($m) => $m->getId()) ?? 0;
-
-        $newMuebleData = $request->all();
-        $newMuebleData['id'] = $maxId + 1;
-
-        $imagePath = 'default.jpg';
+        // 4. Imagen
         if ($request->hasFile('image')) {
-            $request->validate([
-                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            ]);
+            $request->validate(['image' => 'image|max:2048']);
             $imageName = time().'.'.$request->image->extension();
             $request->image->move(public_path('images'), $imageName);
-            $imagePath = 'images/'.$imageName;
-        }
 
-        /*
-if ($request->hasFile('image')) {
-            $request->validate([
-                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            // Crear relación en tabla images
+            $mueble->images()->create([
+                'image_path' => 'images/'.$imageName,
+                'is_primary' => true,
             ]);
-            $imageName = time().'.'.$request->image->extension();
-            $request->image->move(public_path('images'), $imageName);
-            $imagePath = 'images/'.$imageName;
-            $mueble->setImages([$imagePath]);
         }
 
-        */
-
-        // Creamos una instancia de Furniture para mantener la consistencia
-        $newMueble = new Furniture(
-            $newMuebleData['id'],
-            (int)$newMuebleData['category_id'],
-            $newMuebleData['name'],
-            $newMuebleData['description'],
-            (float)$newMuebleData['price'],
-            (int)$newMuebleData['stock'],
-            $newMuebleData['materials'] ?? '',
-            $newMuebleData['dimensions'] ?? '',
-            $newMuebleData['main_color'],
-            $request->has('is_salient'),
-            [$imagePath]
-        );
-
-
-        $muebles->push($newMueble);
-
-        $this->saveMuebles($muebles);
-
-
-        $sesionId = $request->input('sesionId');
-        return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId])->with('success', 'Mueble creado correctamente.');
+        return redirect()->route('admin.muebles.index')->with('success', 'Mueble creado correctamente.');
     }
 
-    /**
-     * Muestra los detalles de un mueble específico.
-     */
-
-    public function show(Request $request, $id)
+    public function show(Request $request, Furniture $mueble)
     {
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
-
-
-        $muebles = $this->getMuebles();
-
-
-        $mueble = $muebles->first(fn($m) => $m->getId() == (int)$id);
-
-        if (!$mueble) {
-            abort(404);
+        if (($check = $this->checkAdmin($request)) !== true) {
+            return $check;
         }
 
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->query('sesionId');
 
-        $sesionId = $request->input('sesionId') ?? $request->query('sesionId');
+        // Laravel ya buscó el mueble por ti. Si no existe, da error 404 solo.
         return view('admin.muebles.show', compact('mueble', 'sesionId'));
     }
 
-
-    /**
-     * Muestra el formulario para editar un mueble.
-     */
-
-    public function edit(Request $request, $id)
+    public function edit(Request $request, Furniture $mueble)
     {
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
-
-
-        $muebles = $this->getMuebles();
-
-
-        $mueble = $muebles->first(fn($m) => $m->getId() == (int)$id);
-
-        if (!$mueble) {
-            abort(404);
+        if (($check = $this->checkAdmin($request)) !== true) {
+            return $check;
         }
 
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->query('sesionId');
 
-        $categories = Category::getMockData();
-        $sesionId = $request->input('sesionId') ?? $request->query('sesionId');
-        return view('admin.muebles.edit', compact('mueble', 'sesionId', 'categories'));
+        $categories = Category::all();
+
+        return view('admin.muebles.edit', compact('mueble', 'categories', 'sesionId'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Furniture $mueble)
     {
-
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
-
-
-        $muebles = $this->getMuebles();
-
-
-        $muebleIndex = $muebles->search(fn($m) => $m->getId() == (int)$id);
-
-        if ($muebleIndex === false) {
-            abort(404);
+        if (($check = $this->checkAdmin($request)) !== true) {
+            return $check;
         }
 
-        $mueble = $muebles[$muebleIndex];
+        // 1. Validar
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'materials' => 'nullable|string',
+            'dimensions' => 'nullable|string',
+            'main_color' => 'required|string|max:100',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
 
-        // Asignación de todos los campos del formulario
-        $mueble->setName($request->input('name', $mueble->getName()));
-        $mueble->setDescription($request->input('description', $mueble->getDescription()));
-        $mueble->setPrice((float)$request->input('price', $mueble->getPrice()));
-        $mueble->setMainColor($request->input('main_color', $mueble->getMainColor()));
-        $mueble->setIsSalient($request->has('is_salient'));
-        $mueble->setStock((int)$request->input('stock', $mueble->getStock()));
-        $mueble->setCategoryId((int)$request->input('category_id', $mueble->getCategoryId()));
-        $mueble->setMaterials($request->input('materials', $mueble->getMaterials()));
-        $mueble->setDimensions($request->input('dimensions', $mueble->getDimensions()));
+        // 2. Checkbox
+        $data['is_salient'] = $request->has('is_salient');
 
+        // 3. Actualizamos
+        $mueble->update($data);
 
+        // 4. Imagen nueva (opcional)
         if ($request->hasFile('image')) {
-            $request->validate([
-                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            ]);
+            $request->validate(['image' => 'image|max:2048']);
             $imageName = time().'.'.$request->image->extension();
             $request->image->move(public_path('images'), $imageName);
-            $imagePath = 'images/'.$imageName;
-            $mueble->setImages([$imagePath]);
+
+            // Opcional: Quitar prioridad a las anteriores
+            $mueble->images()->update(['is_primary' => false]);
+
+            // Crear la nueva
+            $mueble->images()->create([
+                'image_path' => 'images/'.$imageName,
+                'is_primary' => true,
+            ]);
         }
 
-
-
-        $muebles[$muebleIndex] = $mueble;
-        $this->saveMuebles($muebles);
-
-        $sesionId = $request->input('sesionId');
-        return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId])->with('success', 'Mueble actualizado correctamente.');
+        return redirect()->route('admin.muebles.index')->with('success', 'Mueble actualizado correctamente.');
     }
 
-    /**
-     * Elimina un mueble de la cookie.
-     */
-
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, Furniture $mueble)
     {
+        if (($check = $this->checkAdmin($request)) !== true) {
+            return $check;
+        }
 
-        $check = $this->checkAdmin($request);
-        if ($check !== true) return $check; // Si no es admin, redirige
+        // BORRADO DB
+        $mueble->delete();
 
+        return redirect()->route('admin.muebles.index')->with('success', 'Mueble eliminado correctamente.');
+    }
 
-        $muebles = $this->getMuebles();
+    public function indexCategorias(Request $request)
+    {
+        if (($check = $this->checkAdmin($request)) !== true) {
+            return $check;
+        }
 
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
+        if (!$sesionId) {
+            $sesionId = $request->cookie('current_sesionId');
+        }
 
-        $muebles = $muebles->reject(fn($m) => $m->getId() == (int)$id)->values();
+        $search = $request->input('search');
 
-        $this->saveMuebles($muebles);
+        $query = Category::query();
 
-        $sesionId = $request->input('sesionId');
-        return redirect()->route('admin.muebles.index', ['sesionId' => $sesionId])->with('success', 'Mueble eliminado correctamente.');
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+        $categorias = $query->get();
+
+        return view('admin.categorias.index', compact('categorias', 'sesionId', 'search'));
     }
 }

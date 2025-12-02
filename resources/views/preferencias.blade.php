@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+
 @section('title', 'Configurar Preferencias')
 
 @section('content')
@@ -14,14 +15,10 @@
                 </p>
 
 
-                <form action="{{ route('preferencias.update') }}" method="POST">
+                <form action="{{ route('preferencias.update', parameters: ['sesionId' => $sesionId]) }}" method="POST">
                     @csrf
 
-
-                    <!-- Esta variable $sesionId la pasa el método 'index' del controlador -->
-                    <input type="hidden" name="sesionId" value="{{ $sesionId }}">
-
-                    <!-- 1. Tema Visual -->
+                    <!-- Tema Visual -->
                     <div class="mb-3">
                         <label for="tema" class="form-label">Tema Visual</label>
                         <select class="form-select form-select-lg" id="tema" name="tema">
@@ -30,7 +27,7 @@
                         </select>
                     </div>
 
-                    <!-- 2. Moneda -->
+                    <!-- Moneda -->
                     <div class="mb-3">
                         <label for="moneda" class="form-label">Moneda</label>
                         <select class="form-select form-select-lg" id="moneda" name="moneda">
@@ -40,7 +37,7 @@
                         </select>
                     </div>
 
-                    <!-- 3. Tamaño (Productos por Página) -->
+                    <!-- Tamaño (Productos por Página) -->
                     <div class="mb-3">
                         <label for="tamaño" class="form-label fw-bold">Productos por Página:</label>
                         <select name="tamaño" id="tamaño" class="form-select">

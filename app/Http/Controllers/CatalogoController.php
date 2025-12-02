@@ -5,188 +5,226 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Session; // <-- Importar Session
+use Illuminate\Support\Facades\Session;
 use App\Models\Furniture;
 use App\Models\Category;
+use App\Models\User;
+use Illuminate\Support\Facades\Cookie;
 
-// Controlador de Catálogo
 class CatalogoController extends Controller
 {
     /**
-     * Carga las preferencias y el usuario activo desde la sesión y las cookies.
+     * Helper privado para cargar sesión y preferencias de forma consistente.
      */
-    private function cargarSesionYPreferencias(Request $request): array
+    private function getSesionYPreferencias(Request $request)
     {
-        $activeSesionId = $request->query('sesionId');
+        // Obtener ID de sesión (URL o Input)
+        $activeSesionId = $request->input('sesionId') ?? $request->query('sesionId');
+
         $activeUser = null;
-        $cookieName = null;
-        // Valores por defecto
+
+        // Valores por defecto de preferencias
         $preferencias = [
             'tema' => 'claro',
             'moneda' => 'EUR',
-            'tamaño' => 6, //
+            'tamaño' => 6,
         ];
 
-        if ($activeSesionId && Session::has('usuarios')) {
-            $usuarios = Session::get('usuarios');
-            if (isset($usuarios[$activeSesionId])) {
-                $activeUser = json_decode($usuarios[$activeSesionId]);
-                $cookieName = 'preferencias_' . $activeUser->id;
+        // Buscamos el usuario por su id de sesión
+        if ($activeSesionId) {
+            $activeUser = User::activeUserSesion($activeSesionId);
+        }
+
+        // Si hay usuario activo, leemos su cookie personalizada
+        if ($activeUser) {
+            $cookieName = 'preferencias_' . $activeUser->id;
+
+            // Laravel desencripta la cookie automáticamente
+            $cookieValue = $request->cookie($cookieName);
+
+            // Decodificamos el JSON si existe
+            if ($cookieValue) {
+                $cookieData = json_decode($cookieValue, true);
+                if (is_array($cookieData)) {
+                    $preferencias = array_merge($preferencias, $cookieData);
+                }
             }
         }
-
-        if ($cookieName && $request->hasCookie($cookieName)) {
-            $preferencias = array_merge($preferencias, json_decode($request->cookie($cookieName), true));
-        }
-
-        return [$activeSesionId, $preferencias];
+        // Devolvemos los datos
+        return compact('activeSesionId', 'activeUser', 'preferencias');
     }
 
+    /**
+     * Muestra la lista de categorías.
+     */
+    public function categorias(Request $request) {
+        // Cargar datos comunes
+        $data = $this->getSesionYPreferencias($request);
 
-    // Listado de categorías
-    public function categorias(Request $request){
-        // Cargar sesión y preferencias para el layout (navbar)
-        list($activeSesionId, $preferencias) = $this->cargarSesionYPreferencias($request);
+        // Cargamos las categorías con DB
+        $categories = Category::all();
 
-        $categories = Category::getMockData();
-
-        return view('catalogo.categorias', compact('categories', 'activeSesionId', 'preferencias'));
+        // Pasamos todo a la vista
+        return view('catalogo.categorias', array_merge($data, [
+            'categories' => $categories
+        ]));
     }
 
-    // Mostrar muebles por categoría
-    public function show(Request $request, $id){
-        // Cargar sesionId para la redirección
-        list($activeSesionId, $preferencias) = $this->cargarSesionYPreferencias($request);
-
-        $category = Category::findById((int)$id);
-
-        // Si la categoría no existe, redirigir
-        if (!$category) {
-            return redirect()->route('principal', ['sesionId' => $activeSesionId]);
-        }
-
-
-        Cookie::queue("categoria_{$category->getId()}", json_encode($category), 60 * 24 * 30);
-
-        // Redirigimos a /muebles propagando el sesionId
-        return redirect()->route('muebles.index', [
-            'category' => $category->getId(),
-            'sesionId' => $activeSesionId
-        ]);
-    }
-
-    private $sessionKey = 'muebles_crud_session';
-
-    private function getMuebles()
-    {
-        // Intenta obtener los muebles de la sesión
-        $muebles = Session::get($this->sessionKey);
-
-        // Si la sesión tiene una colección de muebles, la devuelve
-        if ($muebles instanceof \Illuminate\Support\Collection) {
-            return $muebles;
-        }
-
-        // Si no, carga los datos mock
-        $muebles = collect(Furniture::getMockData());
-
-        // Guarda los muebles en la sesión para futuros usos
-        Session::put($this->sessionKey, $muebles);
-
-        return $muebles;
-    }
-    // Listado de muebles con filtros, orden y paginación
+    /**
+     * Función para mostrar el catálogo principal (index) con filtros y paginación.
+     */
     public function index(Request $request)
-    {
-        // Cargar sesión y preferencias
-        list($activeSesionId, $preferencias) = $this->cargarSesionYPreferencias($request);
+{
+        // Cargar Sessón y preferencias
+        $sesionData = $this->getSesionYPreferencias($request);
+        $preferencias = $sesionData['preferencias'];
+        $perPage = (int) ($preferencias['tamaño'] ?? 6);
+        if (!in_array($perPage, [6, 12, 24])) $perPage = 6;
 
-        // Obtenemos preferencia de paginación desde NUESTRA cookie
-        $perPage = max((int) ($preferencias['tamaño'] ?? 6), 6); // Mínimo 6
-        $currentPage = LengthAwarePaginator::resolveCurrentPage('page');
+        // Creamos la consulta de la BD para el catálogo
+        $query = Furniture::query();
 
-        // Obtenemos todos los muebles
-        $items = $this->getMuebles();
-
-        // Filtrar por categoría
+        // Filtros del catálogo
+        // Categoría
         if ($request->filled('category')) {
-            $catId = (int)$request->input('category');
-            $items = $items->filter(fn($mueble) => $mueble->getCategoryId() === $catId);
+            // Consulta WHERE en la BD para la categoría
+            $query->where('category_id', $request->category);
         }
 
-        // Filtrar rango precio: min_price, max_price
-        if ($request->filled('min_price')) {
-            $min = (float)$request->input('min_price');
-            $items = $items->filter(fn($mueble) => $mueble->getPrice() >= $min);
-        }
-        if ($request->filled('max_price')) {
-            $max = (float)$request->input('max_price');
-            $items = $items->filter(fn($mueble) => $mueble->getPrice() <= $max);
-        }
-
-        // Filtrar por color
-        if ($request->filled('color')) {
-            $color = strtolower($request->input('color'));
-            $items = $items->filter(fn($mueble) => str_contains(strtolower($mueble->getMainColor()), $color));
-        }
-
-        // Filtrar por búsqueda general (nombre y descripción)
+        // Búsqueda (q)
         if ($request->filled('q')) {
-            $query = strtolower($request->input('q'));
-            $items = $items->filter(fn($mueble) =>
-                str_contains(strtolower($mueble->getName()), $query) || str_contains(strtolower($mueble->getDescription()), $query)
-            );
+            // Buscamos en el nombre y la descripción del mueble en la BD
+            $term = $request->q;
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'LIKE', "%{$term}%")
+                  ->orWhere('description', 'LIKE', "%{$term}%");
+            });
         }
 
-        // Ordenamos price_asc, price_desc, name_asc, name_desc, new
-        if ($request->filled('sort')) {
-            switch ($request->input('sort')) {
-                case 'price_asc':
-                    $items = $items->sortBy(fn($m) => $m->getPrice());
-                    break;
-                case 'price_desc':
-                    $items = $items->sortByDesc(fn($m) => $m->getPrice());
-                    break;
-                case 'name_asc':
-                    $items = $items->sortBy(fn($m) => $m->getName());
-                    break;
-                case 'name_desc':
-                    $items = $items->sortByDesc(fn($m) => $m->getName());
-                    break;
-                case 'new':
-                default:
-                    $items = $items->sortByDesc(fn($m) => $m->getId());
-                    break;
+        // Precio Mínimo
+        if ($request->filled('min_price')) {
+            // Forzamos a que sea número para evitar errores de string vacíos raros
+            $min = (float) $request->min_price;
+            // Consulta WHERE en la BD para el precio mínimo
+            $query->where('price', '>=', $min);
+        }
+
+        // Precio Máximo
+        if ($request->filled('max_price')) {
+            $max = (float) $request->max_price;
+            $query->where('price', '<=', $max);
+        }
+
+        // Color seleccionado
+        if ($request->filled('color')) {
+            $query->where('main_color', 'LIKE', $request->color);
+        }
+
+        // Ordenación
+        $sort = $request->input('sort', 'default');
+        match ($sort) {
+            'price_asc'  => $query->orderBy('price', 'asc'),
+            'price_desc' => $query->orderBy('price', 'desc'),
+            'name_asc'   => $query->orderBy('name', 'asc'),
+            'name_desc'  => $query->orderBy('name', 'desc'),
+            'date_new'   => $query->orderBy('created_at', 'desc'),
+            'date_old'   => $query->orderBy('created_at', 'asc'),
+            default      => $query->orderBy('id', 'desc'),
+        };
+
+        // Paginación
+        $muebles = $query->paginate($perPage)->withQueryString();
+
+        // Datos Auxiliares
+        $categories = Category::all();
+
+        // Obtenemos los colores de los muebles con DB
+        $colors = Furniture::query()
+                    ->select('main_color')
+                    ->whereNotNull('main_color')
+                    ->distinct()
+                    ->orderBy('main_color')
+                    ->pluck('main_color');
+        // Pasamos todo a la vista
+        return view('catalogo.index', array_merge($sesionData, [
+            'muebles'    => $muebles,
+            'categories' => $categories,
+            'colors'     => $colors
+        ]));
+    }
+
+    /**
+     * Redirige al catálogo filtrado por una categoría.
+     */
+    public function show(Request $request, $id){
+        $sesionData = $this->getSesionYPreferencias($request);
+
+        // Intenta encontrar la categoría (Mock o BD)
+        if (method_exists(Category::class, 'findById')) {
+            $category = Category::findById((int)$id);
+        } else {
+            $category = Category::find($id);
+        }
+
+        if (!$category) {
+            return redirect()->route('principal', ['sesionId' => $sesionData['activeSesionId']]);
+        }
+
+        // Usa el getter getId() si existe, o la propiedad id directamente
+        $catId = method_exists($category, 'getId') ? $category->getId() : $category->id;
+
+        return redirect()->route('muebles.index', [
+            'category' => $catId,
+            'sesionId' => $sesionData['activeSesionId']
+        ]);
+    }
+
+    // Muestra el detalle de un mueble
+    public function showMueble(Request $request, $id){
+        // Cargamos la sesión y las preferencias (Helper existente)
+        $sesionData = $this->getSesionYPreferencias($request);
+
+        // Buscamos el mueble
+        $mueble = Furniture::find($id);
+
+        if (!$mueble) {
+            abort(404, 'Mueble no encontrado');
+        }
+
+        // Control de stock
+        $activeSesionId = $sesionData['activeSesionId'];
+        $stockTotal = $mueble->stock;
+        $enCarrito = 0;
+
+        // Verificamos si hay una sesión activa
+        if ($activeSesionId) {
+            // Usamos el helper del modelo User para buscar al usuario de esta sesión
+            $u = User::activeUserSesion($activeSesionId);
+
+            if ($u) {
+                // Obtenemos el carrito de la sesión
+                $carritoSesion = Session::get('carrito_' . $u->id, []);
+
+                // Verificamos si este mueble específico está en el carrito
+                if (isset($carritoSesion[$mueble->id])) {
+                    $enCarrito = (int) $carritoSesion[$mueble->id]['cantidad'];
+                }
             }
         }
 
-        // Reindexar colección después de filtros y orden
-        $items = $items->values();
-
-        // Paginar manualmente
-        $total = $items->count();
-        $slice = $items->slice(($currentPage - 1) * $perPage, $perPage)->all();
-
-        // Pasar los query params al paginador para que los filtros persistan
-        $paginator = new LengthAwarePaginator($slice, $total, $perPage, $currentPage, [
-            'path' => Paginator::resolveCurrentPath(), // Usa Paginator
-            'pageName' => 'page',
-        ]);
-
-        $paginator->appends($request->except('page'));
+        // Calculamos lo que queda realmente disponible para comprar
+        $stockDisponible = max(0, $stockTotal - $enCarrito);
 
 
-        // Pasamos categorías para filtros
-        $categories = Category::getMockData();
+        // Creamos cookie de historial
+        Cookie::queue("mueble_{$mueble->id}", json_encode($mueble), 60 * 24 * 30);
 
-        // Devolver la vista y pasar las variables
-        return view('catalogo.index', [
-            'muebles' => $paginator,
-            'categories' => $categories,
-            'activeSesionId' => $activeSesionId,
-            'preferencias' => $preferencias,
-        ]);
+        // Enviamos los datos necesarios a la vista
+        return view('muebles.show', array_merge($sesionData, [
+            'mueble' => $mueble,
+            'stockTotal' => $stockTotal,
+            'enCarrito' => $enCarrito,
+            'stockDisponible' => $stockDisponible
+        ]));
     }
 }

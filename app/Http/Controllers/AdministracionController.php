@@ -217,11 +217,6 @@ class AdministracionController extends Controller
         return redirect()->route('admin.muebles.index')->with('success', 'Mueble creado correctamente.');
     }
 
-    // ========================================================================
-    // AQUÍ VIENE LA MAGIA: Route Model Binding
-    // En lugar de ($id), pedimos (Furniture $mueble)
-    // ========================================================================
-
     public function show(Request $request, Furniture $mueble)
     {
         if (($check = $this->checkAdmin($request)) !== true) {
@@ -299,15 +294,11 @@ class AdministracionController extends Controller
             return $check;
         }
 
-        // BORRADO DB: ¡Directo y simple!
+        // BORRADO DB
         $mueble->delete();
 
         return redirect()->route('admin.muebles.index')->with('success', 'Mueble eliminado correctamente.');
     }
-
-    // ---------------------------------------------------
-    // MÉTODOS DE ADMINISTRACIÓN (CATEGORÍAS)
-    // ---------------------------------------------------
 
     public function indexCategorias(Request $request)
     {

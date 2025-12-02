@@ -80,7 +80,7 @@
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
 
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">
+                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">
                     Panel de Control
                 </a>
 
@@ -92,6 +92,7 @@
                         <li class="nav-item">
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
+                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
                                 <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">
                                     Cerrar Sesión
                                 </button>
@@ -109,8 +110,8 @@
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
                     <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
-                    <a class="nav-link" href="{{ route('admin.muebles.index') }}">Muebles</a>
-                    <a class="nav-link active" href="{{ route('admin.categorias.index') }}">Categorías</a>
+                    <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
+                    <a class="nav-link active" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorías</a>
                 </div>
             </div>
 
@@ -160,7 +161,7 @@
 
                                 <div class="col-12 mt-4">
                                     <button type="submit" class="btn btn-primary">Actualizar Categoría</button>
-                                    <a href="{{ route('admin.categorias.index') }}" class="btn btn-secondary">Cancelar</a>
+                                    <a href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}" class="btn btn-secondary">Cancelar</a>
                                 </div>
                             </div>
                         </form>

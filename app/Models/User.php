@@ -59,8 +59,8 @@ class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        // Usamos optional() por si la relación role no está cargada o es null
-        return optional($this->role)->name === 'Administrador' || optional($this->role)->name === 'Admin';
+        // Comparamos directamente la columna 'role_id' de la tabla users
+        return $this->role_id === 1;
     }
 
     /**

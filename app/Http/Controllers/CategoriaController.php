@@ -17,14 +17,13 @@ class CategoriaController extends Controller
     private function checkAdmin(Request $request)
     {
         // 1. Obtenemos el sesionId de la petición.
-        // Lo buscamos en la ruta, en la query string, en los inputs del formulario o en la sesión de Laravel
+        // Lo buscamos en la ruta, en la query string, en los inputs del formulario
         $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
 
-        // Si no lo encontramos en la petición, buscamos en la sesión de Laravel
+        // ❌ IMPORTANTE: No buscamos en la sesión global
+        // Si viene sin sesionId, significa que intenta acceder sin autenticación
         if (!$sesionId) {
-            // Obtenemos el primer sesionId disponible en el array 'usuarios'
-            $usuarios = Session::get('usuarios', []);
-            $sesionId = array_key_first($usuarios);
+            return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
         }
 
         $user = User::activeUserSesion($sesionId);
@@ -34,8 +33,8 @@ class CategoriaController extends Controller
             return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
         }
 
-        // 3. Comprobamos si el usuario tiene el rol 'Admin'.
-        if ($user->hasRole('Admin')) {
+        // 3. Comprobamos si el usuario es admin
+        if ($user->isAdmin()) {
             return true;
         }
 
@@ -49,14 +48,17 @@ class CategoriaController extends Controller
      */
     public function index(Request $request)
     {
-         if (($check = $this->checkAdmin($request)) !== true) {
+        if (($check = $this->checkAdmin($request)) !== true) {
             return $check;
         }
+
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->query('sesionId');
 
         // DB: Traemos todas las categorías
         $categorias = Category::all();
 
-        return view('admin.categorias.index', compact('categorias'));
+        return view('admin.categorias.index', compact('categorias', 'sesionId'));
     }
 
     /**
@@ -68,9 +70,12 @@ class CategoriaController extends Controller
             return $check;
         }
 
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->query('sesionId');
+
         $categorias = Category::all();
 
-        return view('admin.categorias.create', compact('categorias'));
+        return view('admin.categorias.create', compact('categorias', 'sesionId'));
     }
 
     /**
@@ -102,7 +107,10 @@ class CategoriaController extends Controller
             return $check;
         }
 
-        return view('admin.categorias.show', compact('categoria'));
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->query('sesionId');
+
+        return view('admin.categorias.show', compact('categoria', 'sesionId'));
     }
 
     /**
@@ -114,7 +122,10 @@ class CategoriaController extends Controller
             return $check;
         }
 
-        return view('admin.categorias.edit', compact('categoria'));
+        // Si pasamos checkAdmin, el sesionId debe estar presente
+        $sesionId = $request->query('sesionId');
+
+        return view('admin.categorias.edit', compact('categoria', 'sesionId'));
     }
 
     /**

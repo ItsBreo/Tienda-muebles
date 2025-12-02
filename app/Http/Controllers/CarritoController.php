@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Furniture; 
-use App\Models\Cart; 
+use App\Models\Furniture;
+use App\Models\Cart;
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB; 
-use Illuminate\Support\Facades\Log; 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CarritoController extends Controller
 {
@@ -39,7 +39,7 @@ class CarritoController extends Controller
 		if (!empty($cart)) {
 			$idsInCart = array_keys($cart);
 
-			// CONSULTA A LA BD: Obtener la información  de Furniture
+			// Obtener la información  de Furniture
 			$allFurniture = Furniture::whereIn('id', $idsInCart)->get()->keyBy('id');
 
 			foreach ($cart as $id => $item) {
@@ -47,8 +47,8 @@ class CarritoController extends Controller
 
 				if ($liveFurniture) {
 					$cantidad = (int) $item['cantidad'];
-					$precioVivo = $liveFurniture->price; 
-					$nombreVivo = $liveFurniture->name;   
+					$precioVivo = $liveFurniture->price;
+					$nombreVivo = $liveFurniture->name;
 
 					$lineTotal = $precioVivo * $cantidad;
 					$subtotal += $lineTotal;
@@ -59,7 +59,7 @@ class CarritoController extends Controller
 						'nombre' => $nombreVivo,
 						'precio' => $precioVivo,
 						'cantidad' => $cantidad,
-						'imagen' => $liveFurniture->getMainImage(), 
+						'imagen' => $liveFurniture->getMainImage(),
 						'line_total' => $lineTotal,
 					];
 				}
@@ -94,7 +94,7 @@ class CarritoController extends Controller
 			$quantity = 1;
 		}
 
-		// CONSULTA A LA BD REAL
+
 		$furniture = Furniture::find($id);
 
 		if (!$furniture) {
@@ -185,7 +185,7 @@ class CarritoController extends Controller
             return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('error', 'El carrito está vacío.');
         }
 
-        // Preparar datos y validar stock ANTES de abrir transacción
+        // Preparar datos y validar stock antes de abrir transacción
         $subtotal = 0;
         $itemsToStore = [];
         $idsInCart = array_keys($carritoSesion);

@@ -11,18 +11,15 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    /**
-     * Los atributos que se pueden asignar masivamente.
-     */
     protected $fillable = [
         'name',
-        'surname',      // Añadido según migración
+        'surname',
         'email',
         'password',
         'role_id',
         'last_login_at',
-        'failed_attempts', // Para el bloqueo de seguridad
-        'locked_until',    // Para el bloqueo de seguridad
+        'failed_attempts',
+        'locked_until',
     ];
 
     /**
@@ -33,26 +30,17 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    /**
-     * Conversión de tipos.
-     */
     protected $casts = [
         'locked_until' => 'datetime',
         'last_login_at' => 'datetime',
     ];
 
-    // ------------------------------------------------------------------------
-    // RELACIONES
-    // ------------------------------------------------------------------------
 
     public function role()
     {
         return $this->belongsTo(Role::class);
     }
 
-    // ------------------------------------------------------------------------
-    // HELPERS
-    // ------------------------------------------------------------------------
 
     /**
      * Comprueba si el usuario es administrador.
@@ -71,9 +59,6 @@ class User extends Authenticatable
         return optional($this->role)->name === $roleName;
     }
 
-    // ------------------------------------------------------------------------
-    // LÓGICA DE SESIÓN MANUAL (Requisito: Múltiples usuarios en el mismo navegador)
-    // ------------------------------------------------------------------------
 
     /**
      * Recupera el usuario activo para una pestaña específica.
@@ -88,14 +73,14 @@ class User extends Authenticatable
             return null;
         }
 
-        // 1. Obtenemos el array global de usuarios conectados en este navegador
+        // Obtenemos el array global de usuarios conectados en este navegador
         $usuariosEnSesion = Session::get('usuarios', []);
 
-        // 2. Buscamos si existe una entrada para este $sesionId
+        // Buscamos si existe una entrada para este $sesionId
         if (isset($usuariosEnSesion[$sesionId])) {
             $userData = json_decode($usuariosEnSesion[$sesionId]);
 
-            // 3. ¡IMPORTANTE! Recuperamos el usuario de la Base de Datos.
+            // Recuperamos el usuario de la Base de Datos.
             // Esto asegura que si bloqueamos al usuario o cambiamos su rol,
             // la aplicación se entere inmediatamente.
             return User::with('role')->find($userData->id);

@@ -16,7 +16,7 @@ class CategoriaController extends Controller
      */
     private function checkAdmin(Request $request)
     {
-        // 1. Obtenemos el sesionId de la petición.
+        // Obtenemos el sesionId de la petición.
         $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
 
         if (!$sesionId) {
@@ -29,12 +29,12 @@ class CategoriaController extends Controller
 
         $user = User::activeUserSesion($sesionId);
 
-        // 2. Comprobamos si existe un usuario para esa sesión.
+        // Comprobamos si existe un usuario para esa sesión.
         if (! $user) {
             return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
         }
 
-        // 3. Comprobamos si el usuario es admin
+        // Comprobamos si el usuario es admin
         if ($user->isAdmin()) {
             return true;
         }

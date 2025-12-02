@@ -71,7 +71,7 @@ class AdministracionController extends Controller
      */
     private function checkAdmin(Request $request)
     {
-        // 1. Obtenemos el sesionId de la petición.
+        // Obtenemos el sesionId de la petición.
         // Lo buscamos en la ruta, en la query string, en los inputs del formulario
         $sesionId = $request->route('sesionId') ?? $request->query('sesionId') ?? $request->input('sesionId');
 
@@ -85,12 +85,12 @@ class AdministracionController extends Controller
 
         $user = User::activeUserSesion($sesionId);
 
-        // 2. Comprobamos si existe un usuario para esa sesión.
+        // Comprobamos si existe un usuario para esa sesión.
         if (! $user) {
             return redirect()->route('login.show')->with('error', 'Debes iniciar sesión para acceder a esta sección.');
         }
 
-        // 3. Comprobamos si el usuario es admin usando la función dedicada
+        // Comprobamos si el usuario es admin usando la función dedicada
         if ($user->isAdmin()) {
             return true;
         }
@@ -127,15 +127,7 @@ class AdministracionController extends Controller
         ]));
     }
 
-    // ---------------------------------------------------
-    // MÉTODOS DE ADMINISTRACIÓN (CRUD)
-    // ---------------------------------------------------
 
-    // ---------------------------------------------------
-    // CAMBIOS EN GENERAL:
-    // Ahora en base de datos solo se pasa el mueble y Laravel ya encuentra el indicado para el CRUD.
-    // Ya no hace falta buscarlo en cada función
-    // ---------------------------------------------------
     public function index(Request $request)
     {
         if (($check = $this->checkAdmin($request)) !== true) {
@@ -150,7 +142,6 @@ class AdministracionController extends Controller
 
         $search = $request->input('search');
 
-        // DB: Traemos todos (paginados si fueran muchos, pero all() vale por ahora)
         $query = Furniture::query();
 
         if ($search) {
@@ -182,7 +173,7 @@ class AdministracionController extends Controller
             return $check;
         }
 
-        // 1. Validar
+        // Validar
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
@@ -195,13 +186,13 @@ class AdministracionController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // 2. Checkbox manual
+        // Checkbox manual
         $data['is_salient'] = $request->has('is_salient');
 
-        // 3. Crear Mueble (El ID se genera solo en la DB, no calculamos MaxId)
+        // Crear Mueble (El ID se genera solo en la DB, no calculamos MaxId)
         $mueble = Furniture::create($data);
 
-        // 4. Imagen
+        // Imagen
         if ($request->hasFile('image')) {
             $request->validate(['image' => 'image|max:2048']);
             $imageName = time().'.'.$request->image->extension();
@@ -250,7 +241,7 @@ class AdministracionController extends Controller
             return $check;
         }
 
-        // 1. Validar
+        // Validar
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
@@ -263,19 +254,19 @@ class AdministracionController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // 2. Checkbox
+        // Checkbox
         $data['is_salient'] = $request->has('is_salient');
 
-        // 3. Actualizamos
+        // Actualizamos
         $mueble->update($data);
 
-        // 4. Imagen nueva (opcional)
+        // Imagen nueva (opcional)
         if ($request->hasFile('image')) {
             $request->validate(['image' => 'image|max:2048']);
             $imageName = time().'.'.$request->image->extension();
             $request->image->move(public_path('images'), $imageName);
 
-            // Opcional: Quitar prioridad a las anteriores
+            // Quitar prioridad a las anteriores
             $mueble->images()->update(['is_primary' => false]);
 
             // Crear la nueva

@@ -55,5 +55,4 @@ class UsuarioController extends Controller
         return view('admin.usuarios.index', compact('users', 'sesionId'));
     }
 
-    // TODO: Añadir más métodos si es necesario (create, store, edit, update, destroy);
 }

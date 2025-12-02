@@ -35,7 +35,7 @@ class Furniture extends Model
     }
 
     /**
-    * 4. Helper para obtener la imagen principal.
+    * Helper para obtener la imagen principal.
     */
     public function getMainImage(): string{
 

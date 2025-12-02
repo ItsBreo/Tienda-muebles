@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Furniture extends Model // Nota: Model con mayúscula
+class Furniture extends Model
 {
     use HasFactory;
 
-    // 1. Asignación masiva (Coincide con tus columnas snake_case de la DB)
+    // Atributos de la tabla 'furniture'
     protected $fillable = [
         'category_id',
         'name',
@@ -22,23 +22,21 @@ class Furniture extends Model // Nota: Model con mayúscula
         'is_salient',
     ];
 
-    // 2. Relaciones: Un mueble tiene muchas imágenes
+    // Relaciones: Un mueble tiene muchas imágenes 1:N
     public function images()
     {
         return $this->hasMany(Image::class);
     }
 
-    // 3. Helper para saber si es destacado (Casteo simple)
+    // Helper para saber si es destacado
     public function isSalient(): bool
     {
         return (bool) $this->is_salient;
     }
 
     /**
-     * 4. Helper para obtener la imagen principal.
-     * ADVERTENCIA: Para que esto funcione, tu tabla 'images' debe tener
-     * columnas 'is_primary' (booleano) y 'url' (string).
-     */
+    * 4. Helper para obtener la imagen principal.
+    */
     public function getMainImage(): string{
 
         // Encontramos la imagen principal
@@ -60,7 +58,7 @@ class Furniture extends Model // Nota: Model con mayúscula
     }
 
     /**
-     * 5. Formateador de precio (Presentación)
+     * Formateador de precio (Presentación)
      */
     public function getFormattedPrice(string $moneda = 'EUR'): string
     {

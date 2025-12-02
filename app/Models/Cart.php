@@ -31,7 +31,6 @@ class Cart extends Model
 			'cart_id',
 			'furniture_id'
 		)
-		// CORRECCIÓN FINAL: Usamos 'quantity' y 'unit_price' (para coincidir con la migración)
 		->withPivot('quantity', 'unit_price')
 		->withTimestamps();
 	}

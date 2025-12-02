@@ -21,13 +21,12 @@ class CartFactory extends Factory
     public function definition(): array
     {
         return [
-            // El carrito pertenece a un usuario (se crea uno si no se especifica)
+            // Cada usuario tiene un solo carrito
             'user_id' => User::factory(),
 
-            // Nuevo campo: Generamos una cadena única simulando una ID de sesión
             'sesion_id' => $this->faker->uuid(),
 
-            // Precio total entre 0 y 1000 con 2 decimales
+            // Precio total entre 0 y 1000
             'total_price' => $this->faker->randomFloat(2, 10, 1000),
         ];
     }

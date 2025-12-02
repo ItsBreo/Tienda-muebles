@@ -11,7 +11,7 @@
             </div>
             <div class="card-body p-4 bg-light">
 
-                {{-- !! CORRECCIÓN: Sintaxis action arreglada y ruta correcta !! --}}
+
                 <form method="POST" action="{{ route('register.store') }}">
                     @csrf
 

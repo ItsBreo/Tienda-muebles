@@ -18,24 +18,24 @@ class CatalogoController extends Controller
      */
     private function getSesionYPreferencias(Request $request)
     {
-        // 1. Obtener ID de sesión (URL o Input)
+        // Obtener ID de sesión (URL o Input)
         $activeSesionId = $request->input('sesionId') ?? $request->query('sesionId');
 
         $activeUser = null;
 
-        // Valores por defecto
+        // Valores por defecto de preferencias
         $preferencias = [
             'tema' => 'claro',
             'moneda' => 'EUR',
             'tamaño' => 6,
         ];
 
-        // 2. Intentar recuperar el usuario
+        // Buscamos el usuario por su id de sesión
         if ($activeSesionId) {
             $activeUser = User::activeUserSesion($activeSesionId);
         }
 
-        // 3. Si hay usuario, leer su cookie personalizada
+        // Si hay usuario activo, leemos su cookie personalizada
         if ($activeUser) {
             $cookieName = 'preferencias_' . $activeUser->id;
 
@@ -50,7 +50,7 @@ class CatalogoController extends Controller
                 }
             }
         }
-
+        // Devolvemos los datos
         return compact('activeSesionId', 'activeUser', 'preferencias');
     }
 
@@ -74,70 +74,82 @@ class CatalogoController extends Controller
      * Función para mostrar el catálogo principal (index) con filtros y paginación.
      */
     public function index(Request $request)
-    {
-        // Cargamos las preferencias
+{
+        // Cargar Sessón y preferencias
         $sesionData = $this->getSesionYPreferencias($request);
         $preferencias = $sesionData['preferencias'];
+        $perPage = (int) ($preferencias['tamaño'] ?? 6);
+        if (!in_array($perPage, [6, 12, 24])) $perPage = 6;
 
-        // Cargamos datos de nuestra DB
-        $categories = Category::all();
-        $items = collect(Furniture::all());
+        // Creamos la consulta de la BD para el catálogo
+        $query = Furniture::query();
 
-        // Recogemos los colores de los muebles
-        $colors = $items->pluck('main_color')->unique()->sort();
-
-        // Lógica de Filtrado
+        // Filtros del catálogo
+        // Categoría
         if ($request->filled('category')) {
-            $items = $items->filter(fn($m) => $m->category_id == $request->category);
-        }
-        if ($request->filled('q')) {
-            $q = strtolower($request->q);
-            $items = $items->filter(fn($m) =>
-                str_contains(strtolower($m->name), $q) ||
-                str_contains(strtolower($m->description), $q)
-            );
-        }
-        if ($request->filled('min_price')) {
-            $items = $items->filter(fn($m) => $m->price >= $request->min_price);
-        }
-        if ($request->filled('max_price')) {
-            $items = $items->filter(fn($m) => $m->price <= $request->max_price);
-        }
-        if ($request->filled('color')) {
-            $items = $items->filter(fn($m) => $m->main_color == $request->color);
+            // Consulta WHERE en la BD para la categoría
+            $query->where('category_id', $request->category);
         }
 
-        // 4. Lógica de Ordenación
+        // Búsqueda (q)
+        if ($request->filled('q')) {
+            // Buscamos en el nombre y la descripción del mueble en la BD
+            $term = $request->q;
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'LIKE', "%{$term}%")
+                  ->orWhere('description', 'LIKE', "%{$term}%");
+            });
+        }
+
+        // Precio Mínimo
+        if ($request->filled('min_price')) {
+            // Forzamos a que sea número para evitar errores de string vacíos raros
+            $min = (float) $request->min_price;
+            // Consulta WHERE en la BD para el precio mínimo
+            $query->where('price', '>=', $min);
+        }
+
+        // Precio Máximo
+        if ($request->filled('max_price')) {
+            $max = (float) $request->max_price;
+            $query->where('price', '<=', $max);
+        }
+
+        // Color seleccionado
+        if ($request->filled('color')) {
+            $query->where('main_color', 'LIKE', $request->color);
+        }
+
+        // Ordenación
         $sort = $request->input('sort', 'default');
-        $items = match ($sort) {
-            'price_asc' => $items->sortBy(fn($m) => $m->price),
-            'price_desc' => $items->sortByDesc(fn($m) => $m->price),
-            'name_asc' => $items->sortBy(fn($m) => $m->name),
-            'name_desc' => $items->sortByDesc(fn($m) => $m->name),
-            'date_new' => $items->sortByDesc(fn($m) => $m->created_at ?? 0),
-            'date_old' => $items->sortBy(fn($m) => $m->created_at ?? 0),
-            default => $items,
+        match ($sort) {
+            'price_asc'  => $query->orderBy('price', 'asc'),
+            'price_desc' => $query->orderBy('price', 'desc'),
+            'name_asc'   => $query->orderBy('name', 'asc'),
+            'name_desc'  => $query->orderBy('name', 'desc'),
+            'date_new'   => $query->orderBy('created_at', 'desc'),
+            'date_old'   => $query->orderBy('created_at', 'asc'),
+            default      => $query->orderBy('id', 'desc'),
         };
 
-        // 5. Paginación usando la preferencia
-        // Aseguramos que $perPage sea un entero válido
-        $perPage = (int) ($preferencias['tamaño'] ?? 6);
-        if ($perPage < 1) $perPage = 6;
+        // Paginación
+        $muebles = $query->paginate($perPage)->withQueryString();
 
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        // Datos Auxiliares
+        $categories = Category::all();
 
-        $currentItems = $items->slice(($currentPage - 1) * $perPage, $perPage)->values();
-
-        $paginator = new LengthAwarePaginator($currentItems, $items->count(), $perPage, $currentPage, [
-            'path' => $request->url(),
-            'query' => $request->query(),
-        ]);
-
-        // 6. Pasar todas las variables a la vista
+        // Obtenemos los colores de los muebles con DB
+        $colors = Furniture::query()
+                    ->select('main_color')
+                    ->whereNotNull('main_color')
+                    ->distinct()
+                    ->orderBy('main_color')
+                    ->pluck('main_color');
+        // Pasamos todo a la vista
         return view('catalogo.index', array_merge($sesionData, [
-            'muebles' => $paginator,
+            'muebles'    => $muebles,
             'categories' => $categories,
-            'colors' => $colors,
+            'colors'     => $colors
         ]));
     }
 
@@ -167,22 +179,24 @@ class CatalogoController extends Controller
         ]);
     }
 
+    // Muestra el detalle de un mueble
     public function showMueble(Request $request, $id){
-        // 1. Cargamos la sesión y las preferencias (Helper existente)
+        // Cargamos la sesión y las preferencias (Helper existente)
         $sesionData = $this->getSesionYPreferencias($request);
 
-        // 2. Buscamos el mueble
+        // Buscamos el mueble
         $mueble = Furniture::find($id);
 
         if (!$mueble) {
             abort(404, 'Mueble no encontrado');
         }
 
-        // 3. LÓGICA DE STOCK (Movida desde la Vista al Controlador)
+        // Control de stock
         $activeSesionId = $sesionData['activeSesionId'];
         $stockTotal = $mueble->stock;
         $enCarrito = 0;
 
+        // Verificamos si hay una sesión activa
         if ($activeSesionId) {
             // Usamos el helper del modelo User para buscar al usuario de esta sesión
             $u = User::activeUserSesion($activeSesionId);
@@ -202,15 +216,15 @@ class CatalogoController extends Controller
         $stockDisponible = max(0, $stockTotal - $enCarrito);
 
 
-        // 4. Creamos cookie de historial (mantenemos tu lógica existente)
+        // Creamos cookie de historial
         Cookie::queue("mueble_{$mueble->id}", json_encode($mueble), 60 * 24 * 30);
 
-        // 5. Enviamos TODOS los datos calculados a la vista
+        // Enviamos los datos necesarios a la vista
         return view('muebles.show', array_merge($sesionData, [
             'mueble' => $mueble,
-            'stockTotal' => $stockTotal,       // Total en BD
-            'enCarrito' => $enCarrito,         // Lo que ya tiene el user
-            'stockDisponible' => $stockDisponible // Lo que puede comprar ahora
+            'stockTotal' => $stockTotal,
+            'enCarrito' => $enCarrito,
+            'stockDisponible' => $stockDisponible
         ]));
     }
 }

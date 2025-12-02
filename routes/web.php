@@ -55,7 +55,7 @@ Route::post('/carrito/guardar', [CarritoController::class, 'saveOnBD'])->name('c
 // Categorías (CRUD)
  //Route::resource('categorias', CatalogoController::class);
 
-// Nombres generados:
+
 // categorias.index|create|store|show|edit|update|destroy
 // Productos (CRUD)
 Route::resource('/admin/muebles', AdministracionController::class) -> names('admin.muebles');
@@ -64,7 +64,7 @@ Route::resource('/admin/categorias', CategoriaController::class) -> names('admin
 
 Route::get('/admin/usuarios', [UsuarioController::class, 'index'])->name('admin.usuarios.index');
 
-// Nombres generados:
+
 // productos.index|create|store|show|edit|update|destroy
 // Galería de Productos
  Route::post('productos/{mueble}/galeria', [ProductosGaleriaController::class,'store'])->name('productos.galeria.store');// Subida múltiple
@@ -75,9 +75,6 @@ Route::get('/admin/usuarios', [UsuarioController::class, 'index'])->name('admin.
  Route::post('productos/{mueble}/galeria/{image}/principal',
 [ProductosGaleriaController::class, 'setMain'])->name('productos.galeria.principal'); // Establecer imagen principal
 
-// Panel de Administración de prueba
-// TODO: Borrar esta ruta una vez el CRUD esté hecho
-// Route::view('/admin', 'adminPanel')->name('admin.dashboard');
 
 // Depuración de cookies
 Route::get('/cookiesActivas', function (Request $request) {

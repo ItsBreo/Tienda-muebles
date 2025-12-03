@@ -44,7 +44,7 @@ class UserController extends Controller
     {
         $sesionId = $request->input('sesionId');
 
-        // 1. Validación completa
+        // Validación
         $request->validate([
             'nombre' => 'required|string|max:255',
             'apellidos' => 'nullable|string|max:255',
@@ -53,7 +53,7 @@ class UserController extends Controller
             'role_id' => 'required|exists:roles,id',
         ]);
 
-        // 2. Crear el usuario
+        // Crear el usuario
         User::create([
             'name' => $request->nombre,
             'surname' => $request->apellidos,

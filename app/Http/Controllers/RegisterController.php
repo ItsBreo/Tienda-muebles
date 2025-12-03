@@ -19,7 +19,7 @@ class RegisterController extends Controller
     // Procesar registro
     public function store(Request $request)
     {
-        // 1. Validación
+        // Validación
         $request->validate([
             'name' => 'required|string|max:30',
             'surname' => 'required|string|max:30',
@@ -27,11 +27,11 @@ class RegisterController extends Controller
             'password' => 'required|string|min:4|confirmed', // requiere campo password_confirmation
         ]);
 
-        // 2. Obtener rol de cliente (Asegúrate de tener seeders o roles creados en BD)
-        // Buscamos por nombre o creamos si no existe (para evitar errores ahora)
+        // Obtener rol de cliente
+        // Buscamos por nombre o creamos si no existe
         $role = Role::firstOrCreate(['name' => 'Cliente']);
 
-        // 3. Crear Usuario en Base de Datos
+        // Crear Usuario en Base de Datos
         User::create([
             'name' => $request->name,
             'surname' => $request->surname,
@@ -41,7 +41,7 @@ class RegisterController extends Controller
             'failed_attempts' => 0,
         ]);
 
-        // 4. Redirigir al login
+        // Redirigir al login
         return redirect()->route('login.show')->with('success', 'Registro completado. Por favor inicia sesión.');
     }
 }

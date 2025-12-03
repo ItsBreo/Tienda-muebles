@@ -91,7 +91,7 @@ class CatalogoController extends Controller
             $query->where('category_id', $request->category);
         }
 
-        // Búsqueda (q)
+        // Búsqueda
         if ($request->filled('q')) {
             // Buscamos en el nombre y la descripción del mueble en la BD
             $term = $request->q;

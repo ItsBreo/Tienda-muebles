@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Furniture;
 use App\Models\User;
-use Illuminate\Support\Facades\Session; // <-- 1. AÑADIMOS EL IMPORT DE SESSION
+use Illuminate\Support\Facades\Session;
 
 // Controlador Principal
 class PrincipalController extends Controller

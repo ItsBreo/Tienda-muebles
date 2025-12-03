@@ -7,7 +7,6 @@
 
         <h1 class="mb-4 display-5">🛒 Resumen del Carrito</h1>
 
-        {{-- Mostrar mensajes de sesión (ej: "Mueble agregado al carrito") --}}
         @if (session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
@@ -19,6 +18,20 @@
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 {{ session('error') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-danger mb-4 border-l-4 border-red-700 p-4">
+                <h4 class="alert-heading fw-bold">⚠️ Compra no Procesada</h4>
+                <p>La siguiente lista muestra los motivos por los cuales no se pudo finalizar la compra:</p>
+                <ul class="list-disc ps-4">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <hr>
+                <p class="mb-0">Por favor, edita las cantidades en el carrito o vacía el carrito para continuar.</p>
             </div>
         @endif
 
@@ -56,8 +69,6 @@
                                             <td class="text-center" style="width: 100px;">
                                                 <form method="POST" action="{{ route('carrito.remove', ['mueble' => $id, 'sesionId' => $sesionId]) }}">
                                                     @csrf
-                                                    {{-- Usamos el método DELETE para ser más RESTful, aunque Laravel lo simule con POST --}}
-                                                    {{-- @method('DELETE') COMENTO ESTA LINEA--}}
                                                     <button class="btn btn-sm btn-outline-danger" type="submit" title="Eliminar ítem">
                                                         <i class="bi bi-trash"></i> 🗑️
                                                     </button>
@@ -79,14 +90,15 @@
                     </a>
                 </div>
                 <div class="col-md-6 text-end">
+                    <p class="mb-1">Subtotal: <span class="fw-bold">{{ number_format($subtotal, 2) }} €</span></p>
+                    <p class="mb-1">Impuestos (10%): <span class="fw-bold">{{ number_format($impuestos, 2) }} €</span></p>
                     <h3 class="fw-bold mb-3">Total del Pedido: <span class="text-primary">{{ number_format($total, 2) }} €</span></h3>
 
                     <form method="POST" action="{{ route('carrito.clear', ['sesionId' => $sesionId]) }}" class="d-inline me-2">
                         @csrf
-                        {{-- @method('DELETE') COMENTO ESTA LINEA TAMBIEN --}}
                         <button class="btn btn-outline-warning" type="submit">Vaciar Carrito</button>
                     </form>
-                    <form method="POST" action="{{ route('carrito.save', ['sesionId' => $sesionId]) }}" class="d-inline}}" >
+                    <form method="POST" action="{{ route('carrito.save') }}" class="d-inline" >
                         @csrf
                         <input type="hidden" name="sesionId" value="{{ $sesionId }}">
 

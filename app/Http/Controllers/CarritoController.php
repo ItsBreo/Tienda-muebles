@@ -39,7 +39,7 @@ class CarritoController extends Controller
 		if (!empty($cart)) {
 			$idsInCart = array_keys($cart);
 
-			// Obtener la información  de Furniture
+			// CONSULTA A LA BD: Obtener la información  de Furniture
 			$allFurniture = Furniture::whereIn('id', $idsInCart)->get()->keyBy('id');
 
 			foreach ($cart as $id => $item) {
@@ -94,7 +94,7 @@ class CarritoController extends Controller
 			$quantity = 1;
 		}
 
-
+		// CONSULTA A LA BD
 		$furniture = Furniture::find($id);
 
 		if (!$furniture) {
@@ -166,93 +166,108 @@ class CarritoController extends Controller
 	 * Guarda el carrito de sesión en la BD (Persistencia) y vacía el carrito actual.
 	 */
 	public function saveOnBD(Request $request)
-    {
-        $sesionId = $request->input('sesionId');
-        $user = User::activeUserSesion($sesionId);
+	{
+		$sesionId = $request->input('sesionId');
+		$user = User::activeUserSesion($sesionId);
 
-        if (!$user) {
-            return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión para guardar el carrito.']);
-        }
+		if (!$user) {
+			return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión para guardar el carrito.']);
+		}
 
-        // Si el usuario es válido, lo inyectamos
-        if (!Auth::check()) {
-            Auth::login($user);
-        }
+		// Si el usuario es válido, lo inyectamos
+		if (!Auth::check()) {
+			Auth::login($user);
+		}
 
-        $carritoSesion = Session::get('carrito_' . $user->id, []);
+		$carritoSesion = Session::get('carrito_' . $user->id, []);
 
-        if (empty($carritoSesion)) {
-            return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('error', 'El carrito está vacío.');
-        }
+		if (empty($carritoSesion)) {
+			return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('error', 'El carrito está vacío.');
+		}
 
-        // Preparar datos y validar stock antes de abrir transacción
-        $subtotal = 0;
-        $itemsToStore = [];
-        $idsInCart = array_keys($carritoSesion);
-        $allFurniture = Furniture::whereIn('id', $idsInCart)->get()->keyBy('id');
+		// Preparar datos y VALIDACIÓN DE STOCK antes de abrir transacción
+		$subtotal = 0;
+		$itemsToStore = [];
+		$idsInCart = array_keys($carritoSesion);
+		$allFurniture = Furniture::whereIn('id', $idsInCart)->get()->keyBy('id');
 
-        foreach ($carritoSesion as $id => $item) {
-            $liveFurniture = $allFurniture->get($id);
-            if ($liveFurniture) {
-                $cantidad = (int) $item['cantidad'];
+        $stockErrors = []; // Array para recoger todos los errores de stock
+
+		foreach ($carritoSesion as $id => $item) {
+			$liveFurniture = $allFurniture->get($id);
+
+			if ($liveFurniture) {
+				$cantidad = (int) $item['cantidad'];
 
                 if ($liveFurniture->stock < $cantidad) {
-                    return redirect()->route('carrito.show', ['sesionId' => $sesionId])
-                        ->withErrors("No hay suficiente stock para '{$liveFurniture->name}'. Quedan {$liveFurniture->stock}.");
+                    $stockErrors[] = "Stock insuficiente para '{$liveFurniture->name}'. Solicitaste {$cantidad}, pero solo quedan {$liveFurniture->stock} unidades.";
+                    continue;
                 }
 
-                $precioUnitario = $liveFurniture->price;
-                $subtotal += $cantidad * $precioUnitario;
+				$precioUnitario = $liveFurniture->price;
+				$subtotal += $cantidad * $precioUnitario;
 
-                $itemsToStore[] = [
-                    'producto_id' => $id,
-                    'cantidad' => $cantidad,
-                    'precio_unitario' => $precioUnitario,
-                    'modelo' => $liveFurniture // Pasamos el modelo para restarlo luego
-                ];
-            }
-        }
-
-        $impuestos = $subtotal * self::TAX_RATE;
-        $total = $subtotal + $impuestos;
-
-        // Transacción de BD
-        try {
-            Log::info('--- INICIO TRANSACCION SAVE ON BD --- User ID: ' . Auth::id());
-
-            DB::beginTransaction();
-
-            // Guardar Carrito (Historial)
-            $newCart = Cart::create([
-                'user_id' => Auth::id(),
-                'sesion_id' => $sesionId,
-                'total_price' => $total,
-            ]);
-
-            // Guardar Detalles y RESTAR STOCK
-            foreach ($itemsToStore as $item) {
-                $newCart->productos()->attach($item['producto_id'], [
-                    'quantity' => $item['cantidad'],
-                    'unit_price' => $item['precio_unitario']
-                ]);
-
-                $item['modelo']->decrement('stock', $item['cantidad']);
-            }
-
-            DB::commit();
-            Log::info('--- COMMIT EXITOSO ---');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('--- ROLLBACK POR EXCEPCION --- Mensaje: ' . $e->getMessage());
+				$itemsToStore[] = [
+					'producto_id' => $id,
+					'cantidad' => $cantidad,
+					'precio_unitario' => $precioUnitario,
+					'modelo' => $liveFurniture
+				];
+			}
+		}
+            // Control de stock
+        if (!empty($stockErrors)) {
             return redirect()->route('carrito.show', ['sesionId' => $sesionId])
-                ->withErrors('Error de base de datos al finalizar la compra. Mensaje: ' . $e->getMessage());
+                ->withErrors($stockErrors)
+                ->with('error', 'La compra no se ha procesado debido a problemas de stock. Por favor, ajusta las cantidades.');
         }
 
-        // Vaciar el carrito actual de la sesión
-        Session::forget('carrito_' . $user->id);
 
-        return redirect()->route('carrito.show', ['sesionId' => $sesionId])
-            ->with('success', '¡Compra guardada correctamente y stock actualizado!');
-    }
+		$impuestos = $subtotal * self::TAX_RATE;
+		$total = $subtotal + $impuestos;
+
+		// Transacción de BD (Solo si NO hubo errores de stock)
+		try {
+			Log::info('--- INICIO TRANSACCION SAVE ON BD --- User ID: ' . Auth::id());
+
+			DB::beginTransaction();
+
+			// Guardar Carrito (Historial)
+			$newCart = Cart::create([
+				'user_id' => Auth::id(),
+				'sesion_id' => $sesionId,
+				'total_price' => $total,
+			]);
+
+            if (!$newCart) {
+                throw new \Exception("Error al crear el registro del carrito. Verifique permisos de tabla 'carts' o campos obligatorios nulos.");
+            }
+
+			// Guardar Detalles y RESTAR STOCK
+			foreach ($itemsToStore as $item) {
+				$newCart->productos()->attach($item['producto_id'], [
+					'quantity' => $item['cantidad'],
+					'unit_price' => $item['precio_unitario']
+				]);
+
+				// Restar stock del mueble en la BD
+				$item['modelo']->decrement('stock', $item['cantidad']);
+			}
+
+			DB::commit();
+			Log::info('--- COMMIT EXITOSO ---');
+
+		} catch (\Exception $e) {
+			DB::rollBack();
+			Log::error('--- ROLLBACK POR EXCEPCION --- Mensaje: ' . $e->getMessage());
+			return redirect()->route('carrito.show', ['sesionId' => $sesionId])
+				->withErrors('Error de base de datos al finalizar la compra. Mensaje: ' . $e->getMessage());
+		}
+
+		// Vaciar el carrito actual de la sesión
+		Session::forget('carrito_' . $user->id);
+
+		return redirect()->route('carrito.show', ['sesionId' => $sesionId])
+			->with('success', '¡Compra guardada correctamente y stock actualizado!');
+	}
 }

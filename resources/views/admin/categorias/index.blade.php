@@ -105,6 +105,7 @@
 
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
+                    <a class="nav-link" href="{{ route('principal', ['sesionId' => $sesionId]) }}">Ir a la tienda</a>
                     <a class="nav-link" href="{{ route('admin.usuarios.index', ['sesionId' => $sesionId]) }}">Usuarios</a>
                     <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
                     <a class="nav-link active" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorías</a>

@@ -351,4 +351,64 @@ class FeatureTest extends TestCase
         $response->assertRedirect(route('admin.muebles.index')); // La ruta de redirección no lleva sesionId
         $this->assertDatabaseMissing('furniture', ['id' => $mueble->id]);
     }
+
+    public function test_admin_puede_ver_formulario_edicion_mueble()
+    {
+        // Login como Admin
+        [$sesionId, $user] = $this->loginAs('admin');
+
+        // Creamos datos previos (Categoría y Mueble)
+        $category = Category::factory()->create();
+        $furniture = Furniture::factory()->create(['category_id' => $category->id]);
+
+        // GET a la ruta de edición pasando el sesionId (requerido por checkAdmin)
+        $response = $this->get(route('admin.muebles.edit', [
+            'mueble' => $furniture->id,
+            'sesionId' => $sesionId
+        ]));
+
+        // Aserciones
+        $response->assertStatus(200);
+        $response->assertViewIs('admin.muebles.edit');
+        // Verificamos que la vista cargó el mueble correcto
+        $response->assertViewHas('mueble', function($viewMueble) use ($furniture) {
+            return $viewMueble->id === $furniture->id;
+        });
+    }
+
+    public function test_admin_puede_actualizar_un_mueble()
+    {
+        // Login como Admin
+        [$sesionId, $user] = $this->loginAs('admin');
+
+        // Creamos datos previos
+        $category = Category::factory()->create();
+        $furniture = Furniture::factory()->create(['category_id' => $category->id]);
+
+        // Datos nuevos para actualizar (incluyendo sesionId para el middleware manual)
+        $updatedData = [
+            'sesionId' => $sesionId,
+            'name' => 'Nombre Actualizado',
+            'description' => 'Nueva descripción del producto',
+            'price' => 199.99,
+            'stock' => 20,
+            'category_id' => $category->id,
+            'main_color' => 'Verde',
+            'is_salient' => 'on' // Simula checkbox activado
+        ];
+
+        // PUT a la ruta update
+        $response = $this->put(route('admin.muebles.update', ['mueble' => $furniture->id]), $updatedData);
+
+        // Aserciones
+        $response->assertRedirect(route('admin.muebles.index'));
+
+        // Verificamos que en la BD hayan cambiado los valores
+        $this->assertDatabaseHas('furniture', [
+            'id' => $furniture->id,
+            'name' => 'Nombre Actualizado',
+            'price' => 199.99,
+            'main_color' => 'Verde'
+        ]);
+    }
 }

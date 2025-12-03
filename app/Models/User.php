@@ -41,6 +41,22 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
+    /**
+     * Relación con el carrito de compras.
+     */
+    public function cart()
+    {
+        return $this->hasOne(Cart::class);
+    }
+
+    /**
+     * Relación con los registros de sesión.
+     */
+    public function sessionLogs()
+    {
+        return $this->hasMany(SessionLog::class);
+    }
+
 
     /**
      * Comprueba si el usuario es administrador.

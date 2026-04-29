@@ -10,22 +10,13 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class CategoryFactory extends Factory
 {
-    /* The name of the factory's corresponding model.
-     *s
-     * @var string
-    */
     protected $model = Category::class;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array
-    */
-    public function definition()
+    public function definition(): array
     {
         return [
-            'name' => $this->faker->name,
-            'description' => $this->faker->paragraph(2)
+            'name'        => $this->faker->words(2, true),
+            'description' => $this->faker->paragraph(2),
         ];
     }
 }

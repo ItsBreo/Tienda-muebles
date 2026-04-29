@@ -5,13 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-// Clase Imagen
-class Image extends model {
+class Image extends Model
+{
     use HasFactory;
 
     protected $table = 'furniture_images';
 
-    // Define las columnas que se pueden llenar masivamente
     protected $fillable = [
         'furniture_id',
         'image_path',
@@ -22,7 +21,6 @@ class Image extends model {
 
     public function furniture()
     {
-        // Una imagen pertenece a un solo mueble (muchos a uno)
         return $this->belongsTo(Furniture::class);
     }
 }

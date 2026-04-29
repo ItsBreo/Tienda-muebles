@@ -11,7 +11,6 @@ class SessionLog extends Model
 
     protected $table = 'session_logs';
 
-
     protected $fillable = [
         'session_id',
         'user_id',
@@ -21,12 +20,10 @@ class SessionLog extends Model
         'logout_at',
     ];
 
-
     protected $casts = [
-        'login_at' => 'datetime',
+        'login_at'  => 'datetime',
         'logout_at' => 'datetime',
     ];
-
 
     public function user()
     {

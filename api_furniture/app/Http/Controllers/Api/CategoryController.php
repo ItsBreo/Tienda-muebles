@@ -3,75 +3,98 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CategoryResource;
 use App\Models\Category;
+use App\Traits\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    /**
-     * GET /api/categories
-     * Devuelve todas las categorías.
-     */
-    public function index()
+    use ApiResponse;
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // GET /api/categories
+    // Lista todas las categorías.
+    // ──────────────────────────────────────────────────────────────────────────
+    public function index(): JsonResponse
     {
-        return response()->json(Category::all(), 200);
+        $categorias = Category::withCount('furniture')
+            ->orderBy('name')
+            ->get();
+
+        return $this->okResponse(
+            CategoryResource::collection($categorias)->resolve(request()),
+            'Categorías disponibles.'
+        );
     }
 
-    /**
-     * POST /api/categories
-     * Crea una nueva categoría.
-     */
-    public function store(Request $request)
+    // ──────────────────────────────────────────────────────────────────────────
+    // GET /api/categories/{id}
+    // Detalle de una categoría con sus muebles.
+    // ──────────────────────────────────────────────────────────────────────────
+    public function show(Category $categoria): JsonResponse
     {
-        $data = $request->validate([
+        $categoria->load([
+            'furniture.images',
+        ])->loadCount('furniture');
+
+        return $this->okResponse(
+            new CategoryResource($categoria),
+            'Detalle de categoría.'
+        );
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // POST /api/categories
+    // Crea una nueva categoría. Requiere token de admin.
+    // ──────────────────────────────────────────────────────────────────────────
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
             'name'        => 'required|string|max:255|unique:categories,name',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:1000',
         ]);
 
-        $categoria = Category::create($data);
+        $categoria = Category::create($validated);
 
-        return response()->json([
-            'message'   => 'Categoría creada correctamente.',
-            'categoria' => $categoria,
-        ], 201);
+        return $this->createdResponse(
+            new CategoryResource($categoria),
+            'Categoría creada correctamente.'
+        );
     }
 
-    /**
-     * GET /api/categories/{id}
-     * Muestra una categoría específica.
-     */
-    public function show(Category $categoria)
+    // ──────────────────────────────────────────────────────────────────────────
+    // PUT /api/categories/{id}
+    // Actualiza una categoría. Requiere token de admin.
+    // ──────────────────────────────────────────────────────────────────────────
+    public function update(Request $request, Category $categoria): JsonResponse
     {
-        return response()->json($categoria->load('furniture'), 200);
-    }
-
-    /**
-     * PUT /api/categories/{id}
-     * Actualiza una categoría.
-     */
-    public function update(Request $request, Category $categoria)
-    {
-        $data = $request->validate([
+        $validated = $request->validate([
             'name'        => 'required|string|max:255|unique:categories,name,' . $categoria->id,
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:1000',
         ]);
 
-        $categoria->update($data);
+        $categoria->update($validated);
 
-        return response()->json([
-            'message'   => 'Categoría actualizada correctamente.',
-            'categoria' => $categoria->fresh(),
-        ], 200);
+        return $this->okResponse(
+            new CategoryResource($categoria->fresh()),
+            'Categoría actualizada correctamente.'
+        );
     }
 
-    /**
-     * DELETE /api/categories/{id}
-     * Elimina una categoría.
-     */
-    public function destroy(Category $categoria)
+    // ──────────────────────────────────────────────────────────────────────────
+    // DELETE /api/categories/{id}
+    // Elimina una categoría. Requiere token de admin.
+    //
+    // Nota: los muebles asociados quedarán con category_id = NULL
+    // (definido con onDelete('set null') en la FK de furniture).
+    // ──────────────────────────────────────────────────────────────────────────
+    public function destroy(Category $categoria): JsonResponse
     {
+        $nombre = $categoria->name;
         $categoria->delete();
 
-        return response()->json(['message' => 'Categoría eliminada correctamente.'], 200);
+        return $this->messageResponse("Categoría «{$nombre}» eliminada correctamente.");
     }
 }

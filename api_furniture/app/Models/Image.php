@@ -19,6 +19,11 @@ class Image extends Model
         'alt_text',
     ];
 
+    protected $casts = [
+        'is_primary'    => 'boolean',
+        'display_order' => 'integer',
+    ];
+
     public function furniture()
     {
         return $this->belongsTo(Furniture::class);

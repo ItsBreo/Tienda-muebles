@@ -3,189 +3,271 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+use App\Http\Resources\FurnitureListResource;
+use App\Http\Resources\FurnitureResource;
 use App\Models\Furniture;
+use App\Traits\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
 
 class FurnitureController extends Controller
 {
-    /**
-     * GET /api/furniture
-     * Listado público con filtros opcionales: category, q, min_price, max_price, color, sort, per_page.
-     */
-    public function index(Request $request)
-    {
-        $query = Furniture::with('images', 'category');
+    use ApiResponse;
 
-        if ($request->filled('category')) {
-            $query->where('category_id', $request->category);
+    // ──────────────────────────────────────────────────────────────────────────
+    // GET /api/furniture
+    // Listado paginado con filtros y ordenación.
+    //
+    // Parámetros de filtro (todos opcionales):
+    //   ?category=1           → filtra por category_id
+    //   ?q=silla              → búsqueda en nombre y descripción
+    //   ?min_price=50         → precio mínimo
+    //   ?max_price=500        → precio máximo
+    //   ?color=Blanco         → filtra por color exacto
+    //   ?only_salient=true    → solo muebles destacados
+    //
+    // Parámetros de ordenación:
+    //   ?sort=price_asc       → precio ascendente
+    //   ?sort=price_desc      → precio descendente
+    //   ?sort=name_asc        → nombre A→Z
+    //   ?sort=name_desc       → nombre Z→A
+    //   ?sort=date_new        → más recientes primero
+    //   ?sort=date_old        → más antiguos primero
+    //   (por defecto: más recientes primero)
+    //
+    // Paginación:
+    //   ?per_page=12          → resultados por página (6|12|24|48)
+    //   ?page=2               → número de página
+    // ──────────────────────────────────────────────────────────────────────────
+    public function index(Request $request): JsonResponse
+    {
+        // ── Validación de parámetros de entrada ───────────────────────────────
+        $validated = $request->validate([
+            'category'      => 'nullable|integer|exists:categories,id',
+            'q'             => 'nullable|string|max:100',
+            'min_price'     => 'nullable|numeric|min:0',
+            'max_price'     => 'nullable|numeric|min:0|gte:min_price',
+            'color'         => 'nullable|string|max:100',
+            'only_salient'  => 'nullable|boolean',
+            'sort'          => 'nullable|string|in:price_asc,price_desc,name_asc,name_desc,date_new,date_old',
+            'per_page'      => 'nullable|integer|in:6,12,24,48',
+        ]);
+
+        // ── Construcción de la query ───────────────────────────────────────────
+        $query = Furniture::with(['images', 'category']);
+
+        // Filtro por categoría
+        if (!empty($validated['category'])) {
+            $query->where('category_id', $validated['category']);
         }
 
-        if ($request->filled('q')) {
-            $term = $request->q;
+        // Búsqueda de texto libre en nombre y descripción
+        if (!empty($validated['q'])) {
+            $term = trim($validated['q']);
             $query->where(function ($q) use ($term) {
                 $q->where('name', 'LIKE', "%{$term}%")
                   ->orWhere('description', 'LIKE', "%{$term}%");
             });
         }
 
-        if ($request->filled('min_price')) {
-            $query->where('price', '>=', (float) $request->min_price);
+        // Rango de precios
+        if (isset($validated['min_price'])) {
+            $query->where('price', '>=', (float) $validated['min_price']);
+        }
+        if (isset($validated['max_price'])) {
+            $query->where('price', '<=', (float) $validated['max_price']);
         }
 
-        if ($request->filled('max_price')) {
-            $query->where('price', '<=', (float) $request->max_price);
+        // Filtro por color
+        if (!empty($validated['color'])) {
+            $query->where('main_color', $validated['color']);
         }
 
-        if ($request->filled('color')) {
-            $query->where('main_color', 'LIKE', $request->color);
+        // Solo destacados
+        if (filter_var($validated['only_salient'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            $query->where('is_salient', true);
         }
 
-        $sort = $request->input('sort', 'default');
-        match ($sort) {
+        // ── Ordenación ────────────────────────────────────────────────────────
+        match ($validated['sort'] ?? 'date_new') {
             'price_asc'  => $query->orderBy('price', 'asc'),
             'price_desc' => $query->orderBy('price', 'desc'),
             'name_asc'   => $query->orderBy('name', 'asc'),
             'name_desc'  => $query->orderBy('name', 'desc'),
-            'date_new'   => $query->orderBy('created_at', 'desc'),
             'date_old'   => $query->orderBy('created_at', 'asc'),
-            default      => $query->orderBy('id', 'desc'),
+            default      => $query->orderBy('created_at', 'desc'), // date_new
         };
 
-        $perPage = (int) $request->input('per_page', 12);
-        if (!in_array($perPage, [6, 12, 24, 48, 100])) {
-            $perPage = 12;
-        }
-
+        // ── Paginación ────────────────────────────────────────────────────────
+        $perPage = (int) ($validated['per_page'] ?? 12);
         $muebles = $query->paginate($perPage)->withQueryString();
 
-        return response()->json($muebles, 200);
+        // ── Respuesta con filtros activos incluidos ────────────────────────────
+        return $this->paginatedResponse($muebles, FurnitureListResource::class, [
+            'category'     => $validated['category'] ?? null,
+            'q'            => $validated['q'] ?? null,
+            'min_price'    => $validated['min_price'] ?? null,
+            'max_price'    => $validated['max_price'] ?? null,
+            'color'        => $validated['color'] ?? null,
+            'only_salient' => isset($validated['only_salient'])
+                                  ? filter_var($validated['only_salient'], FILTER_VALIDATE_BOOLEAN)
+                                  : null,
+            'sort'         => $validated['sort'] ?? 'date_new',
+        ]);
     }
 
-    /**
-     * GET /api/furniture/featured
-     * Muebles destacados (is_salient = true).
-     */
-    public function featured(Request $request)
+    // ──────────────────────────────────────────────────────────────────────────
+    // GET /api/furniture/featured
+    // Muebles destacados (is_salient = true).
+    // ?limit=6  → máximo de resultados (1-24, por defecto 6)
+    // ──────────────────────────────────────────────────────────────────────────
+    public function featured(Request $request): JsonResponse
     {
-        $limit = (int) $request->input('limit', 6);
-        $muebles = Furniture::with('images')->where('is_salient', true)->take($limit)->get();
+        $validated = $request->validate([
+            'limit' => 'nullable|integer|min:1|max:24',
+        ]);
 
-        return response()->json($muebles, 200);
+        $limit   = (int) ($validated['limit'] ?? 6);
+        $muebles = Furniture::with(['images', 'category'])
+            ->where('is_salient', true)
+            ->orderBy('created_at', 'desc')
+            ->take($limit)
+            ->get();
+
+        return $this->okResponse(
+            FurnitureListResource::collection($muebles)->resolve(request()),
+            'Muebles destacados.'
+        );
     }
 
-    /**
-     * GET /api/furniture/colors
-     * Lista de colores únicos disponibles.
-     */
-    public function colors()
+    // ──────────────────────────────────────────────────────────────────────────
+    // GET /api/furniture/colors
+    // Lista de colores únicos disponibles (para los filtros del catálogo).
+    // ──────────────────────────────────────────────────────────────────────────
+    public function colors(): JsonResponse
     {
         $colors = Furniture::select('main_color')
             ->whereNotNull('main_color')
+            ->where('main_color', '!=', '')
             ->distinct()
             ->orderBy('main_color')
             ->pluck('main_color');
 
-        return response()->json($colors, 200);
+        return $this->okResponse($colors, 'Colores disponibles.');
     }
 
-    /**
-     * POST /api/furniture
-     * Crea un nuevo mueble.
-     */
-    public function store(Request $request)
+    // ──────────────────────────────────────────────────────────────────────────
+    // GET /api/furniture/{id}
+    // Detalle completo: todas las imágenes (principal primero) y categoría.
+    // ──────────────────────────────────────────────────────────────────────────
+    public function show(Furniture $mueble): JsonResponse
     {
-        $data = $request->validate([
-            'name'        => 'required|string|max:255',
-            'description' => 'required|string',
-            'price'       => 'required|numeric|min:0',
-            'stock'       => 'required|integer|min:0',
-            'category_id' => 'required|exists:categories,id',
-            'materials'   => 'nullable|string',
-            'dimensions'  => 'nullable|string',
-            'main_color'  => 'required|string|max:100',
-            'is_salient'  => 'nullable|boolean',
-            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        $mueble->load([
+            'images'   => fn($q) => $q->orderByDesc('is_primary')->orderBy('display_order'),
+            'category',
         ]);
 
-        $data['is_salient'] = $request->boolean('is_salient');
+        return $this->okResponse(
+            (new FurnitureResource($mueble))->resolve(request()),
+            'Detalle del mueble.'
+        );
+    }
 
-        $mueble = Furniture::create($data);
+    // ──────────────────────────────────────────────────────────────────────────
+    // POST /api/furniture
+    // Crea un nuevo mueble. Requiere token de admin.
+    // ──────────────────────────────────────────────────────────────────────────
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'description' => 'required|string|max:2000',
+            'price'       => 'required|numeric|min:0|max:999999.99',
+            'stock'       => 'required|integer|min:0|max:9999',
+            'category_id' => 'required|integer|exists:categories,id',
+            'materials'   => 'nullable|string|max:255',
+            'dimensions'  => 'nullable|string|max:100',
+            'main_color'  => 'required|string|max:100',
+            'is_salient'  => 'nullable|boolean',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:4096',
+        ]);
 
-        // Imagen principal
+        $validated['is_salient'] = $request->boolean('is_salient');
+
+        $mueble = Furniture::create($validated);
+
         if ($request->hasFile('image')) {
-            $imageName = time() . '.' . $request->image->extension();
+            $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
             $request->image->move(public_path('images'), $imageName);
             $mueble->images()->create([
                 'image_path' => 'images/' . $imageName,
                 'is_primary' => true,
+                'alt_text'   => $mueble->name,
             ]);
         }
 
-        return response()->json([
-            'message' => 'Mueble creado correctamente.',
-            'mueble'  => $mueble->load('images', 'category'),
-        ], 201);
+        $mueble->load(['images', 'category']);
+
+        return $this->createdResponse(
+            (new FurnitureResource($mueble))->resolve(request()),
+            'Mueble creado correctamente.'
+        );
     }
 
-    /**
-     * GET /api/furniture/{id}
-     * Detalle de un mueble.
-     */
-    public function show(Furniture $mueble)
+    // ──────────────────────────────────────────────────────────────────────────
+    // PUT /api/furniture/{id}
+    // Actualiza un mueble existente. Requiere token de admin.
+    // ──────────────────────────────────────────────────────────────────────────
+    public function update(Request $request, Furniture $mueble): JsonResponse
     {
-        return response()->json($mueble->load('images', 'category'), 200);
-    }
-
-    /**
-     * PUT /api/furniture/{id}
-     * Actualiza un mueble existente.
-     */
-    public function update(Request $request, Furniture $mueble)
-    {
-        $data = $request->validate([
+        $validated = $request->validate([
             'name'        => 'required|string|max:255',
-            'description' => 'required|string',
-            'price'       => 'required|numeric|min:0',
-            'stock'       => 'required|integer|min:0',
-            'category_id' => 'required|exists:categories,id',
-            'materials'   => 'nullable|string',
-            'dimensions'  => 'nullable|string',
+            'description' => 'required|string|max:2000',
+            'price'       => 'required|numeric|min:0|max:999999.99',
+            'stock'       => 'required|integer|min:0|max:9999',
+            'category_id' => 'required|integer|exists:categories,id',
+            'materials'   => 'nullable|string|max:255',
+            'dimensions'  => 'nullable|string|max:100',
             'main_color'  => 'required|string|max:100',
             'is_salient'  => 'nullable|boolean',
-            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:4096',
         ]);
 
-        $data['is_salient'] = $request->boolean('is_salient');
+        $validated['is_salient'] = $request->boolean('is_salient');
 
-        $mueble->update($data);
+        $mueble->update($validated);
 
-        // Imagen nueva opcional
         if ($request->hasFile('image')) {
-            $imageName = time() . '.' . $request->image->extension();
+            $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
             $request->image->move(public_path('images'), $imageName);
+            // Quitar principal anterior y añadir la nueva
             $mueble->images()->update(['is_primary' => false]);
             $mueble->images()->create([
                 'image_path' => 'images/' . $imageName,
                 'is_primary' => true,
+                'alt_text'   => $mueble->name,
             ]);
         }
 
-        return response()->json([
-            'message' => 'Mueble actualizado correctamente.',
-            'mueble'  => $mueble->fresh()->load('images', 'category'),
-        ], 200);
+        $mueble->load([
+            'images'   => fn($q) => $q->orderByDesc('is_primary')->orderBy('display_order'),
+            'category',
+        ]);
+
+        return $this->okResponse(
+            (new FurnitureResource($mueble))->resolve(request()),
+            'Mueble actualizado correctamente.'
+        );
     }
 
-    /**
-     * DELETE /api/furniture/{id}
-     * Elimina un mueble.
-     */
-    public function destroy(Furniture $mueble)
+    // ──────────────────────────────────────────────────────────────────────────
+    // DELETE /api/furniture/{id}
+    // Elimina un mueble. Requiere token de admin.
+    // ──────────────────────────────────────────────────────────────────────────
+    public function destroy(Furniture $mueble): JsonResponse
     {
         $mueble->delete();
 
-        return response()->json(['message' => 'Mueble eliminado correctamente.'], 200);
+        return $this->messageResponse('Mueble eliminado correctamente.');
     }
 }

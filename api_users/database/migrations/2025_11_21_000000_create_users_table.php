@@ -8,26 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name', 255);
-            $table->string('surname', 255)->nullable();
-            $table->string('email', 255)->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            // Clave foránea al rol
-            $table->foreignId('role_id')->constrained('roles')->default(3);
-
-            $table->integer('failed_attempts')->default(0);
-            $table->timestamp('locked_until')->nullable();
-            $table->timestamp('last_login_at')->nullable();
-            $table->rememberToken();
-            $table->timestamps();
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('surname', 255)->nullable()->after('name');
+            $table->unsignedBigInteger('role_id')->nullable()->after('password');
+            $table->foreign('role_id')->references('id')->on('roles');
+            $table->integer('failed_attempts')->default(0)->after('role_id');
+            $table->timestamp('locked_until')->nullable()->after('failed_attempts');
+            $table->timestamp('last_login_at')->nullable()->after('locked_until');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['role_id']);
+            $table->dropColumn(['surname', 'role_id', 'failed_attempts', 'locked_until', 'last_login_at']);
+        });
     }
 };

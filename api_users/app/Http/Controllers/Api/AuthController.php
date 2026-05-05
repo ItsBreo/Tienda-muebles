@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SessionLog;
 use App\Models\User;
 use App\Models\Role;
+use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -13,6 +14,8 @@ use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
 {
+    use ApiResponse;
+
     #[OA\Post(
         path: '/api/register',
         operationId: 'authRegister',
@@ -64,10 +67,11 @@ class AuthController extends Controller
             'failed_attempts' => 0,
         ]);
 
-        return response()->json([
-            'message' => 'Usuario registrado correctamente.',
-            'user'    => $user->only(['id', 'name', 'surname', 'email', 'role_id']),
-        ], 201);
+        return $this->successResponse(
+            ['user' => $user->only(['id', 'name', 'surname', 'email', 'role_id'])],
+            'Usuario registrado correctamente.',
+            201
+        );
     }
 
     #[OA\Post(
@@ -121,14 +125,12 @@ class AuthController extends Controller
         $user = User::with('role')->where('email', $credentials['email'])->first();
 
         if (!$user) {
-            return response()->json(['message' => 'Credenciales incorrectas.'], 401);
+            return $this->errorResponse('Credenciales incorrectas.', 401);
         }
 
         if ($user->locked_until && Carbon::now()->lessThan($user->locked_until)) {
             $minutosRestantes = Carbon::now()->diffInMinutes($user->locked_until) + 1;
-            return response()->json([
-                'message' => "Cuenta bloqueada temporalmente. Inténtalo de nuevo en {$minutosRestantes} minutos.",
-            ], 403);
+            return $this->errorResponse("Cuenta bloqueada temporalmente. Inténtalo de nuevo en {$minutosRestantes} minutos.", 403);
         }
 
         if (!Hash::check($credentials['password'], $user->password)) {
@@ -139,15 +141,11 @@ class AuthController extends Controller
                     'locked_until'    => Carbon::now()->addMinutes(5),
                     'failed_attempts' => 0,
                 ]);
-                return response()->json([
-                    'message' => 'Has excedido el número de intentos. Tu cuenta ha sido bloqueada por 5 minutos.',
-                ], 403);
+                return $this->errorResponse('Has excedido el número de intentos. Tu cuenta ha sido bloqueada por 5 minutos.', 403);
             }
 
             $intentosRestantes = 3 - $user->failed_attempts;
-            return response()->json([
-                'message' => "Contraseña incorrecta. Te quedan {$intentosRestantes} intentos.",
-            ], 401);
+            return $this->errorResponse("Contraseña incorrecta. Te quedan {$intentosRestantes} intentos.", 401);
         }
 
         $user->update([
@@ -167,8 +165,7 @@ class AuthController extends Controller
         $abilities = $this->abilitiesForRole($user->role?->name);
         $token = $user->createToken('auth-token', $abilities)->plainTextToken;
 
-        return response()->json([
-            'message'    => 'Login correcto.',
+        return $this->successResponse([
             'token'      => $token,
             'token_type' => 'Bearer',
             'abilities'  => $abilities,
@@ -181,7 +178,7 @@ class AuthController extends Controller
                 'rol_name' => $user->role?->name ?? 'Cliente',
                 'role_id'  => $user->role_id,
             ],
-        ], 200);
+        ], 'Login correcto.');
     }
 
     #[OA\Post(
@@ -217,7 +214,7 @@ class AuthController extends Controller
                 ->update(['logout_at' => Carbon::now()]);
         }
 
-        return response()->json(['message' => 'Sesión cerrada correctamente.'], 200);
+        return $this->successResponse(null, 'Sesión cerrada correctamente.');
     }
 
     #[OA\Get(
@@ -248,7 +245,7 @@ class AuthController extends Controller
     {
         $user = $request->user()->load('role');
 
-        return response()->json([
+        return $this->successResponse([
             'id'        => $user->id,
             'name'      => $user->name,
             'surname'   => $user->surname,
@@ -256,7 +253,7 @@ class AuthController extends Controller
             'rol_name'  => $user->role?->name ?? 'Cliente',
             'role_id'   => $user->role_id,
             'abilities' => $request->user()->currentAccessToken()->abilities,
-        ], 200);
+        ], 'Perfil recuperado correctamente.');
     }
 
     #[OA\Get(
@@ -295,19 +292,19 @@ class AuthController extends Controller
             ->first();
 
         if (!$log || !$log->user) {
-            return response()->json(['message' => 'Sesión no válida o expirada.'], 404);
+            return $this->errorResponse('Sesión no válida o expirada.', 404);
         }
 
         $user = $log->user;
 
-        return response()->json([
+        return $this->successResponse([
             'id'       => $user->id,
             'name'     => $user->name,
             'surname'  => $user->surname,
             'email'    => $user->email,
             'rol_name' => $user->role?->name ?? 'Cliente',
             'role_id'  => $user->role_id,
-        ], 200);
+        ], 'Sesión válida.');
     }
 
     // -------------------------------------------------------------------------
@@ -315,8 +312,9 @@ class AuthController extends Controller
     private function abilitiesForRole(?string $roleName): array
     {
         return match ($roleName) {
-            'Admin' => ['admin', 'users:list', 'users:view', 'users:create', 'users:update', 'users:delete', 'roles:list'],
-            default => ['profile:view', 'profile:update'],
+            'Admin' => ['perfil.ver', 'usuarios.ver', 'usuarios.crear', 'usuarios.editar', 'usuarios.eliminar', 'muebles.ver', 'muebles.crear', 'muebles.editar', 'muebles.eliminar', 'admin.panel'],
+            'Gestor' => ['perfil.ver', 'muebles.ver', 'muebles.crear', 'muebles.editar', 'muebles.eliminar'],
+            default => ['perfil.ver', 'muebles.ver', 'carrito.gestionar', 'pedidos.crear'],
         };
     }
 }

@@ -21,16 +21,28 @@ use App\Http\Controllers\Api\GalleryController;
 Route::get('/furniture/featured', [FurnitureController::class, 'featured']);
 Route::get('/furniture/colors',   [FurnitureController::class, 'colors']);
 
-// ── CRUD completo de muebles ──────────────────────────────────────────────────
-Route::apiResource('/furniture', FurnitureController::class);
+// ── CRUD completo de muebles (Lectura pública) ──────────────────────────────────
+Route::apiResource('/furniture', FurnitureController::class)->only(['index', 'show']);
 
-// ── Galería de imágenes ───────────────────────────────────────────────────────
-Route::prefix('/furniture/{mueble}/gallery')->name('gallery.')->group(function () {
-    Route::post('/',                    [GalleryController::class, 'store'])->name('store');
-    Route::delete('/{image}',           [GalleryController::class, 'destroy'])->name('destroy');
-    Route::post('/{image}/main',        [GalleryController::class, 'setMain'])->name('main');
-    Route::put('/{image}/order',        [GalleryController::class, 'updateOrder'])->name('order');
+// ── CRUD completo de categorías (Lectura pública) ───────────────────────────────
+Route::apiResource('/categories', CategoryController::class)->only(['index', 'show']);
+
+// ── Rutas protegidas (Requieren token y habilidades) ──────────────────────────
+Route::middleware('remote.auth:muebles.crear')->group(function () {
+    Route::post('/furniture', [FurnitureController::class, 'store'])->name('furniture.store');
+    Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::post('/furniture/{mueble}/gallery', [GalleryController::class, 'store'])->name('gallery.store');
 });
 
-// ── CRUD completo de categorías ───────────────────────────────────────────────
-Route::apiResource('/categories', CategoryController::class);
+Route::middleware('remote.auth:muebles.editar')->group(function () {
+    Route::put('/furniture/{furniture}', [FurnitureController::class, 'update'])->name('furniture.update');
+    Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+    Route::post('/furniture/{mueble}/gallery/{image}/main', [GalleryController::class, 'setMain'])->name('gallery.main');
+    Route::put('/furniture/{mueble}/gallery/{image}/order', [GalleryController::class, 'updateOrder'])->name('gallery.order');
+});
+
+Route::middleware('remote.auth:muebles.eliminar')->group(function () {
+    Route::delete('/furniture/{furniture}', [FurnitureController::class, 'destroy'])->name('furniture.destroy');
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+    Route::delete('/furniture/{mueble}/gallery/{image}', [GalleryController::class, 'destroy'])->name('gallery.destroy');
+});

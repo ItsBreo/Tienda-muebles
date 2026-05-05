@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use OpenApi\Attributes as OA;
 
 class UserController extends Controller
 {
+    use ApiResponse;
+
     #[OA\Get(
         path: '/api/users',
         operationId: 'userIndex',
@@ -30,13 +33,13 @@ class UserController extends Controller
     )]
     public function index(Request $request)
     {
-        if (!$request->user()->tokenCan('users:list')) {
-            return response()->json(['message' => 'No autorizado.'], 403);
+        if (!$request->user()->tokenCan('usuarios.ver')) {
+            return $this->errorResponse('No autorizado.', 403);
         }
 
         $users = User::with('role')->orderByDesc('last_login_at')->get();
 
-        return response()->json($users, 200);
+        return $this->successResponse($users);
     }
 
     #[OA\Post(
@@ -75,8 +78,8 @@ class UserController extends Controller
     )]
     public function store(Request $request)
     {
-        if (!$request->user()->tokenCan('users:create')) {
-            return response()->json(['message' => 'No autorizado.'], 403);
+        if (!$request->user()->tokenCan('usuarios.crear')) {
+            return $this->errorResponse('No autorizado.', 403);
         }
 
         $data = $request->validate([
@@ -96,10 +99,7 @@ class UserController extends Controller
             'failed_attempts' => 0,
         ]);
 
-        return response()->json([
-            'message' => 'Usuario creado correctamente.',
-            'user'    => $user->load('role'),
-        ], 201);
+        return $this->successResponse(['user' => $user->load('role')], 'Usuario creado correctamente.', 201);
     }
 
     #[OA\Get(
@@ -123,11 +123,11 @@ class UserController extends Controller
     {
         $authUser = $request->user();
 
-        if (!$authUser->tokenCan('users:view') && $authUser->id !== $user->id) {
-            return response()->json(['message' => 'No autorizado.'], 403);
+        if (!$authUser->tokenCan('usuarios.ver') && $authUser->id !== $user->id) {
+            return $this->errorResponse('No autorizado.', 403);
         }
 
-        return response()->json($user->load('role'), 200);
+        return $this->successResponse($user->load('role'));
     }
 
     #[OA\Put(
@@ -172,10 +172,10 @@ class UserController extends Controller
     {
         $authUser = $request->user();
         $isSelf   = $authUser->id === $user->id;
-        $isAdmin  = $authUser->tokenCan('users:update');
+        $isAdmin  = $authUser->tokenCan('usuarios.editar');
 
-        if (!$isAdmin && !($isSelf && $authUser->tokenCan('profile:update'))) {
-            return response()->json(['message' => 'No autorizado.'], 403);
+        if (!$isAdmin && !($isSelf && $authUser->tokenCan('perfil.ver'))) {
+            return $this->errorResponse('No autorizado.', 403);
         }
 
         $rules = [
@@ -207,10 +207,7 @@ class UserController extends Controller
 
         $user->update($toUpdate);
 
-        return response()->json([
-            'message' => 'Usuario actualizado correctamente.',
-            'user'    => $user->fresh()->load('role'),
-        ], 200);
+        return $this->successResponse(['user' => $user->fresh()->load('role')], 'Usuario actualizado correctamente.');
     }
 
     #[OA\Delete(
@@ -236,13 +233,13 @@ class UserController extends Controller
     )]
     public function destroy(Request $request, User $user)
     {
-        if (!$request->user()->tokenCan('users:delete')) {
-            return response()->json(['message' => 'No autorizado.'], 403);
+        if (!$request->user()->tokenCan('usuarios.eliminar')) {
+            return $this->errorResponse('No autorizado.', 403);
         }
 
         $user->delete();
 
-        return response()->json(['message' => 'Usuario eliminado correctamente.'], 200);
+        return $this->successResponse(null, 'Usuario eliminado correctamente.');
     }
 
     #[OA\Get(
@@ -273,10 +270,10 @@ class UserController extends Controller
     )]
     public function roles(Request $request)
     {
-        if (!$request->user()->tokenCan('roles:list')) {
-            return response()->json(['message' => 'No autorizado.'], 403);
+        if (!$request->user()->tokenCan('admin.panel')) {
+            return $this->errorResponse('No autorizado.', 403);
         }
 
-        return response()->json(Role::all(), 200);
+        return $this->successResponse(Role::all());
     }
 }

@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
-use App\Models\User;
-
+use Illuminate\Support\Facades\Session;
 class PreferenciasController extends Controller
 {
     /**
@@ -17,7 +16,7 @@ class PreferenciasController extends Controller
         $sesionId = $request->input('sesionId') ?? $request->query('sesionId');
 
         // Obtener el usuario activo
-        $user = User::activeUserSesion($sesionId);
+        $user = Session::get('user');
 
         // Si no hay usuario, redirigir al login
         if (!$user) {
@@ -25,7 +24,7 @@ class PreferenciasController extends Controller
         }
 
         // Cargar las preferencias actuales de la cookie
-        $cookieName = 'preferencias_' . $user->id;
+        $cookieName = 'preferencias_' . $user['id'];
         $cookieValue = $request->cookie($cookieName);
 
 
@@ -58,7 +57,7 @@ class PreferenciasController extends Controller
         $sesionId = $request->input('sesionId');
 
         // Obtener el usuario
-        $user = User::activeUserSesion($sesionId);
+        $user = Session::get('user');
 
         if (!$user) {
             return redirect()->route('login.show')->withErrors(['error' => 'Sesión expirada.']);
@@ -72,7 +71,7 @@ class PreferenciasController extends Controller
         ]);
 
         // Crear la cookie
-        $cookieName = 'preferencias_' . $user->id;
+        $cookieName = 'preferencias_' . $user['id'];
 
         // Obtenemos los datos viejos para no perder información
         $oldCookieValue = $request->cookie($cookieName);

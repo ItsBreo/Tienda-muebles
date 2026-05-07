@@ -13,7 +13,7 @@ return new class extends Migration
 	{
 		Schema::create('carts', function (Blueprint $table) {
 			$table->id();
-			$table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+			$table->foreignId('user_id'); // Referencia al ID en api_users
 			$table->string('sesion_id', 255)->nullable();
 			$table->decimal('total_price', 10, 2);
 			$table->timestamps();

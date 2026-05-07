@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\Furniture;
 use App\Models\Cart;
 use Illuminate\Support\Facades\Session;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -24,14 +23,14 @@ class CarritoController extends Controller
 	public function show(Request $request)
 	{
 		$sesionId = $request->query('sesionId');
-		$user = User::activeUserSesion($sesionId);
+		$user = Session::get('user');
 
 		if (!$user) {
 			return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
 		}
 
 		// Obtener el carrito de la sesión específica del usuario
-		$cart = Session::get('carrito_' . $user->id, []);
+		$cart = Session::get('carrito_' . $user['id'], []);
 
 		$subtotal = 0;
 		$cartWithLiveData = [];
@@ -83,7 +82,7 @@ class CarritoController extends Controller
 	public function add(Request $request, int $id)
 	{
 		$sesionId = $request->input('sesionId');
-		$user = User::activeUserSesion($sesionId);
+		$user = Session::get('user');
 
 		if (!$user) {
 			return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
@@ -101,7 +100,7 @@ class CarritoController extends Controller
 			return redirect()->back()->withErrors('Mueble no encontrado en la base de datos.');
 		}
 
-		$cart = Session::get('carrito_' . $user->id, []);
+		$cart = Session::get('carrito_' . $user['id'], []);
 		$currentQuantity = isset($cart[$id]) ? (int)$cart[$id]['cantidad'] : 0;
 		$newQuantity = $currentQuantity + $quantity;
 
@@ -123,7 +122,7 @@ class CarritoController extends Controller
 			];
 		}
 
-		Session::put('carrito_' . $user->id, $cart);
+		Session::put('carrito_' . $user['id'], $cart);
 		return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('success', 'Mueble agregado al carrito');
 	}
 
@@ -133,16 +132,16 @@ class CarritoController extends Controller
 	public function remove(Request $request, $id)
 	{
 		$sesionId = $request->input('sesionId');
-		$user = User::activeUserSesion($sesionId);
+		$user = Session::get('user');
 
 		if (!$user) {
 			return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
 		}
 
-		$cart = Session::get('carrito_' . $user->id, []);
+		$cart = Session::get('carrito_' . $user['id'], []);
 
 		unset($cart[$id]);
-		Session::put('carrito_' . $user->id, $cart);
+		Session::put('carrito_' . $user['id'], $cart);
 		return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('success', 'Mueble eliminado del carrito');
 	}
 
@@ -152,13 +151,13 @@ class CarritoController extends Controller
 	public function clear(Request $request)
 	{
 		$sesionId = $request->input('sesionId');
-		$user = User::activeUserSesion($sesionId);
+		$user = Session::get('user');
 
 		if (!$user) {
 			return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
 		}
 
-		Session::forget('carrito_' . $user->id);
+		Session::forget('carrito_' . $user['id']);
 		return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('success', 'Carrito vaciado');
 	}
 
@@ -168,18 +167,18 @@ class CarritoController extends Controller
 	public function saveOnBD(Request $request)
 	{
 		$sesionId = $request->input('sesionId');
-		$user = User::activeUserSesion($sesionId);
+		$user = Session::get('user');
 
 		if (!$user) {
 			return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión para guardar el carrito.']);
 		}
 
-		// Si el usuario es válido, lo inyectamos
-		if (!Auth::check()) {
-			Auth::login($user);
-		}
+		// Si el usuario es válido, lo inyectamos (temporalmente comentado hasta implementar ApiAuth)
+		// if (!Auth::check()) {
+		// 	Auth::login($user);
+		// }
 
-		$carritoSesion = Session::get('carrito_' . $user->id, []);
+		$carritoSesion = Session::get('carrito_' . $user['id'], []);
 
 		if (empty($carritoSesion)) {
 			return redirect()->route('carrito.show', ['sesionId' => $sesionId])->with('error', 'El carrito está vacío.');
@@ -265,7 +264,7 @@ class CarritoController extends Controller
 		}
 
 		// Vaciar el carrito actual de la sesión
-		Session::forget('carrito_' . $user->id);
+		Session::forget('carrito_' . $user['id']);
 
 		return redirect()->route('carrito.show', ['sesionId' => $sesionId])
 			->with('success', '¡Compra guardada correctamente y stock actualizado!');

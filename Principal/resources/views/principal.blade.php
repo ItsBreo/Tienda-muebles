@@ -21,10 +21,10 @@
     <div class="col-md-3">
         <div class="card mb-3">
             <div class="card-body">
-                <h5 class="card-title">{{ $cat->name }}</h5>
-                <p class="card-text">{{ $cat->description }}</p>
+                <h5 class="card-title">{{ $cat['name'] }}</h5>
+                <p class="card-text">{{ $cat['description'] ?? '' }}</p>
 
-                <a href="{{ route('categorias.show', ['id' => $cat->id, 'sesionId' => $sesionId]) }}" class="btn btn-sm btn-primary">Ver muebles</a>
+                <a href="{{ route('categorias.show', ['id' => $cat['id'], 'sesionId' => $sesionId]) }}" class="btn btn-sm btn-primary">Ver muebles</a>
             </div>
         </div>
     </div>
@@ -36,19 +36,19 @@
     @forelse($featured as $m)
     <div class="col-md-4">
         <div class="card mb-3">
-            <img src="{{ asset($m->getMainImage()) }}" class="card-img-top" alt="{{ $m->name }}">
+            <img src="{{ env('API_FURNITURE_URL') }}/{{ $m['main_image'] }}" class="card-img-top" alt="{{ $m['name'] }}">
             <div class="card-body">
-                <h5 class="card-title">{{ $m->name }}</h5>
-                <p class="card-text">{{ \Illuminate\Support\Str::limit($m->description, 90) }}</p>
+                <h5 class="card-title">{{ $m['name'] }}</h5>
+                <p class="card-text">{{ \Illuminate\Support\Str::limit($m['description'], 90) }}</p>
 
 
-                <p class="mb-1"><strong>{{ number_format($m->price, 2) }} {{ $preferencias['moneda'] }}</strong></p>
+                <p class="mb-1"><strong>{{ number_format($m['price'], 2) }} {{ $preferencias['moneda'] }}</strong></p>
 
 
-                <a href="{{ route('muebles.show', ['id' => $m->id, 'sesionId' => $sesionId]) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+                <a href="{{ route('muebles.show', ['id' => $m['id'], 'sesionId' => $sesionId]) }}" class="btn btn-sm btn-outline-primary">Ver</a>
 
-                @if ($m->stock > 0)
-                            <form action="{{ route('carrito.add', ['mueble' => $m->id, 'sesionId' => $sesionId]) }}" method="POST" class="d-inline ms-1">
+                @if ($m['stock'] > 0)
+                            <form action="{{ route('carrito.add', ['mueble' => $m['id'], 'sesionId' => $sesionId]) }}" method="POST" class="d-inline ms-1">
                                 @csrf
                                 <input type="hidden" name="quantity" value="1">
                                 <button type="submit" class="btn btn-sm btn-success">Añadir</button>

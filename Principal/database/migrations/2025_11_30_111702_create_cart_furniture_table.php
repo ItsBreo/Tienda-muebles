@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('cart_furniture', function (Blueprint $table) {
             $table->id();
             $table->foreignId('cart_id')->constrained('carts')->onDelete('cascade');
-            $table->foreignId('furniture_id')->constrained('furniture')->onDelete('cascade');
+            $table->foreignId('furniture_id'); // Referencia al ID en api_furniture
             $table->integer('quantity');
             $table->decimal('unit_price', 10, 2)->comment('Precio del producto en el momento de la compra');
             $table->timestamps();

@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Cart;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,7 +21,7 @@ class CartFactory extends Factory
     {
         return [
             // Cada usuario tiene un solo carrito
-            'user_id' => User::factory(),
+            'user_id' => $this->faker->numberBetween(1, 10),
 
             'sesion_id' => $this->faker->uuid(),
 

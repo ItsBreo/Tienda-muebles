@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', $category ? $category->name : 'Todos los Muebles')
+@section('title', $categoria ? $categoria['name'] : 'Todos los Muebles')
 
 @section('content')
     <div class="text-center mb-5">
-        @if ($category)
-            <h1>{{ $category->name }}</h1>
-            <p class="lead">{{ $category->description }}</p>
+        @if ($categoria)
+            <h1>{{ $categoria['name'] }}</h1>
+            <p class="lead">{{ $categoria['description'] ?? '' }}</p>
         @else
             <h1>Todos los Muebles</h1>
             <p class="lead">Explora nuestro catálogo completo</p>
@@ -71,20 +71,20 @@
         @forelse ($muebles as $mueble)
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm border-0">
-                    <img src="{{ asset('images/' . $mueble->getMainImage()) }}" class="card-img-top"
-                        alt="{{ $mueble->name }}" style="height: 250px; object-fit: cover;">
+                    <img src="{{ env('API_FURNITURE_URL') }}/{{ $mueble['main_image'] }}" class="card-img-top"
+                        alt="{{ $mueble['name'] }}" style="height: 250px; object-fit: cover;">
                     <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">{{ $mueble->name }}</h5>
+                        <h5 class="card-title">{{ $mueble['name'] }}</h5>
 
-                        @if ($mueble->isSalient)
+                        @if ($mueble['is_salient'])
                             <span class="badge bg-success mb-2 align-self-start">Destacado</span>
                         @endif
 
                         <p class="h4 fw-bold text-end" style="color: #565254;">
                             {{-- TODO: Formatear moneda según la cookie de preferencias (Apartado 1) --}}
-                            {{ number_format($mueble->price, 2) }} €
+                            {{ number_format($mueble['price'], 2) }} €
                         </p>
-                        <a href="{{ route('muebles.show', $mueble->id) }}" class="btn btn-primary w-100 mt-auto">
+                        <a href="{{ route('muebles.show', ['id' => $mueble['id'], 'sesionId' => $activeSesionId]) }}" class="btn btn-primary w-100 mt-auto">
                             Ver Detalle
                         </a>
                     </div>

@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class ApiFurnitureService
+{
+    protected string $baseUrl;
+
+    public function __construct()
+    {
+        $this->baseUrl = rtrim(env('API_FURNITURE_URL', 'http://api_furniture'), '/');
+    }
+
+    /**
+     * Obtiene la lista de categorías.
+     */
+    public function getCategories()
+    {
+        try {
+            $response = Http::timeout(5)->get($this->baseUrl . '/api/categories');
+            if ($response->successful()) {
+                return $response->json('data') ?? [];
+            }
+        } catch (\Exception $e) {
+            Log::error('Error fetching categories from api_furniture: ' . $e->getMessage());
+        }
+        return [];
+    }
+
+    /**
+     * Obtiene los muebles destacados.
+     */
+    public function getFeatured()
+    {
+        try {
+            $response = Http::timeout(5)->get($this->baseUrl . '/api/furniture/featured');
+            if ($response->successful()) {
+                return $response->json('data') ?? [];
+            }
+        } catch (\Exception $e) {
+            Log::error('Error fetching featured furniture from api_furniture: ' . $e->getMessage());
+        }
+        return [];
+    }
+    
+    /**
+     * Obtiene el catálogo de muebles con filtros y paginación.
+     */
+    public function getFurnitureList(array $filters = [])
+    {
+        try {
+            $response = Http::timeout(5)->get($this->baseUrl . '/api/furniture', $filters);
+            if ($response->successful()) {
+                // Devuelve el array completo porque incluye metadata de paginación
+                return $response->json() ?? [];
+            }
+        } catch (\Exception $e) {
+            Log::error('Error fetching furniture list from api_furniture: ' . $e->getMessage());
+        }
+        return [];
+    }
+
+    /**
+     * Obtiene los colores disponibles.
+     */
+    public function getColors()
+    {
+        try {
+            $response = Http::timeout(5)->get($this->baseUrl . '/api/furniture/colors');
+            if ($response->successful()) {
+                return $response->json('data') ?? [];
+            }
+        } catch (\Exception $e) {
+            Log::error('Error fetching colors from api_furniture: ' . $e->getMessage());
+        }
+        return [];
+    }
+    
+    /**
+     * Obtiene el detalle de un mueble específico.
+     */
+    public function getFurnitureDetail($id)
+    {
+        try {
+            $response = Http::timeout(5)->get($this->baseUrl . '/api/furniture/' . $id);
+            if ($response->successful()) {
+                return $response->json('data');
+            }
+        } catch (\Exception $e) {
+            Log::error('Error fetching furniture detail from api_furniture: ' . $e->getMessage());
+        }
+        return null;
+    }
+}

@@ -24,8 +24,8 @@
             <select name="category" class="form-select form-select-sm">
                 <option value="">Todas</option>
                 @foreach ($categories as $c)
-                    <option value="{{ $c->id }}" @selected(request('category') == $c->id)>
-                        {{ $c->name }}
+                    <option value="{{ $c['id'] }}" @selected(request('category') == $c['id'])>
+                        {{ $c['name'] }}
                     </option>
                 @endforeach
             </select>
@@ -80,18 +80,18 @@
             <div class="col-md-4">
 
                 <div class="card mb-3 @if (request()->cookie('pref_theme') === 'dark') dark @endif">
-                    <img src="{{ asset($m->getMainImage()) }}" class="card-img-top" alt="{{ $m->name }}">
+                    <img src="{{ env('API_FURNITURE_URL') }}/{{ $m['main_image'] }}" class="card-img-top" alt="{{ $m['name'] }}">
                     <div class="card-body">
-                        <h5 class="card-title">{{ $m->name }}</h5>
-                        <p class="card-text">{{ \Illuminate\Support\Str::limit($m->description, 100) }}</p>
-                        <p class="mb-1"><strong>{{ number_format($m->price) }} €</strong></p>
+                        <h5 class="card-title">{{ $m['name'] }}</h5>
+                        <p class="card-text">{{ \Illuminate\Support\Str::limit($m['description'], 100) }}</p>
+                        <p class="mb-1"><strong>{{ number_format($m['price']) }} €</strong></p>
 
 
-                        <a href="{{ route('muebles.show', ['id' => $m->id, 'sesionId' => $activeSesionId]) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+                        <a href="{{ route('muebles.show', ['id' => $m['id'], 'sesionId' => $activeSesionId]) }}" class="btn btn-sm btn-outline-primary">Ver</a>
 
 
-                        @if ($m->stock > 0)
-                            <form action="{{ route('carrito.add', ['mueble' => $m->id, 'sesionId' => $activeSesionId]) }}" method="POST" class="d-inline ms-1">
+                        @if ($m['stock'] > 0)
+                            <form action="{{ route('carrito.add', ['mueble' => $m['id'], 'sesionId' => $activeSesionId]) }}" method="POST" class="d-inline ms-1">
                                 @csrf
                                 <input type="hidden" name="quantity" value="1">
                                 <button type="submit" class="btn btn-sm btn-success">Añadir</button>

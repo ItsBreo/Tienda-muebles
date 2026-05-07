@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $mueble->name)
+@section('title', $mueble['name'])
 
 @section('content')
     {{--
@@ -11,44 +11,44 @@
     <div class="row g-5">
         {{-- COLUMNA IZQUIERDA: IMÁGENES --}}
         <div class="col-lg-6">
-            <img src="{{ asset($mueble->getMainImage()) }}"
+            <img src="{{ env('API_FURNITURE_URL') }}/{{ $mueble['main_image'] }}"
                  class="img-fluid rounded shadow-sm w-100 mb-3"
-                 alt="{{ $mueble->name }}"
+                 alt="{{ $mueble['name'] }}"
                  id="main-image"
                  style="height: 450px; object-fit: cover; border: 1px solid #EEE;">
 
             <div class="d-flex flex-wrap">
-                @foreach($mueble->images as $image)
-                    <img src="{{ asset($image->image_path) }}"
+                @foreach($mueble['images'] as $image)
+                    <img src="{{ env('API_FURNITURE_URL') }}/{{ $image['image_path'] }}"
                          class="img-thumbnail me-2 mb-2"
                          style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;"
                          alt="Miniatura"
-                         onclick="document.getElementById('main-image').src = '{{ asset($image->image_path) }}'">
+                         onclick="document.getElementById('main-image').src = '{{ env('API_FURNITURE_URL') }}/{{ $image['image_path'] }}'">
                 @endforeach
             </div>
         </div>
 
         {{-- COLUMNA DERECHA: INFO --}}
         <div class="col-lg-6">
-            <h1>{{ $mueble->name }}</h1>
+            <h1>{{ $mueble['name'] }}</h1>
 
-            @if($mueble->is_salient)
+            @if($mueble['is_salient'])
                 <span class="badge bg-success mb-2">Producto Destacado</span>
             @endif
 
-            <p class="lead">{{ $mueble->description }}</p>
+            <p class="lead">{{ $mueble['description'] }}</p>
 
             <p class="display-4 fw-bold" style="color: var(--bs-body-color);">
-                {{ number_format($mueble->price, 2) }} {{ $preferencias['moneda'] }}
+                {{ number_format($mueble['price'], 2) }} {{ $preferencias['moneda'] ?? 'EUR' }}
             </p>
 
             <hr>
 
             <h4>Detalles</h4>
             <ul class="list-unstyled">
-                <li><strong>Material:</strong> {{ $mueble->materials }}</li>
-                <li><strong>Dimensiones:</strong> {{ $mueble->dimensions }}</li>
-                <li><strong>Color:</strong> {{ $mueble->main_color }}</li>
+                <li><strong>Material:</strong> {{ $mueble['materials'] ?? 'No especificado' }}</li>
+                <li><strong>Dimensiones:</strong> {{ $mueble['dimensions'] ?? 'No especificadas' }}</li>
+                <li><strong>Color:</strong> {{ $mueble['main_color'] }}</li>
 
                 {{-- INDICADOR DE ESTADO (Arriba) --}}
                 <li class="mt-2">
@@ -68,7 +68,7 @@
 
             {{-- BLOQUE DE COMPRA O AVISO --}}
             @if($stockDisponible > 0)
-                <form action="{{ route('carrito.add', ['mueble' => $mueble->id]) }}" method="POST">
+                <form action="{{ route('carrito.add', ['mueble' => $mueble['id']]) }}" method="POST">
                     @csrf
                     {{-- Usamos activeSesionId que viene del array sesionData --}}
                     <input type="hidden" name="sesionId" value="{{ $activeSesionId }}">
@@ -144,7 +144,7 @@
             @endif
 
             <div class="mt-4">
-                <a href="{{ route('categorias.show', ['id' => $mueble->category_id, 'sesionId' => $activeSesionId]) }}" class="btn btn-outline-secondary">&larr; Volver</a>
+                <a href="{{ route('categorias.show', ['id' => $mueble['category_id'], 'sesionId' => $activeSesionId]) }}" class="btn btn-outline-secondary">&larr; Volver</a>
                 <a href="{{ route('muebles.index', ['sesionId' => $activeSesionId]) }}" class="btn btn-outline-secondary">Catálogo</a>
             </div>
         </div>

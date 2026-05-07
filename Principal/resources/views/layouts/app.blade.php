@@ -1,66 +1,24 @@
 @php
+    // Usuario y sesión desde la sesión de Laravel (gestionado por AuthController)
+    $activeUser     = \Illuminate\Support\Facades\Session::get('user');
+    $activeSesionId = $activeSesionId ?? null;
 
-    if (!isset($activeSesionId)) {
-        $activeSesionId = request()->query('sesionId');
-    }
-
-
-
-    if (!isset($activeUser)) {
-        if ($activeSesionId) {
-
-            $todosLosUsuarios = \Illuminate\Support\Facades\Session::get('usuarios', []);
-
-
-
-            $datosUsuarioJson = $todosLosUsuarios[$activeSesionId] ?? null;
-
-
-            if ($datosUsuarioJson) {
-                // Intentamos buscar en BD
-
-
-                $activeUser = \App\Models\User::activeUserSesion($activeSesionId);
-
-            } else {
-                dump('FALLO: El sesionId de la URL no existe en el array de sesión.');
-                $activeUser = null;
-            }
-        } else {
-            $activeUser = null;
-        }
-    }
-
-
-
-    // 3. Obtener Preferencias
+    // Preferencias desde cookie
     if (!isset($preferencias)) {
-        $defaultPrefs = [
-            'tema' => 'claro',
-            'moneda' => 'EUR',
-            'tamaño' => 6,
-        ];
+        $defaultPrefs = ['tema' => 'claro', 'moneda' => 'EUR', 'tamaño' => 6];
 
-        // Usamos el $activeUser que acabamos de definir
         if ($activeUser) {
-            $cookieName = 'preferencias_' . $activeUser->id;
+            $cookieName = 'preferencias_' . $activeUser['id'];
             $cookieData = json_decode(request()->cookie($cookieName), true);
-
-            if ($cookieData) {
-                $preferencias = array_merge($defaultPrefs, $cookieData);
-            } else {
-                $preferencias = $defaultPrefs;
-            }
+            $preferencias = $cookieData ? array_merge($defaultPrefs, $cookieData) : $defaultPrefs;
         } else {
             $preferencias = $defaultPrefs;
         }
     }
 
-
-    $temaActual = $preferencias['tema'] ?? 'claro';
-    $bsTheme = ($temaActual === 'oscuro') ? 'dark' : 'light';
+    $temaActual  = $preferencias['tema'] ?? 'claro';
+    $bsTheme     = ($temaActual === 'oscuro') ? 'dark' : 'light';
     $navbarClass = ($temaActual === 'oscuro') ? 'navbar-dark' : 'navbar-light';
-
 @endphp
 <!DOCTYPE html>
 <html lang="es" data-theme="{{ $temaActual }}">
@@ -115,9 +73,15 @@
                         </li>
 
 
-                        @if ($activeUser->isAdmin())
+                        @php
+                            $abilities = $activeUser['abilities'] ?? [];
+                            $isAdmin   = in_array('admin.panel', $abilities);
+                            $isGestor  = in_array('muebles.crear', $abilities);
+                        @endphp
+
+                        @if ($isAdmin || $isGestor)
                             <li class="nav-item">
-                                <a class="nav-link fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $activeSesionId]) }}">Administración</a>
+                                <a class="nav-link fw-bold" href="{{ route('admin.muebles.index') }}">Administración</a>
                             </li>
                         @endif
 
@@ -126,7 +90,7 @@
                                 @csrf
                                 <input type="hidden" name="sesionId" value="{{ $activeSesionId }}">
                                 <button type="submit" class="btn btn-link nav-link">
-                                    Logout ({{ $activeUser->email }})
+                                    Logout ({{ $activeUser['email'] }})
                                 </button>
                             </form>
                         </li>

@@ -5,15 +5,28 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PrincipalController;
 use App\Http\Controllers\PreferenciasController;
 use App\Http\Controllers\CarritoController;
+use App\Http\Controllers\CatalogoController;
+use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 
 /*
 | Esta aplicación es el cliente principal que consume las APIs:
-|   - api_users  (http://api_users.test)
-|   - api_furniture (http://api_furniture.test)
 */
 
 Route::get('/', [PrincipalController::class, 'index'])->name('principal');
+
+// ── Autenticación ───────────────────────────────────────────────────────────
+Route::get('/login',    [AuthController::class, 'showLogin'])->name('login.show');
+Route::post('/login',   [AuthController::class, 'login'])->name('login.submit');
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register.show');
+Route::post('/register',[AuthController::class, 'register'])->name('register.submit');
+Route::post('/logout',  [AuthController::class, 'logout'])->name('login.logout');
+
+Route::get('/catalogo', [CatalogoController::class, 'index'])->name('muebles.index');
+Route::get('/catalogo/{id}', [CatalogoController::class, 'showMueble'])->name('muebles.show');
+
+Route::get('/categorias', [CatalogoController::class, 'indexCategorias'])->name('categorias.index');
+Route::get('/categorias/{id}', [CatalogoController::class, 'showCategoria'])->name('categorias.show');
 
 Route::get('/preferencias',  [PreferenciasController::class, 'show'])->name('preferencias.show');
 Route::post('/preferencias', [PreferenciasController::class, 'update'])->name('preferencias.update');

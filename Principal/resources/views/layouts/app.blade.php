@@ -73,15 +73,9 @@
                         </li>
 
 
-                        @php
-                            $abilities = $activeUser['abilities'] ?? [];
-                            $isAdmin   = in_array('admin.panel', $abilities);
-                            $isGestor  = in_array('muebles.crear', $abilities);
-                        @endphp
-
-                        @if ($isAdmin || $isGestor)
+                        @if(($activeUser['rol_name'] ?? '') === 'Admin')
                             <li class="nav-item">
-                                <a class="nav-link fw-bold" href="{{ route('admin.muebles.index') }}">Administración</a>
+                                <a class="nav-link fw-bold text-warning" href="{{ route('admin.muebles.index', ['sesionId' => $activeSesionId]) }}">⚙ Admin</a>
                             </li>
                         @endif
 

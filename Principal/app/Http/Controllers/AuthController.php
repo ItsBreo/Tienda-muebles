@@ -38,10 +38,17 @@ class AuthController extends Controller
         ]);
 
         if ($response->successful()) {
-            $data = $response->json();
+            // La API devuelve: { success, message, data: { token, token_type, abilities, session_id, user } }
+            $data = $response->json('data');
 
-            Session::put('token', $data['token']);
-            Session::put('user', $data['user']);
+            Session::put('token',      $data['token']);
+            Session::put('session_id', $data['session_id']);
+            Session::put('user',       $data['user']);
+
+            // Si es Admin, redirigir directamente al panel de administración
+            if (($data['user']['rol_name'] ?? '') === 'Admin') {
+                return redirect()->route('admin.muebles.index');
+            }
 
             return redirect()->route('principal');
         }
@@ -64,42 +71,63 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name'                  => 'required|string|max:255',
+            'name'                  => 'required|string|max:30',
+            'surname'               => 'required|string|max:30',
             'email'                 => 'required|email|max:255',
-            'password'              => 'required|string|min:8|confirmed',
+            'password'              => 'required|string|min:4|confirmed',
         ]);
 
-        $response = Http::post("{$this->apiUsersUrl}/api/register", [
+        // 1. Registrar el usuario en la API
+        $registerResponse = Http::post("{$this->apiUsersUrl}/api/register", [
             'name'                  => $request->name,
+            'surname'               => $request->surname,
             'email'                 => $request->email,
             'password'              => $request->password,
             'password_confirmation' => $request->password_confirmation,
         ]);
 
-        if ($response->successful()) {
-            $data = $response->json();
+        if (!$registerResponse->successful()) {
+            $errors = $registerResponse->json('errors', [
+                'general' => $registerResponse->json('message', 'Error al registrarse.'),
+            ]);
+            return back()->withErrors($errors)->withInput();
+        }
 
-            Session::put('token', $data['token']);
-            Session::put('user', $data['user']);
+        // 2. La API de registro no devuelve token — hacemos login automático
+        $loginResponse = Http::post("{$this->apiUsersUrl}/api/login", [
+            'email'    => $request->email,
+            'password' => $request->password,
+        ]);
+
+        if ($loginResponse->successful()) {
+            $data = $loginResponse->json('data');
+
+            Session::put('token',      $data['token']);
+            Session::put('session_id', $data['session_id']);
+            Session::put('user',       $data['user']);
 
             return redirect()->route('principal');
         }
 
-        $errors = $response->json('errors', ['general' => $response->json('message', 'Error al registrarse.')]);
-        return back()->withErrors($errors)->withInput();
+        // Registro OK pero login falló — redirigir al login manualmente
+        return redirect()->route('login.show')
+            ->with('success', 'Cuenta creada correctamente. Por favor, inicia sesión.');
     }
 
     // ── LOGOUT ────────────────────────────────────────────────────────────────
 
     public function logout(Request $request)
     {
-        $token = Session::get('token');
+        $token     = Session::get('token');
+        $sessionId = Session::get('session_id');
 
         if ($token) {
-            Http::withToken($token)->post("{$this->apiUsersUrl}/api/logout");
+            Http::withToken($token)->post("{$this->apiUsersUrl}/api/logout", [
+                'session_id' => $sessionId,
+            ]);
         }
 
-        Session::forget(['token', 'user']);
+        Session::forget(['token', 'session_id', 'user']);
 
         return redirect()->route('principal');
     }

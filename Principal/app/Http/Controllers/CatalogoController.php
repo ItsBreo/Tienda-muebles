@@ -60,10 +60,11 @@ class CatalogoController extends Controller
             $enCarrito = isset($cart[$id]) ? (int)$cart[$id]['cantidad'] : 0;
         }
 
-        $stockTotal = $mueble['stock'] ?? 0;
+        $stockTotal      = $mueble['stock'] ?? 0;
         $stockDisponible = max(0, $stockTotal - $enCarrito);
+        $preferencias    = Session::get('preferencias', ['moneda' => 'EUR']);
 
-        return view('muebles.show', compact('mueble', 'activeSesionId', 'stockTotal', 'enCarrito', 'stockDisponible'));
+        return view('muebles.show', compact('mueble', 'activeSesionId', 'stockTotal', 'enCarrito', 'stockDisponible', 'preferencias'));
     }
 
     public function indexCategorias()

@@ -7,6 +7,7 @@ use App\Http\Controllers\PreferenciasController;
 use App\Http\Controllers\CarritoController;
 use App\Http\Controllers\CatalogoController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Http\Request;
 
 /*
@@ -38,9 +39,35 @@ Route::post('/carrito/eliminar/{mueble}',    [CarritoController::class, 'remove'
 Route::post('/carrito/vaciar',               [CarritoController::class, 'clear'])->name('carrito.clear');
 Route::post('/carrito/guardar',              [CarritoController::class, 'saveOnBD'])->name('carrito.save');
 
+// ── Panel de Administración (solo rol Admin) ──────────────────────────────────
+Route::prefix('admin')->name('admin.')->middleware('es.admin')->group(function () {
+
+    // Muebles
+    Route::get('/muebles',              [AdminController::class, 'mueblesIndex'])->name('muebles.index');
+    Route::get('/muebles/crear',        [AdminController::class, 'mueblesCreate'])->name('muebles.create');
+    Route::post('/muebles',             [AdminController::class, 'mueblesStore'])->name('muebles.store');
+    Route::get('/muebles/{mueble}',     [AdminController::class, 'mueblesShow'])->name('muebles.show');
+    Route::get('/muebles/{mueble}/editar', [AdminController::class, 'mueblesEdit'])->name('muebles.edit');
+    Route::put('/muebles/{mueble}',     [AdminController::class, 'mueblesUpdate'])->name('muebles.update');
+    Route::delete('/muebles/{mueble}',  [AdminController::class, 'mueblesDestroy'])->name('muebles.destroy');
+
+    // Categorías
+    Route::get('/categorias',              [AdminController::class, 'categoriasIndex'])->name('categorias.index');
+    Route::get('/categorias/crear',        [AdminController::class, 'categoriasCreate'])->name('categorias.create');
+    Route::post('/categorias',             [AdminController::class, 'categoriasStore'])->name('categorias.store');
+    Route::get('/categorias/{categoria}',  [AdminController::class, 'categoriasShow'])->name('categorias.show');
+    Route::get('/categorias/{categoria}/editar', [AdminController::class, 'categoriasEdit'])->name('categorias.edit');
+    Route::put('/categorias/{categoria}',  [AdminController::class, 'categoriasUpdate'])->name('categorias.update');
+    Route::delete('/categorias/{categoria}', [AdminController::class, 'categoriasDestroy'])->name('categorias.destroy');
+
+    // Usuarios (solo lectura)
+    Route::get('/usuarios', [AdminController::class, 'usuariosIndex'])->name('usuarios.index');
+});
+
 // ── Depuración de cookies (desarrollo) ───────────────────────────────────────
 Route::get('/cookiesActivas', function (Request $request) {
     $cookies = $request->cookies->all();
     echo "<h3>Cookies detectadas por Request:</h3>";
     dd($cookies);
 });
+

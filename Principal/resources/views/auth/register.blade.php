@@ -12,7 +12,7 @@
             <div class="card-body p-4 bg-light">
 
 
-                <form method="POST" action="{{ route('register.store') }}">
+                <form method="POST" action="{{ route('register.submit') }}">
                     @csrf
 
                     {{-- Nombre --}}

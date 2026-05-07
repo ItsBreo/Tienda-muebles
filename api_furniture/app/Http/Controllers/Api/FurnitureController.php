@@ -160,15 +160,15 @@ class FurnitureController extends Controller
     // GET /api/furniture/{id}
     // Detalle completo: todas las imágenes (principal primero) y categoría.
     // ──────────────────────────────────────────────────────────────────────────
-    public function show(Furniture $mueble): JsonResponse
+    public function show(Furniture $furniture): JsonResponse
     {
-        $mueble->load([
+        $furniture->load([
             'images'   => fn($q) => $q->orderByDesc('is_primary')->orderBy('display_order'),
             'category',
         ]);
 
         return $this->okResponse(
-            (new FurnitureResource($mueble))->resolve(request()),
+            (new FurnitureResource($furniture))->resolve(request()),
             'Detalle del mueble.'
         );
     }

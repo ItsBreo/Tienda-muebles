@@ -120,18 +120,18 @@
                         </div>
                     </div>
                 @else
-                    {{-- CASO 2: REALMENTE AGOTADO EN TIENDA --}}
+                    {
                     <div class="card border-0 shadow-sm">
                         <div class="card-body text-center py-4">
 
-                            {{-- TEXTO AGOTADO: Ancho completo y padding grande --}}
+                            
                             <h3 class="mb-4">
                                 <div class="bg-danger text-white fs-3 p-4 rounded-3 w-100 fw-bold">
                                     SE HAN AGOTADO LAS EXISTENCIAS
                                 </div>
                             </h3>
 
-                            {{-- MENSAJE MEJORADO --}}
+                            
                             <div class="alert alert-light border d-flex align-items-center justify-content-center p-3 shadow-sm rounded-3">
                                 <i class="bi bi-emoji-frown fs-3 text-secondary me-3"></i>
                                 <span class="text-secondary fw-medium fs-5">Lamentamos que no pueda comprar este producto :(</span>
@@ -144,7 +144,9 @@
             @endif
 
             <div class="mt-4">
-                <a href="{{ route('categorias.show', ['id' => $mueble['category_id'], 'sesionId' => $activeSesionId]) }}" class="btn btn-outline-secondary">&larr; Volver</a>
+                @if(!empty($mueble['category_id']))
+                    <a href="{{ route('categorias.show', ['id' => $mueble['category_id'], 'sesionId' => $activeSesionId]) }}" class="btn btn-outline-secondary">&larr; Volver a categoría</a>
+                @endif
                 <a href="{{ route('muebles.index', ['sesionId' => $activeSesionId]) }}" class="btn btn-outline-secondary">Catálogo</a>
             </div>
         </div>

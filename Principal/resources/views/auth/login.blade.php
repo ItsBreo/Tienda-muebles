@@ -84,8 +84,15 @@
                     style="width: 100px;">
                     </div>
                     <div class="card-body">
-                        <form method="POST" action="{{ route('login.store') }}">
+                        <form method="POST" action="{{ route('login.submit') }}">
                             @csrf
+
+                            {{-- Mensaje de éxito tras registro --}}
+                            @if (session('success'))
+                                <div class="alert alert-success mb-4">
+                                    {{ session('success') }}
+                                </div>
+                            @endif
 
                             {{-- Bloque para mostrar errores de validación o de credenciales --}}
                             @if ($errors->any())

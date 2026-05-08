@@ -9,6 +9,8 @@ use App\Models\Furniture;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class FurnitureController extends Controller
 {
@@ -194,31 +196,37 @@ class FurnitureController extends Controller
 
         $validated['is_salient'] = $request->boolean('is_salient');
 
-        $mueble = Furniture::create($validated);
+        try {
+            return DB::transaction(function () use ($request, $validated) {
+                $furniture = Furniture::create($validated);
 
-        if ($request->hasFile('image')) {
-            $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
-            $request->image->move(public_path('images'), $imageName);
-            $mueble->images()->create([
-                'image_path' => 'images/' . $imageName,
-                'is_primary' => true,
-                'alt_text'   => $mueble->name,
-            ]);
+                if ($request->hasFile('image')) {
+                    $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
+                    $request->image->move(public_path('images'), $imageName);
+                    $furniture->images()->create([
+                        'image_path' => 'images/' . $imageName,
+                        'is_primary' => true,
+                        'alt_text'   => $furniture->name,
+                    ]);
+                }
+
+                $furniture->load(['images', 'category']);
+
+                return $this->createdResponse(
+                    (new FurnitureResource($furniture))->resolve(request()),
+                    'Mueble creado correctamente.'
+                );
+            });
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error al crear el mueble. Por favor, inténtelo de nuevo.', 500);
         }
-
-        $mueble->load(['images', 'category']);
-
-        return $this->createdResponse(
-            (new FurnitureResource($mueble))->resolve(request()),
-            'Mueble creado correctamente.'
-        );
     }
 
     // ──────────────────────────────────────────────────────────────────────────
     // PUT /api/furniture/{id}
     // Actualiza un mueble existente. Requiere token de admin.
     // ──────────────────────────────────────────────────────────────────────────
-    public function update(Request $request, Furniture $mueble): JsonResponse
+    public function update(Request $request, Furniture $furniture): JsonResponse
     {
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
@@ -235,39 +243,67 @@ class FurnitureController extends Controller
 
         $validated['is_salient'] = $request->boolean('is_salient');
 
-        $mueble->update($validated);
+        try {
+            return DB::transaction(function () use ($request, $validated, $furniture) {
+                $furniture->update($validated);
 
-        if ($request->hasFile('image')) {
-            $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
-            $request->image->move(public_path('images'), $imageName);
-            // Quitar principal anterior y añadir la nueva
-            $mueble->images()->update(['is_primary' => false]);
-            $mueble->images()->create([
-                'image_path' => 'images/' . $imageName,
-                'is_primary' => true,
-                'alt_text'   => $mueble->name,
-            ]);
+                if ($request->hasFile('image')) {
+                    // Delete old primary image file if exists
+                    $oldPrimaryImage = $furniture->images()->where('is_primary', true)->first();
+                    if ($oldPrimaryImage && File::exists(public_path($oldPrimaryImage->image_path))) {
+                        File::delete(public_path($oldPrimaryImage->image_path));
+                    }
+
+                    // Create new image
+                    $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
+                    $request->image->move(public_path('images'), $imageName);
+
+                    // Remove primary status from all images and set new one as primary
+                    $furniture->images()->update(['is_primary' => false]);
+                    $furniture->images()->create([
+                        'image_path' => 'images/' . $imageName,
+                        'is_primary' => true,
+                        'alt_text'   => $furniture->name,
+                    ]);
+                }
+
+                $furniture->load([
+                    'images'   => fn($q) => $q->orderByDesc('is_primary')->orderBy('display_order'),
+                    'category',
+                ]);
+
+                return $this->okResponse(
+                    (new FurnitureResource($furniture))->resolve(request()),
+                    'Mueble actualizado correctamente.'
+                );
+            });
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error al actualizar el mueble. Por favor, inténtelo de nuevo.', 500);
         }
-
-        $mueble->load([
-            'images'   => fn($q) => $q->orderByDesc('is_primary')->orderBy('display_order'),
-            'category',
-        ]);
-
-        return $this->okResponse(
-            (new FurnitureResource($mueble))->resolve(request()),
-            'Mueble actualizado correctamente.'
-        );
     }
 
     // ──────────────────────────────────────────────────────────────────────────
     // DELETE /api/furniture/{id}
     // Elimina un mueble. Requiere token de admin.
     // ──────────────────────────────────────────────────────────────────────────
-    public function destroy(Furniture $mueble): JsonResponse
+    public function destroy(Furniture $furniture): JsonResponse
     {
-        $mueble->delete();
+        try {
+            return DB::transaction(function () use ($furniture) {
+                // Delete all associated image files
+                foreach ($furniture->images as $image) {
+                    if (File::exists(public_path($image->image_path))) {
+                        File::delete(public_path($image->image_path));
+                    }
+                }
 
-        return $this->messageResponse('Mueble eliminado correctamente.');
+                // Delete the furniture record (this will cascade delete the image records)
+                $furniture->delete();
+
+                return $this->messageResponse('Mueble eliminado correctamente.');
+            });
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error al eliminar el mueble. Por favor, inténtelo de nuevo.', 500);
+        }
     }
 }

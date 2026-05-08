@@ -9,6 +9,7 @@ use App\Models\Image;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
 class GalleryController extends Controller
@@ -61,24 +62,30 @@ class GalleryController extends Controller
             return $this->forbiddenResponse('La imagen no pertenece a este mueble.');
         }
 
-        // Borrar fichero del disco si existe
+        // Borrar fichero del disco si existe (antes de la transacción)
         $imagePath = public_path($image->image_path);
         if (File::exists($imagePath)) {
             File::delete($imagePath);
         }
 
-        $wasPrimary = $image->is_primary;
-        $image->delete();
+        try {
+            return DB::transaction(function () use ($mueble, $image) {
+                $wasPrimary = $image->is_primary;
+                $image->delete();
 
-        // Si era la principal, asignar la siguiente como principal
-        if ($wasPrimary) {
-            $siguiente = $mueble->images()->orderBy('display_order')->first();
-            if ($siguiente) {
-                $siguiente->update(['is_primary' => true]);
-            }
+                // Si era la principal, asignar la siguiente como principal
+                if ($wasPrimary) {
+                    $siguiente = $mueble->images()->orderBy('display_order')->first();
+                    if ($siguiente) {
+                        $siguiente->update(['is_primary' => true]);
+                    }
+                }
+
+                return $this->messageResponse('Imagen eliminada correctamente.');
+            });
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error interno al procesar la galería.', 500);
         }
-
-        return $this->messageResponse('Imagen eliminada correctamente.');
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -91,14 +98,20 @@ class GalleryController extends Controller
             return $this->forbiddenResponse('La imagen no pertenece a este mueble.');
         }
 
-        // Quitar el flag principal de todas y poner solo en la seleccionada
-        $mueble->images()->update(['is_primary' => false]);
-        $image->update(['is_primary' => true]);
+        try {
+            return DB::transaction(function () use ($mueble, $image) {
+                // Quitar el flag principal de todas y poner solo en la seleccionada
+                $mueble->images()->update(['is_primary' => false]);
+                $image->update(['is_primary' => true]);
 
-        return $this->okResponse(
-            (new ImageResource($image->fresh()))->resolve(request()),
-            'Imagen principal establecida correctamente.'
-        );
+                return $this->okResponse(
+                    (new ImageResource($image->fresh()))->resolve(request()),
+                    'Imagen principal establecida correctamente.'
+                );
+            });
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error interno al procesar la galería.', 500);
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────────

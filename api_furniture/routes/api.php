@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\FurnitureController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\GalleryController;
+use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Middleware\LogUserActivity;
 
 /*
@@ -46,4 +47,9 @@ Route::middleware(['remote.auth:muebles.eliminar', LogUserActivity::class])->gro
     Route::delete('/furniture/{furniture}', [FurnitureController::class, 'destroy'])->name('furniture.destroy');
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
     Route::delete('/furniture/{mueble}/gallery/{image}', [GalleryController::class, 'destroy'])->name('gallery.destroy');
+});
+
+// ── Activity Logs (Admin Panel) ───────────────────────────────────────────────
+Route::middleware('remote.auth:admin.panel')->group(function () {
+    Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 });

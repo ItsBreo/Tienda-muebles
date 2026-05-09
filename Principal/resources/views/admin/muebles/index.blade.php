@@ -110,6 +110,7 @@
                     <a class="nav-link" href="{{ route('admin.usuarios.index', ['sesionId' => $sesionId]) }}">Usuarios</a>
                     <a class="nav-link active" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
                     <a class="nav-link" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorias</a>
+                    <a class="nav-link" href="{{ route('admin.logs', ['sesionId' => $sesionId]) }}">📋 Logs de Actividad</a>
                 </div>
             </div>
 

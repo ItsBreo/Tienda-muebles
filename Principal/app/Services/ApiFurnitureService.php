@@ -94,4 +94,22 @@ class ApiFurnitureService
         }
         return null;
     }
+
+    /**
+     * Obtiene los detalles de varios muebles por sus IDs.
+     */
+    public function getMultipleFurniture(array $ids)
+    {
+        if (empty($ids)) return collect([]);
+        
+        $results = [];
+        foreach ($ids as $id) {
+            $mueble = $this->getFurnitureDetail($id);
+            if ($mueble) {
+                $results[$id] = $mueble;
+            }
+        }
+        
+        return collect($results);
+    }
 }

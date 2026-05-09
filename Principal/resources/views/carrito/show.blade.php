@@ -59,18 +59,51 @@
                                 <tbody>
                                     @foreach ($cart as $id => $item)
                                         <tr>
-
                                             <td>
-                                                <h6 class="mb-0">{{ $item['nombre'] }}</h6>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <h6 class="mb-0">{{ $item['nombre'] }}</h6>
+                                                </div>
                                             </td>
                                             <td class="text-end">{{ number_format($item['precio'], 2) }} €</td>
-                                            <td class="text-center">{{ $item['cantidad'] }}</td>
+
+                                            {{-- Selector de cantidad con botones + / - --}}
+                                            <td class="text-center">
+                                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                                    {{-- Botón DECREMENTAR --}}
+                                                    <form method="POST" action="{{ route('carrito.update', ['mueble' => $id]) }}">
+                                                        @csrf
+                                                        <input type="hidden" name="sesionId" value="{{ $sesionId }}">
+                                                        <input type="hidden" name="cantidad" value="{{ $item['cantidad'] - 1 }}">
+                                                        <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                            {{ $item['cantidad'] <= 1 ? 'disabled' : '' }}
+                                                            title="Disminuir cantidad">
+                                                            <i class="bi bi-dash"></i>
+                                                        </button>
+                                                    </form>
+
+                                                    <span class="fw-bold px-2" style="min-width:28px;text-align:center">
+                                                        {{ $item['cantidad'] }}
+                                                    </span>
+
+                                                    {{-- Botón INCREMENTAR --}}
+                                                    <form method="POST" action="{{ route('carrito.update', ['mueble' => $id]) }}">
+                                                        @csrf
+                                                        <input type="hidden" name="sesionId" value="{{ $sesionId }}">
+                                                        <input type="hidden" name="cantidad" value="{{ $item['cantidad'] + 1 }}">
+                                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Aumentar cantidad">
+                                                            <i class="bi bi-plus"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+
                                             <td class="text-end fw-bold">{{ number_format($item['precio'] * $item['cantidad'], 2) }} €</td>
-                                            <td class="text-center" style="width: 100px;">
-                                                <form method="POST" action="{{ route('carrito.remove', ['mueble' => $id, 'sesionId' => $sesionId]) }}">
+                                            <td class="text-center" style="width: 80px;">
+                                                <form method="POST" action="{{ route('carrito.remove', ['mueble' => $id]) }}">
                                                     @csrf
+                                                    <input type="hidden" name="sesionId" value="{{ $sesionId }}">
                                                     <button class="btn btn-sm btn-outline-danger" type="submit" title="Eliminar ítem">
-                                                        <i class="bi bi-trash"></i> 🗑️
+                                                        <i class="bi bi-trash"></i>
                                                     </button>
                                                 </form>
                                             </td>

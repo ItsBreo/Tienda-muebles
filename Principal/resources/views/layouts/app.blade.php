@@ -66,6 +66,9 @@
                     @if ($activeUser)
 
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ route('perfil.show', ['sesionId' => $activeSesionId]) }}">Mi perfil</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ route('carrito.show', ['sesionId' => $activeSesionId]) }}">Carrito</a>
                         </li>
                         <li class="nav-item">

@@ -8,6 +8,7 @@ use App\Http\Controllers\CarritoController;
 use App\Http\Controllers\CatalogoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\PerfilController;
 use Illuminate\Http\Request;
 
 /*
@@ -31,6 +32,7 @@ Route::get('/categorias/{id}', [CatalogoController::class, 'showCategoria'])->na
 
 Route::get('/preferencias',  [PreferenciasController::class, 'show'])->name('preferencias.show');
 Route::post('/preferencias', [PreferenciasController::class, 'update'])->name('preferencias.update');
+Route::get('/perfil', [PerfilController::class, 'show'])->name('perfil.show');
 
 Route::get('/carrito',                       [CarritoController::class, 'show'])->name('carrito.show');
 Route::post('/carrito/insertar/{mueble}',    [CarritoController::class, 'add'])->name('carrito.add');
@@ -75,4 +77,3 @@ Route::get('/cookiesActivas', function (Request $request) {
     echo "<h3>Cookies detectadas por Request:</h3>";
     dd($cookies);
 });
-

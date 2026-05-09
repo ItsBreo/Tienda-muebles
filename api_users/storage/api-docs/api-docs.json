@@ -21,7 +21,7 @@
                     "Autenticación"
                 ],
                 "summary": "Registrar un nuevo usuario",
-                "description": "Crea un usuario con rol 'Cliente'. No requiere autenticación.",
+                "description": "Crea un usuario con rol 'Cliente'. No requiere autenticacion.",
                 "operationId": "authRegister",
                 "requestBody": {
                     "required": true,
@@ -43,7 +43,7 @@
                                     },
                                     "surname": {
                                         "type": "string",
-                                        "example": "García",
+                                        "example": "Garcia",
                                         "maxLength": 30
                                     },
                                     "email": {
@@ -97,8 +97,8 @@
                 "tags": [
                     "Autenticación"
                 ],
-                "summary": "Iniciar sesión",
-                "description": "Autentica al usuario y devuelve un Bearer token Sanctum con abilities según el rol. Rol **Admin** obtiene abilities de gestión de usuarios; cualquier otro rol obtiene abilities de perfil.",
+                "summary": "Iniciar sesion",
+                "description": "Autentica al usuario y devuelve un Bearer token Sanctum con abilities segun el rol. Rol **Admin** obtiene abilities de gestion de usuarios; cualquier otro rol obtiene abilities de perfil.",
                 "operationId": "authLogin",
                 "requestBody": {
                     "required": true,
@@ -191,7 +191,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Cuenta bloqueada temporalmente. Inténtalo de nuevo en 5 minutos."
+                                            "example": "Cuenta bloqueada temporalmente. Intentalo de nuevo en 5 minutos."
                                         }
                                     },
                                     "type": "object"
@@ -207,8 +207,8 @@
                 "tags": [
                     "Autenticación"
                 ],
-                "summary": "Cerrar sesión",
-                "description": "Revoca el token Bearer actual y cierra el log de sesión. Requiere autenticación.",
+                "summary": "Cerrar sesion",
+                "description": "Revoca el token Bearer actual y cierra el log de sesion. Requiere autenticacion.",
                 "operationId": "authLogout",
                 "requestBody": {
                     "required": false,
@@ -217,7 +217,7 @@
                             "schema": {
                                 "properties": {
                                     "session_id": {
-                                        "description": "Opcional — cierra también el log de sesión correspondiente",
+                                        "description": "Opcional - cierra tambien el log de sesion correspondiente",
                                         "type": "string",
                                         "example": "sess_64f0a..."
                                     }
@@ -229,14 +229,14 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Sesión cerrada correctamente",
+                        "description": "Sesion cerrada correctamente",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Sesión cerrada correctamente."
+                                            "example": "Sesion cerrada correctamente."
                                         }
                                     },
                                     "type": "object"
@@ -280,7 +280,7 @@
                                         },
                                         "surname": {
                                             "type": "string",
-                                            "example": "García"
+                                            "example": "Garcia"
                                         },
                                         "email": {
                                             "type": "string",
@@ -326,14 +326,14 @@
                 "tags": [
                     "Sesiones"
                 ],
-                "summary": "Verificar sesión activa",
-                "description": "Valida un session_id y devuelve los datos del usuario. Endpoint público para consumo interno entre microservicios.",
+                "summary": "Verificar sesion activa",
+                "description": "Valida un session_id y devuelve los datos del usuario. Endpoint publico para consumo interno entre microservicios.",
                 "operationId": "sessionCheck",
                 "parameters": [
                     {
                         "name": "session_id",
                         "in": "path",
-                        "description": "ID de sesión generado en el login",
+                        "description": "ID de sesion generado en el login",
                         "required": true,
                         "schema": {
                             "type": "string",
@@ -343,7 +343,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Sesión válida — datos del usuario",
+                        "description": "Sesion valida - datos del usuario",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -353,14 +353,14 @@
                         }
                     },
                     "404": {
-                        "description": "Sesión no válida o expirada",
+                        "description": "Sesion no valida o expirada",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Sesión no válida o expirada."
+                                            "example": "Sesion no valida o expirada."
                                         }
                                     },
                                     "type": "object"
@@ -377,7 +377,7 @@
                     "Usuarios"
                 ],
                 "summary": "Listar todos los usuarios",
-                "description": "Devuelve todos los usuarios con su rol, ordenados por último login. Requiere ability **users:list** (rol Admin).",
+                "description": "Devuelve todos los usuarios con su rol, ordenados por ultimo login. Requiere ability **users:list** (rol Admin).",
                 "operationId": "userIndex",
                 "responses": {
                     "200": {
@@ -397,7 +397,7 @@
                         "description": "No autenticado"
                     },
                     "403": {
-                        "description": "No autorizado — se requiere rol Admin"
+                        "description": "No autorizado - se requiere rol Admin"
                     }
                 },
                 "security": [
@@ -427,11 +427,11 @@
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "example": "María"
+                                        "example": "Maria"
                                     },
                                     "surname": {
                                         "type": "string",
-                                        "example": "López"
+                                        "example": "Lopez"
                                     },
                                     "email": {
                                         "type": "string",
@@ -572,7 +572,7 @@
                                     },
                                     "surname": {
                                         "type": "string",
-                                        "example": "García"
+                                        "example": "Garcia"
                                     },
                                     "email": {
                                         "type": "string",

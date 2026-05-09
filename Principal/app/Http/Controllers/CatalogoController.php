@@ -67,10 +67,11 @@ class CatalogoController extends Controller
         return view('muebles.show', compact('mueble', 'activeSesionId', 'stockTotal', 'enCarrito', 'stockDisponible', 'preferencias'));
     }
 
-    public function indexCategorias()
+    public function indexCategorias(Request $request)
     {
-        $categorias = $this->apiFurniture->getCategories();
-        return view('catalogo.categorias', compact('categorias'));
+        $categories = $this->apiFurniture->getCategories();
+        $activeSesionId = $request->query('sesionId');
+        return view('catalogo.categorias', compact('categories', 'activeSesionId'));
     }
 
     public function showCategoria($id, Request $request)
@@ -88,11 +89,13 @@ class CatalogoController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
         
-        $categorias = $this->apiFurniture->getCategories();
-        $categoria = collect($categorias)->firstWhere('id', (int) $id);
+        $categories = $this->apiFurniture->getCategories();
+        $categoria = collect($categories)->firstWhere('id', (int) $id);
+
+        $colors = $this->apiFurniture->getColors();
 
         $activeSesionId = $request->query('sesionId');
 
-        return view('catalogo.show', compact('muebles', 'categoria', 'activeSesionId'));
+        return view('catalogo.show', compact('muebles', 'categories', 'categoria', 'colors', 'activeSesionId'));
     }
 }

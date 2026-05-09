@@ -8,6 +8,7 @@ use App\Http\Controllers\CarritoController;
 use App\Http\Controllers\CatalogoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\PerfilController;
 use Illuminate\Http\Request;
 
 /*
@@ -31,6 +32,7 @@ Route::get('/categorias/{id}', [CatalogoController::class, 'showCategoria'])->na
 
 Route::get('/preferencias',  [PreferenciasController::class, 'show'])->name('preferencias.show');
 Route::post('/preferencias', [PreferenciasController::class, 'update'])->name('preferencias.update');
+Route::get('/perfil', [PerfilController::class, 'show'])->name('perfil.show');
 
 Route::get('/carrito',                       [CarritoController::class, 'show'])->name('carrito.show');
 Route::post('/carrito/insertar/{mueble}',    [CarritoController::class, 'add'])->name('carrito.add');
@@ -38,6 +40,11 @@ Route::post('/carrito/actualizar/{mueble}',  [CarritoController::class, 'update'
 Route::post('/carrito/eliminar/{mueble}',    [CarritoController::class, 'remove'])->name('carrito.remove');
 Route::post('/carrito/vaciar',               [CarritoController::class, 'clear'])->name('carrito.clear');
 Route::post('/carrito/guardar',              [CarritoController::class, 'saveOnBD'])->name('carrito.save');
+
+// ── Stripe Checkout ─────────────────────────────────────────────────────────
+Route::post('/carrito/checkout', [CarritoController::class, 'stripeCheckout'])->name('carrito.checkout');
+Route::get('/checkout/success',  [CarritoController::class, 'checkoutSuccess'])->name('checkout.success');
+Route::get('/checkout/cancel',   [CarritoController::class, 'checkoutCancel'])->name('checkout.cancel');
 
 // ── Panel de Administración (solo rol Admin) ──────────────────────────────────
 Route::prefix('admin')->name('admin.')->middleware('es.admin')->group(function () {
@@ -73,4 +80,3 @@ Route::get('/cookiesActivas', function (Request $request) {
     echo "<h3>Cookies detectadas por Request:</h3>";
     dd($cookies);
 });
-

@@ -131,12 +131,12 @@
                         @csrf
                         <button class="btn btn-outline-warning" type="submit">Vaciar Carrito</button>
                     </form>
-                    <form method="POST" action="{{ route('carrito.save') }}" class="d-inline" >
+                    <form method="POST" action="{{ route('carrito.checkout') }}" class="d-inline" >
                         @csrf
                         <input type="hidden" name="sesionId" value="{{ $sesionId }}">
 
                         <button type="submit" class="btn btn-success btn-lg">
-                            Finalizar Compra &rarr;
+                            Pagar con Stripe &rarr;
                         </button>
                     </form>
                 </div>

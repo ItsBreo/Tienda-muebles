@@ -39,6 +39,11 @@ Route::post('/carrito/eliminar/{mueble}',    [CarritoController::class, 'remove'
 Route::post('/carrito/vaciar',               [CarritoController::class, 'clear'])->name('carrito.clear');
 Route::post('/carrito/guardar',              [CarritoController::class, 'saveOnBD'])->name('carrito.save');
 
+// ── Stripe Checkout ─────────────────────────────────────────────────────────
+Route::post('/carrito/checkout', [CarritoController::class, 'stripeCheckout'])->name('carrito.checkout');
+Route::get('/checkout/success',  [CarritoController::class, 'checkoutSuccess'])->name('checkout.success');
+Route::get('/checkout/cancel',   [CarritoController::class, 'checkoutCancel'])->name('checkout.cancel');
+
 // ── Panel de Administración (solo rol Admin) ──────────────────────────────────
 Route::prefix('admin')->name('admin.')->middleware('es.admin')->group(function () {
 

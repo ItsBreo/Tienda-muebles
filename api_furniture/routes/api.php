@@ -21,6 +21,7 @@ use App\Http\Middleware\LogUserActivity;
 // ── Muebles: rutas especiales ANTES del resource ──────────────────────────────
 Route::get('/furniture/featured', [FurnitureController::class, 'featured']);
 Route::get('/furniture/colors',   [FurnitureController::class, 'colors']);
+Route::post('/furniture/decrement-stock', [FurnitureController::class, 'decrementStock']);
 
 // ── CRUD completo de muebles (Lectura pública) ──────────────────────────────────
 Route::apiResource('/furniture', FurnitureController::class)->only(['index', 'show']);

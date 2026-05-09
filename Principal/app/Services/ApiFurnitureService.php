@@ -112,4 +112,21 @@ class ApiFurnitureService
         
         return collect($results);
     }
+
+    /**
+     * Llama a la API para descontar el stock tras una compra.
+     */
+    public function decrementStock(array $items)
+    {
+        try {
+            $response = Http::timeout(5)->post($this->baseUrl . '/api/furniture/decrement-stock', [
+                'items' => $items
+            ]);
+
+            return $response->successful();
+        } catch (\Exception $e) {
+            Log::error('Error decrementing stock in api_furniture: ' . $e->getMessage());
+            return false;
+        }
+    }
 }

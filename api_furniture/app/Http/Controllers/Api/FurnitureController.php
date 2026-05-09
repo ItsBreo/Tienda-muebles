@@ -306,4 +306,33 @@ class FurnitureController extends Controller
             return $this->errorResponse('Error al eliminar el mueble. Por favor, inténtelo de nuevo.', 500);
         }
     }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // POST /api/furniture/decrement-stock
+    // Descuenta el stock de varios muebles a la vez.
+    // ──────────────────────────────────────────────────────────────────────────
+    public function decrementStock(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'items' => 'required|array',
+            'items.*.producto_id' => 'required|integer|exists:furniture,id',
+            'items.*.cantidad' => 'required|integer|min:1',
+        ]);
+
+        try {
+            DB::transaction(function () use ($validated) {
+                foreach ($validated['items'] as $item) {
+                    $furniture = Furniture::findOrFail($item['producto_id']);
+                    if ($furniture->stock < $item['cantidad']) {
+                        throw new \Exception("Stock insuficiente para el mueble '{$furniture->name}'");
+                    }
+                    $furniture->decrement('stock', $item['cantidad']);
+                }
+            });
+
+            return $this->messageResponse('Stock actualizado correctamente.');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 400);
+        }
+    }
 }

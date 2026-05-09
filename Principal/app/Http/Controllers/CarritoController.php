@@ -7,6 +7,8 @@ use App\Models\Cart;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Stripe\Stripe;
+use Stripe\Checkout\Session as StripeSession;
 
 class CarritoController extends Controller
 {
@@ -288,8 +290,14 @@ class CarritoController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-				// El stock se restará luego a través de una petición a la API.
 			}
+
+            // Llamar a la API de muebles para restar el stock de forma atómica
+            $stockUpdated = $apiFurniture->decrementStock($itemsToStore);
+
+            if (!$stockUpdated) {
+                throw new \Exception("La compra se registró localmente pero no se pudo actualizar el stock en la API de muebles.");
+            }
 
 			DB::commit();
 			Log::info('--- COMMIT EXITOSO ---');
@@ -307,4 +315,87 @@ class CarritoController extends Controller
 		return redirect()->route('carrito.show', ['sesionId' => $sesionId])
 			->with('success', '¡Compra guardada correctamente y stock actualizado!');
 	}
+
+    // ── Stripe Checkout ─────────────────────────────────────────────────────────
+
+    public function stripeCheckout(Request $request)
+    {
+        $user = Session::get('user');
+        if (!$user) {
+            return redirect()->route('login.show')->withErrors(['errorCredenciales' => 'Debes iniciar sesión.']);
+        }
+
+        $cart = Session::get('carrito_' . $user['id'], []);
+        if (empty($cart)) {
+            return redirect()->route('carrito.show')->with('error', 'Tu carrito está vacío.');
+        }
+
+        // Configurar Stripe con la clave secreta del .env
+        Stripe::setApiKey(env('STRIPE_SECRET'));
+
+        $lineItems = [];
+        foreach ($cart as $item) {
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => 'eur',
+                    'product_data' => [
+                        'name' => $item['nombre'],
+                    ],
+                    'unit_amount' => (int)($item['precio'] * 100), // Stripe usa céntimos
+                ],
+                'quantity' => $item['cantidad'],
+            ];
+        }
+
+        // Añadimos el IVA como un concepto separado si quieres, o Stripe Tax. 
+        // Por simplicidad en este ejercicio, los precios unitarios ya podrían llevarlo o añadir un item de "Impuestos".
+        // Aquí vamos a añadir una línea de "Impuestos (10%)" si hay subtotal.
+        $subtotal = 0;
+        foreach($cart as $item) { $subtotal += $item['precio'] * $item['cantidad']; }
+        $lineItems[] = [
+            'price_data' => [
+                'currency' => 'eur',
+                'product_data' => [
+                    'name' => 'Impuestos (10%)',
+                ],
+                'unit_amount' => (int)($subtotal * 0.10 * 100),
+            ],
+            'quantity' => 1,
+        ];
+
+        try {
+            $checkoutSession = StripeSession::create([
+                'payment_method_types' => ['card'],
+                'line_items' => $lineItems,
+                'mode' => 'payment',
+                'success_url' => route('checkout.success') . '?stripe_id={CHECKOUT_SESSION_ID}&sesionId=' . $request->input('sesionId'),
+                'cancel_url' => route('checkout.cancel'),
+            ]);
+
+            return redirect($checkoutSession->url);
+        } catch (\Exception $e) {
+            return redirect()->route('carrito.show')->with('error', 'Error al conectar con Stripe: ' . $e->getMessage());
+        }
+    }
+
+    public function checkoutSuccess(Request $request)
+    {
+        $user = Session::get('user');
+        if (!$user) {
+            return redirect()->route('principal');
+        }
+
+        // En un entorno real, aquí verificaríamos la sesión con Stripe usando $request->session_id
+        
+        // Reutilizamos la lógica de guardado en BD
+        $dummyRequest = new Request();
+        $dummyRequest->merge(['sesionId' => $request->query('sesionId')]);
+        
+        return $this->saveOnBD($dummyRequest);
+    }
+
+    public function checkoutCancel()
+    {
+        return redirect()->route('carrito.show')->with('error', 'El pago fue cancelado o hubo un problema.');
+    }
 }

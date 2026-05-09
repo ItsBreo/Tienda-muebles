@@ -62,6 +62,9 @@ Route::prefix('admin')->name('admin.')->middleware('es.admin')->group(function (
 
     // Usuarios (solo lectura)
     Route::get('/usuarios', [AdminController::class, 'usuariosIndex'])->name('usuarios.index');
+
+    // Activity Logs
+    Route::get('/logs', [AdminController::class, 'logs'])->name('logs');
 });
 
 // ── Depuración de cookies (desarrollo) ───────────────────────────────────────

@@ -251,4 +251,14 @@ class AdminController extends Controller
             'sesionId' => $this->sesionId($request),
         ]);
     }
+
+    // =========================================================================
+    // ACTIVITY LOGS
+    // =========================================================================
+
+    public function logs(Request $request)
+    {
+        $logs = $this->apiFurniture->getActivityLogs();
+        return view('admin.logs', compact('logs'));
+    }
 }

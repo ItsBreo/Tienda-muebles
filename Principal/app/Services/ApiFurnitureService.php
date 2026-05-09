@@ -45,7 +45,7 @@ class ApiFurnitureService
         }
         return [];
     }
-    
+
     /**
      * Obtiene el catálogo de muebles con filtros y paginación.
      */
@@ -78,7 +78,7 @@ class ApiFurnitureService
         }
         return [];
     }
-    
+
     /**
      * Obtiene el detalle de un mueble específico.
      */
@@ -93,5 +93,29 @@ class ApiFurnitureService
             Log::error('Error fetching furniture detail from api_furniture: ' . $e->getMessage());
         }
         return null;
+    }
+
+    /**
+     * Obtiene los logs de actividad del sistema.
+     */
+    public function getActivityLogs()
+    {
+        try {
+            $token = session('api_token');
+            if (!$token) {
+                return [];
+            }
+
+            $response = Http::timeout(5)
+                ->withToken($token)
+                ->get($this->baseUrl . '/api/activity-logs');
+
+            if ($response->successful()) {
+                return $response->json('data') ?? [];
+            }
+        } catch (\Exception $e) {
+            Log::error('Error fetching activity logs from api_furniture: ' . $e->getMessage());
+        }
+        return [];
     }
 }

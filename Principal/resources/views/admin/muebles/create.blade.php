@@ -68,7 +68,7 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">Panel de Control</a>
+                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Panel de Control</a>
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
@@ -91,9 +91,9 @@
 
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-                    <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
-                    <a class="nav-link" href="{{ route('admin.categorias.index') }}">Categorias</a>
-                    <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
+                    <a class="nav-link" href="{{ route('admin.usuarios.index', ['sesionId' => $sesionId]) }}">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorias</a>
+                    <a class="nav-link active" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
                 </div>
             </div>
 
@@ -106,6 +106,7 @@
                         <hr>
                         <form action="{{ route('admin.muebles.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
+                            <input type="hidden" name="sesionId" value="{{ $sesionId }}">
 
                             <div class="row g-3">
                                 <div class="col-md-6">
@@ -163,7 +164,7 @@
                                 </div>
                                 <div class="col-12 mt-4">
                                     <button type="submit" class="btn btn-primary">Guardar Mueble</button>
-                                    <a href="{{ route('admin.muebles.index') }}" class="btn btn-secondary">Cancelar</a>
+                                    <a href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}" class="btn btn-secondary">Cancelar</a>
                                 </div>
                             </div>
                         </form>

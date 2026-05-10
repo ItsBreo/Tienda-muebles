@@ -76,7 +76,7 @@
                         </li>
 
 
-                        @if(($activeUser['rol_name'] ?? '') === 'Admin')
+                        @if(in_array($activeUser['rol_name'] ?? '', ['Admin', 'Gestor']))
                             <li class="nav-item">
                                 <a class="nav-link fw-bold text-warning" href="{{ route('admin.muebles.index', ['sesionId' => $activeSesionId]) }}">⚙ Admin</a>
                             </li>

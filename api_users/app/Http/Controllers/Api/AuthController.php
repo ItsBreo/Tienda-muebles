@@ -164,7 +164,7 @@ class AuthController extends Controller
     {
         return match ($roleName) {
             'Admin' => ['perfil.ver', 'usuarios.ver', 'usuarios.crear', 'usuarios.editar', 'usuarios.eliminar', 'muebles.ver', 'muebles.crear', 'muebles.editar', 'muebles.eliminar', 'admin.panel'],
-            'Gestor' => ['perfil.ver', 'muebles.ver', 'muebles.crear', 'muebles.editar', 'muebles.eliminar'],
+            'Gestor' => ['perfil.ver', 'muebles.ver', 'muebles.crear', 'muebles.editar', 'muebles.eliminar', 'admin.panel'],
             default => ['perfil.ver', 'muebles.ver', 'carrito.gestionar', 'pedidos.crear'],
         };
     }

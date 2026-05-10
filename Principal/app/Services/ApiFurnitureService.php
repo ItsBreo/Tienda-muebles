@@ -101,7 +101,7 @@ class ApiFurnitureService
     public function getActivityLogs()
     {
         try {
-            $token = session('api_token');
+            $token = session('token');
             if (!$token) {
                 return [];
             }
@@ -111,7 +111,7 @@ class ApiFurnitureService
                 ->get($this->baseUrl . '/api/activity-logs');
 
             if ($response->successful()) {
-                return $response->json('data') ?? [];
+                return $response->json() ?? [];
             }
         } catch (\Exception $e) {
             Log::error('Error fetching activity logs from api_furniture: ' . $e->getMessage());

@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ApiFurnitureService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
-use App\Services\ApiFurnitureService;
 
 class AdminController extends Controller
 {
@@ -15,146 +16,132 @@ class AdminController extends Controller
     public function __construct(ApiFurnitureService $apiFurniture)
     {
         $this->apiFurniture = $apiFurniture;
-        $this->apiUsersUrl  = env('API_USERS_URL', 'http://127.0.0.1:8001');
+        $this->apiUsersUrl = env('API_USERS_URL', 'http://127.0.0.1:8001');
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private function token(): ?string
     {
         return Session::get('token');
     }
 
-    private function sesionId(Request $request): ?string
-    {
-        return $request->query('sesionId', Session::get('session_id'));
-    }
-
-    // =========================================================================
-    // MUEBLES
-    // =========================================================================
-
     public function mueblesIndex(Request $request)
     {
-        $search  = $request->query('search');
+        $search = $request->query('search');
         $filters = $search ? ['q' => $search] : [];
-        $data    = $this->apiFurniture->getFurnitureList($filters);
-        $muebles = collect($data['data'] ?? [])->map(fn($m) => (object) $m);
+        $data = $this->apiFurniture->getFurnitureList($filters);
+        $muebles = collect($data['data'] ?? [])->map(fn ($m) => (object) $m);
 
         return view('admin.muebles.index', [
-            'muebles'  => $muebles,
-            'search'   => $search,
-            'sesionId' => $this->sesionId($request),
+            'muebles' => $muebles,
+            'search' => $search,
         ]);
     }
 
     public function mueblesCreate(Request $request)
     {
-        $categories = collect($this->apiFurniture->getCategories());
+        $categories = collect($this->apiFurniture->getCategories())->map(fn ($category) => (object) $category);
 
         return view('admin.muebles.create', [
             'categories' => $categories,
-            'sesionId'   => $this->sesionId($request),
         ]);
     }
 
     public function mueblesStore(Request $request)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'description' => 'required|string',
-            'price'       => 'required|numeric|min:0',
-            'stock'       => 'required|integer|min:0',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
             'category_id' => 'required|integer',
-            'main_color'  => 'required|string|max:100',
+            'main_color' => 'required|string|max:100',
         ]);
 
-        $response = Http::withToken($this->token())
-            ->attach('image', $request->hasFile('image') ? file_get_contents($request->file('image')->getRealPath()) : null, $request->hasFile('image') ? $request->file('image')->getClientOriginalName() : null)
-            ->post("{$this->apiUsersUrl}/api/furniture", $request->except(['_token', 'image']));
+        $payload = $request->except(['_token', 'image']);
 
-        // Si no hay imagen, usar POST normal
         if ($request->hasFile('image')) {
             $response = Http::withToken($this->token())
                 ->attach('image', file_get_contents($request->file('image')->getRealPath()), $request->file('image')->getClientOriginalName())
-                ->post("http://127.0.0.1:8000/api/furniture", $request->except(['_token', 'image']));
+                ->post($this->apiFurnitureUrl('/api/furniture'), $payload);
         } else {
             $response = Http::withToken($this->token())
-                ->post("http://127.0.0.1:8000/api/furniture", $request->except(['_token', 'image']));
+                ->post($this->apiFurnitureUrl('/api/furniture'), $payload);
         }
 
         if ($response->successful()) {
-            return redirect()->route('admin.muebles.index', ['sesionId' => $this->sesionId($request)])
+            return redirect()->route('admin.muebles.index')
                 ->with('success', 'Mueble creado correctamente.');
         }
 
-        return back()->withErrors($response->json('errors', ['general' => $response->json('message', 'Error al crear el mueble.')]))->withInput();
+        return back()->withErrors($response->json('errors', [
+            'general' => $response->json('message', 'Error al crear el mueble.'),
+        ]))->withInput();
     }
 
     public function mueblesShow($id, Request $request)
     {
         $mueble = $this->apiFurniture->getFurnitureDetail($id);
-        if (!$mueble) abort(404);
+        if (!$mueble) {
+            abort(404);
+        }
 
         return view('admin.muebles.show', [
-            'mueble'   => (object) $mueble,
-            'sesionId' => $this->sesionId($request),
+            'mueble' => $this->normalizarMueble($mueble),
         ]);
     }
 
     public function mueblesEdit($id, Request $request)
     {
-        $mueble     = $this->apiFurniture->getFurnitureDetail($id);
-        $categories = collect($this->apiFurniture->getCategories());
-        if (!$mueble) abort(404);
+        $mueble = $this->apiFurniture->getFurnitureDetail($id);
+        $categories = collect($this->apiFurniture->getCategories())->map(fn ($category) => (object) $category);
+        if (!$mueble) {
+            abort(404);
+        }
 
         return view('admin.muebles.edit', [
-            'mueble'     => (object) $mueble,
+            'mueble' => $this->normalizarMueble($mueble),
             'categories' => $categories,
-            'sesionId'   => $this->sesionId($request),
         ]);
     }
 
     public function mueblesUpdate(Request $request, $id)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'description' => 'required|string',
-            'price'       => 'required|numeric|min:0',
-            'stock'       => 'required|integer|min:0',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
             'category_id' => 'required|integer',
-            'main_color'  => 'required|string|max:100',
+            'main_color' => 'required|string|max:100',
         ]);
 
         if ($request->hasFile('image')) {
             $response = Http::withToken($this->token())
                 ->attach('image', file_get_contents($request->file('image')->getRealPath()), $request->file('image')->getClientOriginalName())
-                ->put("http://127.0.0.1:8000/api/furniture/{$id}", $request->except(['_token', '_method', 'image']));
+                ->put($this->apiFurnitureUrl("/api/furniture/{$id}"), $request->except(['_token', '_method', 'image']));
         } else {
             $response = Http::withToken($this->token())
-                ->put("http://127.0.0.1:8000/api/furniture/{$id}", $request->except(['_token', '_method', 'image']));
+                ->put($this->apiFurnitureUrl("/api/furniture/{$id}"), $request->except(['_token', '_method', 'image']));
         }
 
         if ($response->successful()) {
-            return redirect()->route('admin.muebles.index', ['sesionId' => $this->sesionId($request)])
+            return redirect()->route('admin.muebles.index')
                 ->with('success', 'Mueble actualizado correctamente.');
         }
 
-        return back()->withErrors($response->json('errors', ['general' => $response->json('message', 'Error al actualizar.')]))->withInput();
+        return back()->withErrors($response->json('errors', [
+            'general' => $response->json('message', 'Error al actualizar.'),
+        ]))->withInput();
     }
 
     public function mueblesDestroy($id, Request $request)
     {
         Http::withToken($this->token())
-            ->delete("http://127.0.0.1:8000/api/furniture/{$id}");
+            ->delete($this->apiFurnitureUrl("/api/furniture/{$id}"));
 
-        return redirect()->route('admin.muebles.index', ['sesionId' => $this->sesionId($request)])
+        return redirect()->route('admin.muebles.index')
             ->with('success', 'Mueble eliminado correctamente.');
     }
-
-    // =========================================================================
-    // CATEGORÍAS
-    // =========================================================================
 
     public function categoriasIndex(Request $request)
     {
@@ -162,79 +149,86 @@ class AdminController extends Controller
 
         return view('admin.categorias.index', [
             'categorias' => $categorias,
-            'sesionId'   => $this->sesionId($request),
         ]);
     }
 
     public function categoriasCreate(Request $request)
     {
-        return view('admin.categorias.create', [
-            'sesionId' => $this->sesionId($request),
-        ]);
+        return view('admin.categorias.create');
     }
 
     public function categoriasStore(Request $request)
     {
         $response = Http::withToken($this->token())
-            ->post("http://127.0.0.1:8000/api/categories", $request->except('_token'));
+            ->post($this->apiFurnitureUrl('/api/categories'), $request->except(['_token']));
 
         if ($response->successful()) {
-            return redirect()->route('admin.categorias.index', ['sesionId' => $this->sesionId($request)])
-                ->with('success', 'Categoría creada correctamente.');
+            return redirect()->route('admin.categorias.index')
+                ->with('success', 'Categoria creada correctamente.');
         }
 
-        return back()->withErrors(['general' => $response->json('message', 'Error al crear la categoría.')])->withInput();
+        return back()->withErrors([
+            'general' => $response->json('message', 'Error al crear la categoria.'),
+        ])->withInput();
     }
 
     public function categoriasShow($id, Request $request)
     {
-        $response = Http::get("http://127.0.0.1:8000/api/categories/{$id}");
+        $response = Http::get($this->apiFurnitureUrl("/api/categories/{$id}"));
         $categoria = $response->successful() ? (object) $response->json('data') : null;
-        if (!$categoria) abort(404);
+        if (!$categoria) {
+            abort(404);
+        }
+
+        $categoria->created_at = !empty($categoria->created_at) ? Carbon::parse($categoria->created_at) : null;
+        $categoria->updated_at = !empty($categoria->updated_at) ? Carbon::parse($categoria->updated_at) : null;
+        $categoria->furniture = collect($categoria->furniture ?? [])->map(function ($mueble) {
+            $mueble = (object) $mueble;
+            $mueble->images = collect($mueble->images ?? [])->map(fn ($image) => (object) $image);
+            return $mueble;
+        });
 
         return view('admin.categorias.show', [
             'categoria' => $categoria,
-            'sesionId'  => $this->sesionId($request),
         ]);
     }
 
     public function categoriasEdit($id, Request $request)
     {
-        $response = Http::get("http://127.0.0.1:8000/api/categories/{$id}");
+        $response = Http::get($this->apiFurnitureUrl("/api/categories/{$id}"));
         $categoria = $response->successful() ? (object) $response->json('data') : null;
-        if (!$categoria) abort(404);
+        if (!$categoria) {
+            abort(404);
+        }
 
         return view('admin.categorias.edit', [
             'categoria' => $categoria,
-            'sesionId'  => $this->sesionId($request),
         ]);
     }
 
     public function categoriasUpdate(Request $request, $id)
     {
         $response = Http::withToken($this->token())
-            ->put("http://127.0.0.1:8000/api/categories/{$id}", $request->except(['_token', '_method']));
+            ->put($this->apiFurnitureUrl("/api/categories/{$id}"), $request->except(['_token', '_method']));
 
         if ($response->successful()) {
-            return redirect()->route('admin.categorias.index', ['sesionId' => $this->sesionId($request)])
-                ->with('success', 'Categoría actualizada correctamente.');
+            return redirect()->route('admin.categorias.index')
+                ->with('success', 'Categoria actualizada correctamente.');
         }
 
-        return back()->withErrors(['general' => $response->json('message', 'Error al actualizar.')])->withInput();
+        return back()->withErrors([
+            'general' => $response->json('message', 'Error al actualizar.'),
+        ])->withInput();
     }
 
     public function categoriasDestroy($id, Request $request)
     {
         Http::withToken($this->token())
-            ->delete("http://127.0.0.1:8000/api/categories/{$id}");
+            ->delete($this->apiFurnitureUrl("/api/categories/{$id}"));
 
-        return redirect()->route('admin.categorias.index', ['sesionId' => $this->sesionId($request)])
-            ->with('success', 'Categoría eliminada correctamente.');
+        return redirect()->route('admin.categorias.index')
+            ->with('success', 'Categoria eliminada correctamente.');
     }
-
-    // =========================================================================
-    // USUARIOS
-    // =========================================================================
 
     public function usuariosIndex(Request $request)
     {
@@ -243,22 +237,48 @@ class AdminController extends Controller
 
         $users = [];
         if ($response->successful()) {
-            $users = collect($response->json('data') ?? [])->map(fn($u) => (object) $u);
+            $users = collect($response->json('data') ?? [])->map(function ($u) {
+                $user = (object) $u;
+                $user->last_login_at = $user->last_login_at ? Carbon::parse($user->last_login_at) : null;
+                $user->created_at = $user->created_at ? Carbon::parse($user->created_at) : null;
+                if (isset($user->role)) {
+                    $user->role = (object) $user->role;
+                }
+                return $user;
+            });
         }
 
         return view('admin.usuarios.index', [
-            'users'    => $users,
-            'sesionId' => $this->sesionId($request),
+            'users' => $users,
         ]);
     }
 
-    // =========================================================================
-    // ACTIVITY LOGS
-    // =========================================================================
-
     public function logs(Request $request)
     {
-        $logs = $this->apiFurniture->getActivityLogs();
-        return view('admin.logs', compact('logs'));
+        $response = $this->apiFurniture->getActivityLogs();
+        $rawLogs = $response['data']['data'] ?? [];
+        $logs = collect($rawLogs)->map(fn ($log) => (object) $log);
+
+        return view('admin.logs', [
+            'logs' => $logs,
+            'pagination' => $response['data'] ?? null,
+        ]);
+    }
+
+    private function apiFurnitureUrl(string $path): string
+    {
+        return rtrim(env('API_FURNITURE_URL', 'http://127.0.0.1:8002'), '/') . $path;
+    }
+
+    private function normalizarMueble(array $mueble): object
+    {
+        $mueble = (object) $mueble;
+        $mueble->images = collect($mueble->images ?? [])->map(fn ($image) => (object) $image);
+
+        if (isset($mueble->category) && is_array($mueble->category)) {
+            $mueble->category = (object) $mueble->category;
+        }
+
+        return $mueble;
     }
 }

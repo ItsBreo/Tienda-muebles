@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Usuarios - Tienda</title>
+    <title>Gestion de Usuarios - Tienda</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
 
     <style>
         :root { --bs-primary: #565254; --bs-secondary: #7A7D7D; --bs-timberwolf: #D0CFCF; --bs-snow: #FFFBFE; }
@@ -22,15 +21,17 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Panel de Control</a>
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('admin.muebles.index') }}">
+                    <img src="{{ asset('images/JJDAY.png') }}" alt="Logo" style="height: 30px;" class="me-2">
+                    Panel de Control
+                </a>
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
-                        <li class="nav-item"><span class="nav-link">Admin</span></li>
+                        <li class="nav-item"><span class="nav-link">{{ session('user.rol_name') }}</span></li>
                         <li class="nav-item">
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
-                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
-                                <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">Cerrar Sesión</button>
+                                <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">Cerrar Sesion</button>
                             </form>
                         </li>
                     </ul>
@@ -43,11 +44,11 @@
         <div class="row">
             <div class="col-md-3 col-lg-2 sidebar pt-3">
                 <div class="nav flex-column nav-pills">
-                    <a class="nav-link" href="{{ route('principal', ['sesionId' => $sesionId]) }}">Ir a la tienda</a>
-                    <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
-                    <a class="nav-link" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorías</a>
-                    <a class="nav-link active" href="{{ route('admin.usuarios.index', ['sesionId' => $sesionId]) }}">Usuarios</a>
-                    <a class="nav-link" href="{{ route('admin.logs', ['sesionId' => $sesionId]) }}">📋 Logs de Actividad</a>
+                    <a class="nav-link" href="{{ route('principal') }}">Ir a la tienda</a>
+                    <a class="nav-link" href="{{ route('admin.muebles.index') }}">Muebles</a>
+                    <a class="nav-link" href="{{ route('admin.categorias.index') }}">Categorias</a>
+                    <a class="nav-link active" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.logs') }}">Logs de Actividad</a>
                 </div>
             </div>
 
@@ -64,7 +65,7 @@
                                         <th>Nombre</th>
                                         <th>Email</th>
                                         <th>Rol</th>
-                                        <th>Último Acceso</th>
+                                        <th>Ultimo Acceso</th>
                                         <th>Registrado el</th>
                                     </tr>
                                 </thead>
@@ -72,10 +73,8 @@
                                     @foreach($users as $user)
                                         <tr>
                                             <td>{{ $user->id }}</td>
-
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    {{-- Avatar generado con las iniciales (opcional, queda bonito) --}}
                                                     <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center me-2"
                                                          style="width: 35px; height: 35px; font-size: 0.9rem;">
                                                         {{ strtoupper(substr($user->name, 0, 2)) }}
@@ -83,20 +82,16 @@
                                                     {{ $user->name }}
                                                 </div>
                                             </td>
-
                                             <td>{{ $user->email }}</td>
-
                                             <td>
-                                                @if($user->hasRole('Admin'))
+                                                @if(isset($user->role) && $user->role->name === 'Admin')
                                                     <span class="badge bg-primary">Administrador</span>
                                                 @else
                                                     <span class="badge bg-secondary">Cliente</span>
                                                 @endif
                                             </td>
-
                                             <td>
                                                 @if($user->last_login_at)
-                                                    {{-- Muestra "Hace 2 horas" --}}
                                                     <span class="text-success fw-bold">
                                                         {{ $user->last_login_at->diffForHumans() }}
                                                     </span>
@@ -106,8 +101,7 @@
                                                     <span class="text-muted fst-italic">Nunca</span>
                                                 @endif
                                             </td>
-
-                                            <td>{{ $user->created_at->format('d/m/Y') }}</td>
+                                            <td>{{ $user->created_at ? $user->created_at->format('d/m/Y') : 'N/A' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

@@ -16,14 +16,26 @@ class EsAdmin
     {
         $user = Session::get('user');
 
+        if ($request->has('sesionId')) {
+            $query = $request->query();
+            unset($query['sesionId']);
+
+            $target = $request->url();
+            if (!empty($query)) {
+                $target .= '?' . http_build_query($query);
+            }
+
+            return redirect()->to($target);
+        }
+
         if (!$user) {
             return redirect()->route('login.show')
                 ->withErrors(['errorCredenciales' => 'Debes iniciar sesión para acceder a esta sección.']);
         }
 
-        if (($user['rol_name'] ?? '') !== 'Admin') {
+        if (!in_array($user['rol_name'] ?? '', ['Admin', 'Gestor'])) {
             return redirect()->route('principal')
-                ->withErrors(['acceso' => 'No tienes permisos para acceder al panel de administración.']);
+                ->withErrors(['acceso' => 'No tienes permisos suficientes para acceder a esta sección.']);
         }
 
         return $next($request);

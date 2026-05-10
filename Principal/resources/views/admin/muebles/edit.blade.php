@@ -7,10 +7,9 @@
     <title>Editar Mueble - Tienda</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        crossorigin="anonymous">
 
     <style>
-        /* Paleta */
         :root {
             --bs-davys-gray: #565254;
             --bs-gray-medium: #7A7D7D;
@@ -38,10 +37,6 @@
         .navbar-custom .nav-link,
         .navbar-custom .btn-link {
             color: var(--bs-snow) !important;
-        }
-
-        .navbar-custom .btn-link:hover {
-            color: var(--bs-timberwolf) !important;
         }
 
         .sidebar {
@@ -72,7 +67,6 @@
             margin-top: auto;
         }
 
-        /* Ajuste para que las cards de la galería sean iguales */
         .gallery-card {
             height: 100%;
             display: flex;
@@ -86,7 +80,6 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-
                 <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">
                     Panel de Control
                 </a>
@@ -100,7 +93,7 @@
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-link nav-link" style="text-decoration: none;">
-                                    Cerrar Sesión
+                                    Cerrar Sesion
                                 </button>
                             </form>
                         </li>
@@ -112,7 +105,6 @@
 
     <main class="container-fluid flex-grow-1">
         <div class="row">
-
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
                     <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
@@ -122,11 +114,8 @@
             </div>
 
             <div class="col-md-9 col-lg-10 p-4">
-
-                {{-- Título --}}
                 <h1 class="mb-4 text-primary">Editar Mueble: {{ $mueble->name }}</h1>
 
-                {{-- Mensajes de feedback --}}
                 @if (session('success'))
                     <div class="alert alert-success">{{ session('success') }}</div>
                 @endif
@@ -146,8 +135,7 @@
                         <h5 class="card-title text-primary">Detalles del Mueble</h5>
                         <hr>
 
-                        {{-- Ruta UPDATE: Pasamos el objeto $mueble --}}
-                        <form action="{{ route('admin.muebles.update', $mueble) }}" method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('admin.muebles.update', ['mueble' => $mueble->id]) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
 
@@ -171,18 +159,16 @@
                                 </div>
 
                                 <div class="col-12">
-                                    <label for="description" class="form-label">Descripción</label>
+                                    <label for="description" class="form-label">Descripcion</label>
                                     <textarea class="form-control" id="description" name="description" rows="3" required>{{ old('description', $mueble->description) }}</textarea>
                                 </div>
 
                                 <div class="col-md-4">
-                                    <label for="category_id" class="form-label">Categoría</label>
+                                    <label for="category_id" class="form-label">Categoria</label>
                                     <select class="form-select" id="category_id" name="category_id" required>
-                                        <option value="">Seleccione una categoría...</option>
+                                        <option value="">Seleccione una categoria...</option>
                                         @foreach ($categories as $category)
-                                            <option value="{{ $category->id }}"
-
-                                                @if (old('category_id', $mueble->category_id) == $category->id) selected @endif>
+                                            <option value="{{ $category->id }}" @if (old('category_id', $mueble->category_id) == $category->id) selected @endif>
                                                 {{ $category->name }}
                                             </option>
                                         @endforeach
@@ -214,11 +200,10 @@
 
                                 <div class="col-md-6 d-flex align-items-end">
                                     <div class="form-check">
-
                                         <input class="form-check-input" type="checkbox" id="is_salient"
                                             name="is_salient" value="1"
                                             @if (old('is_salient', $mueble->is_salient)) checked @endif>
-                                        <label class="form-check-label" for="is_salient">¿Es un producto destacado?</label>
+                                        <label class="form-check-label" for="is_salient">Es un producto destacado</label>
                                     </div>
                                 </div>
 
@@ -233,46 +218,23 @@
 
                 <div class="card shadow-sm border-0 mt-4 mb-5">
                     <div class="card-body">
-                        <h5 class="card-title text-primary">Galería de Imágenes</h5>
+                        <h5 class="card-title text-primary">Galeria de Imagenes</h5>
                         <hr>
 
-                        {{-- Usamos la ruta de galería pasando el ID del mueble --}}
-                        <form action="{{ route('productos.galeria.store', ['mueble' => $mueble->id]) }}"
-                            method="POST" enctype="multipart/form-data" class="mb-4">
-                            @csrf
-
-                            <div class="mb-3">
-                                <label for="images" class="form-label">Añadir nuevas imágenes adicionales</label>
-                                <input type="file" class="form-control" id="images" name="images[]" multiple required>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Subir Imágenes</button>
-                        </form>
-
-                        @if ($mueble->images->isNotEmpty())
+                        @if (collect($mueble->images ?? [])->isNotEmpty())
                             <div class="row g-3">
                                 @foreach ($mueble->images as $image)
                                     <div class="col-md-3">
                                         <div class="card gallery-card">
-
-                                            {{-- Vista Previa --}}
                                             <img src="{{ asset($image->image_path) }}" class="card-img-top"
-                                                 alt="Imagen galería" style="height: 150px; object-fit: cover;">
+                                                alt="Imagen galeria" style="height: 150px; object-fit: cover;">
 
                                             <div class="card-body text-center d-flex align-items-end justify-content-center">
-
-                                                {{-- Formulario BORRAR IMAGEN --}}
-                                                {{-- Pasamos ID mueble e ID imagen con route binding --}}
-                                                <form action="{{ route('productos.galeria.destroy', ['mueble' => $mueble->id, 'image' => $image->id]) }}"
-                                                      method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                        onclick="return confirm('¿Seguro que quieres eliminar esta imagen?');">
-                                                        Eliminar
-                                                    </button>
-                                                </form>
-
+                                                @if($image->is_primary)
+                                                    <span class="badge bg-success">Principal</span>
+                                                @else
+                                                    <span class="badge bg-secondary">Galeria</span>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -280,13 +242,11 @@
                             </div>
                         @else
                             <div class="alert alert-info mt-3">
-                                Este mueble aún no tiene imágenes adicionales en su galería.
+                                Este mueble aun no tiene imagenes adicionales en su galeria.
                             </div>
                         @endif
-
                     </div>
                 </div>
-
             </div>
         </div>
     </main>
@@ -298,8 +258,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
-    </script>
+        crossorigin="anonymous"></script>
 </body>
 
 </html>

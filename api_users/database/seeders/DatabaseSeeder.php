@@ -31,13 +31,24 @@ class DatabaseSeeder extends Seeder
             'role_id'  => $adminRole->id,
         ]);
 
-        // 4. Crear usuario de prueba (Cliente)
+        // 3.5 Buscar rol Gestor y crear usuario
+        $gestorRole = Role::where('name', 'Gestor')->first();
+        User::factory()->create([
+            'name'     => 'Gestor',
+            'surname'  => 'User',
+            'email'    => 'gestor@tienda.com',
+            'password' => bcrypt('1234'),
+            'role_id'  => $gestorRole->id,
+        ]);
+
+        // 4. Buscar rol Cliente y crear usuario de prueba
+        $clienteRole = Role::where('name', 'Cliente')->first();
         User::factory()->create([
             'name'     => 'Usuario',
             'surname'  => 'Prueba',
             'email'    => 'usuario@tienda.com',
             'password' => bcrypt('1234'),
-            'role_id'  => 3,
+            'role_id'  => $clienteRole->id,
         ]);
 
         // 5. Crear 50 usuarios de prueba

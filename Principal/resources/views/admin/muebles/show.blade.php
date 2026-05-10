@@ -5,22 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalle del Mueble - Tienda</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
     <style>
-        /* Paleta */
         :root {
             --bs-davys-gray: #565254;
             --bs-gray-medium: #7A7D7D;
             --bs-timberwolf: #D0CFCF;
             --bs-snow: #FFFBFE;
-            --bs-primary: var(--bs-davys-gray); /* Color principal: Gris Oscuro */
-            --bs-secondary: var(--bs-gray-medium); /* Color secundario: Gris Medio */
+            --bs-primary: var(--bs-davys-gray);
+            --bs-secondary: var(--bs-gray-medium);
         }
 
         body {
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bs-timberwolf); /* Fondo de página gris claro */
+            background-color: var(--bs-timberwolf);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -31,6 +30,7 @@
             color: var(--bs-snow);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .navbar-custom .navbar-brand,
         .navbar-custom .nav-link {
             color: var(--bs-snow) !important;
@@ -38,15 +38,17 @@
 
         .sidebar {
             width: 250px;
-            background-color: var(--bs-secondary); /* Gris Medio */
+            background-color: var(--bs-secondary);
             padding-top: 1rem;
-            min-height: calc(100vh - 56px); /* 100vh menos altura del navbar */
+            min-height: calc(100vh - 56px);
         }
+
         .sidebar .nav-link {
             color: var(--bs-snow);
             padding: 0.75rem 1rem;
             border-left: 3px solid transparent;
         }
+
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
             color: var(--bs-primary);
@@ -56,11 +58,12 @@
         }
 
         .footer-custom {
-            background-color: var(--bs-primary); /* Gris Oscuro */
+            background-color: var(--bs-primary);
             color: var(--bs-snow);
             padding: 1rem 0;
-            margin-top: auto; /* Empuja el footer hacia abajo */
+            margin-top: auto;
         }
+
         .detail-label {
             font-weight: 600;
             color: var(--bs-secondary);
@@ -72,19 +75,16 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Panel de Control</a>
+                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">Panel de Control</a>
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
                             <a class="nav-link" href="#">Usuario (Admin)</a>
                         </li>
                         <li class="nav-item">
-
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
-                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
-                                <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">Cerrar Sesión</button>
+                                <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">Cerrar Sesion</button>
                             </form>
                         </li>
                     </ul>
@@ -95,13 +95,11 @@
 
     <main class="container-fluid flex-grow-1">
         <div class="row">
-
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-
-                    <a class="nav-link" href="{{ route('admin.usuarios.index', ['sesionId' => $sesionId]) }}">Usuarios</a>
-                    <a class="nav-link" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorias</a>
-                    <a class="nav-link active" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
+                    <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.categorias.index') }}">Categorias</a>
+                    <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
                 </div>
             </div>
 
@@ -111,26 +109,25 @@
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="card-title text-primary mb-0">{{ $mueble->name}}</h5>
+                            <h5 class="card-title text-primary mb-0">{{ $mueble->name }}</h5>
                             <div>
-
-                                <a href="{{ route('admin.muebles.edit', ['sesionId' => $sesionId, 'mueble' => $mueble->id]) }}" class="btn btn-secondary">Editar</a>
-                                <a href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}" class="btn btn-outline-secondary">Volver al listado</a>
+                                <a href="{{ route('admin.muebles.edit', ['mueble' => $mueble->id]) }}" class="btn btn-secondary">Editar</a>
+                                <a href="{{ route('admin.muebles.index') }}" class="btn btn-outline-secondary">Volver al listado</a>
                             </div>
                         </div>
                         <hr>
                         <div class="row g-3">
-                            <div class="col-md-6"><p><span class="detail-label">ID:</span> {{ $mueble->id}}</p></div>
-                            <div class="col-md-6"><p><span class="detail-label">Categoría ID:</span> {{ $mueble->category_id }}</p></div>
-                            <div class="col-md-6"><p><span class="detail-label">Precio:</span> {{ number_format($mueble->price, 2) }} €</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">ID:</span> {{ $mueble->id }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Categoria ID:</span> {{ $mueble->category_id }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Precio:</span> {{ number_format($mueble->price, 2) }} EUR</p></div>
                             <div class="col-md-6"><p><span class="detail-label">Stock:</span> {{ $mueble->stock }}</p></div>
-                            <div class="col-12"><p><span class="detail-label">Descripción:</span><br>{{ $mueble->description }}</p></div>
+                            <div class="col-12"><p><span class="detail-label">Descripcion:</span><br>{{ $mueble->description }}</p></div>
                             <div class="col-md-6"><p><span class="detail-label">Materiales:</span> {{ $mueble->materials ?: 'No especificado' }}</p></div>
                             <div class="col-md-6"><p><span class="detail-label">Dimensiones:</span> {{ $mueble->dimensions ?: 'No especificado' }}</p></div>
                             <div class="col-md-6"><p><span class="detail-label">Color Principal:</span> {{ $mueble->main_color }}</p></div>
-                            <div class="col-md-6"><p><span class="detail-label">Destacado:</span> {{ $mueble->is_salient ? 'Sí' : 'No' }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Destacado:</span> {{ $mueble->is_salient ? 'Si' : 'No' }}</p></div>
                             <div class="col-12">
-                                <p class="detail-label">Imágenes:</p>
+                                <p class="detail-label">Imagenes:</p>
                                 @forelse ($mueble->images as $image)
                                     <div class="mb-2">
                                         <img src="{{ asset($image->image_path) }}" alt="{{ $image->alt_text ?? 'Imagen' }}" style="max-width: 150px; max-height: 150px; object-fit: cover;">
@@ -139,7 +136,7 @@
                                         @endif
                                     </div>
                                 @empty
-                                    <span class="text-muted">No hay imágenes asociadas.</span>
+                                    <span class="text-muted">No hay imagenes asociadas.</span>
                                 @endforelse
                             </div>
                         </div>
@@ -155,6 +152,6 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
 </html>

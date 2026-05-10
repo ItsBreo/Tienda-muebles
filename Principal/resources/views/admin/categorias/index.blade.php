@@ -80,12 +80,15 @@
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
                 {{-- Enlace al Dashboard --}}
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Panel de Control</a>
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">
+                    <img src="{{ asset('images/JJDAY.png') }}" alt="Logo" style="height: 30px;" class="me-2">
+                    Panel de Control
+                </a>
 
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <span class="nav-link">Usuario (Admin)</span>
+                            <span class="nav-link">{{ session('user.rol_name') }}</span>
                         </li>
                         <li class="nav-item">
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">

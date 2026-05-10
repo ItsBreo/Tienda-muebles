@@ -4,13 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle de Categoría - Tienda</title>
+    <title>Detalle de Categoria - Tienda</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
     <style>
-        /* Paleta idéntica al resto */
         :root {
             --bs-davys-gray: #565254;
             --bs-gray-medium: #7A7D7D;
@@ -38,10 +37,6 @@
         .navbar-custom .nav-link,
         .navbar-custom .btn-link {
             color: var(--bs-snow) !important;
-        }
-
-        .navbar-custom .btn-link:hover {
-            color: var(--bs-timberwolf) !important;
         }
 
         .sidebar {
@@ -93,7 +88,7 @@
                                 @csrf
                                 <input type="hidden" name="sesionId" value="{{ $sesionId }}">
                                 <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">
-                                    Cerrar Sesión
+                                    Cerrar Sesion
                                 </button>
                             </form>
                         </li>
@@ -105,25 +100,22 @@
 
     <main class="container-fluid flex-grow-1">
         <div class="row">
-
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
                     <a class="nav-link" href="{{ route('admin.usuarios.index', ['sesionId' => $sesionId]) }}">Usuarios</a>
                     <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
-                    <a class="nav-link active" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorías</a>
+                    <a class="nav-link active" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorias</a>
                 </div>
             </div>
 
             <div class="col-md-9 col-lg-10 p-4">
-
-                {{-- Título y Botones Superiores --}}
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h1 class="text-primary mb-0">Detalle de Categoría</h1>
+                    <h1 class="text-primary mb-0">Detalle de Categoria</h1>
                     <div>
-                        <a href="{{ route('admin.categorias.edit', $categoria) }}" class="btn btn-secondary">
-                            Editar Categoría
+                        <a href="{{ route('admin.categorias.edit', ['sesionId' => $sesionId, 'categoria' => $categoria->id]) }}" class="btn btn-secondary">
+                            Editar Categoria
                         </a>
-                        <a href="{{ route('admin.categorias.index') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}" class="btn btn-outline-secondary">
                             Volver al Listado
                         </a>
                     </div>
@@ -131,7 +123,7 @@
 
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-body">
-                        <h5 class="card-title text-primary">Información General</h5>
+                        <h5 class="card-title text-primary">Informacion General</h5>
                         <hr>
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -143,16 +135,16 @@
                                 <p>#{{ $categoria->id }}</p>
                             </div>
                             <div class="col-12 mb-3">
-                                <label class="fw-bold text-muted">Descripción:</label>
+                                <label class="fw-bold text-muted">Descripcion:</label>
                                 <p class="bg-light p-3 rounded border">
                                     {{ $categoria->description }}
                                 </p>
                             </div>
                             <div class="col-md-6">
-                                <small class="text-muted">Creado el: {{ $categoria->created_at->format('d/m/Y H:i') }}</small>
+                                <small class="text-muted">Creado el: {{ optional($categoria->created_at)->format('d/m/Y H:i') ?? 'N/D' }}</small>
                             </div>
                             <div class="col-md-6">
-                                <small class="text-muted">Última actualización: {{ $categoria->updated_at->format('d/m/Y H:i') }}</small>
+                                <small class="text-muted">Ultima actualizacion: {{ optional($categoria->updated_at)->format('d/m/Y H:i') ?? 'N/D' }}</small>
                             </div>
                         </div>
                     </div>
@@ -160,12 +152,10 @@
 
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
-                        <h5 class="card-title text-primary">Muebles en esta Categoría</h5>
+                        <h5 class="card-title text-primary">Muebles en esta Categoria</h5>
                         <hr>
 
-                        {{-- Comprobamos si la categoría tiene muebles usando la relación --}}
-                        {{-- NOTA: Asumo que en tu modelo Category la relación se llama 'furniture' o 'muebles' --}}
-                        @if ($categoria->furniture->isNotEmpty())
+                        @if (collect($categoria->furniture ?? [])->isNotEmpty())
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle">
                                     <thead class="table-light">
@@ -182,7 +172,7 @@
                                             <tr>
                                                 <td>{{ $mueble->id }}</td>
                                                 <td class="fw-bold">{{ $mueble->name }}</td>
-                                                <td>{{ number_format($mueble->price, 2) }} €</td>
+                                                <td>{{ number_format($mueble->price, 2) }} EUR</td>
                                                 <td>
                                                     @if($mueble->stock > 0)
                                                         <span class="badge bg-success">{{ $mueble->stock }} unid.</span>
@@ -191,8 +181,7 @@
                                                     @endif
                                                 </td>
                                                 <td class="text-end">
-                                                    {{-- Botón para ir a ver ese mueble específico --}}
-                                                    <a href="{{ route('admin.muebles.show', $mueble) }}"
+                                                    <a href="{{ route('admin.muebles.show', ['sesionId' => $sesionId, 'mueble' => $mueble->id]) }}"
                                                        class="btn btn-sm btn-info text-white">
                                                         Ver Mueble
                                                     </a>
@@ -204,13 +193,11 @@
                             </div>
                         @else
                             <div class="alert alert-warning">
-                                No hay muebles registrados en esta categoría actualmente.
+                                No hay muebles registrados en esta categoria actualmente.
                             </div>
                         @endif
-
                     </div>
                 </div>
-
             </div>
         </div>
     </main>

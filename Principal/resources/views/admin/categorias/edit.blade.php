@@ -10,7 +10,6 @@
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
     <style>
-        /* Paleta */
         :root {
             --bs-davys-gray: #565254;
             --bs-gray-medium: #7A7D7D;
@@ -38,10 +37,6 @@
         .navbar-custom .nav-link,
         .navbar-custom .btn-link {
             color: var(--bs-snow) !important;
-        }
-
-        .navbar-custom .btn-link:hover {
-            color: var(--bs-timberwolf) !important;
         }
 
         .sidebar {
@@ -79,23 +74,20 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('admin.muebles.index') }}">
+                    <img src="{{ asset('images/JJDAY.png') }}" alt="Logo" style="height: 30px;" class="me-2">
                     Panel de Control
                 </a>
 
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <span class="nav-link">Usuario (Admin)</span>
+                            <span class="nav-link">{{ session('user.rol_name') }}</span>
                         </li>
                         <li class="nav-item">
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
-                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
-                                <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">
-                                    Cerrar Sesión
-                                </button>
+                                <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">Cerrar Sesión</button>
                             </form>
                         </li>
                     </ul>
@@ -109,18 +101,18 @@
 
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-                    <a class="nav-link" href="{{ route('admin.usuarios.index', ['sesionId' => $sesionId]) }}">Usuarios</a>
-                    <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
-                    <a class="nav-link active" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorías</a>
+                    <a class="nav-link" href="{{ route('principal') }}">Ir a la tienda</a>
+                    <a class="nav-link" href="{{ route('admin.muebles.index') }}">Muebles</a>
+                    <a class="nav-link active" href="{{ route('admin.categorias.index') }}">Categorías</a>
+                    <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.logs') }}">Logs de Actividad</a>
                 </div>
             </div>
 
             <div class="col-md-9 col-lg-10 p-4">
 
-                {{-- Título --}}
                 <h1 class="mb-4 text-primary">Editar Categoría: {{ $categoria->name }}</h1>
 
-                {{-- Mensajes de feedback --}}
                 @if (session('success'))
                     <div class="alert alert-success">{{ session('success') }}</div>
                 @endif
@@ -140,16 +132,13 @@
                         <h5 class="card-title text-primary">Detalles de la Categoría</h5>
                         <hr>
 
-                        {{-- Formulario para actualizar la categoría --}}
-                        {{-- Asegúrate de que esta ruta existe en tu web.php --}}
-                        <form action="{{ route('admin.categorias.update', $categoria) }}" method="POST">
+                        <form action="{{ route('admin.categorias.update', ['categoria' => $categoria->id]) }}" method="POST">
                             @csrf
-                            @method('PUT') {{-- Método PUT obligatorio para updates --}}
+                            @method('PUT')
 
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="name" class="form-label">Nombre de la Categoría</label>
-                                    {{-- Value: recupera el dato viejo si falla validación, o el de la BD --}}
                                     <input type="text" class="form-control" id="name" name="name"
                                         value="{{ old('name', $categoria->name) }}" required>
                                 </div>
@@ -161,7 +150,7 @@
 
                                 <div class="col-12 mt-4">
                                     <button type="submit" class="btn btn-primary">Actualizar Categoría</button>
-                                    <a href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}" class="btn btn-secondary">Cancelar</a>
+                                    <a href="{{ route('admin.categorias.index') }}" class="btn btn-secondary">Cancelar</a>
                                 </div>
                             </div>
                         </form>

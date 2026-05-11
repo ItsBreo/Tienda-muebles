@@ -235,22 +235,159 @@ class AdminController extends Controller
         $response = Http::withToken($this->token())
             ->get("{$this->apiUsersUrl}/api/users");
 
+        if ($response->status() === 403) {
+            return redirect()->route('admin.muebles.index')
+                ->withErrors(['acceso' => 'No tienes permisos para gestionar usuarios.']);
+        }
+
         $users = [];
         if ($response->successful()) {
             $users = collect($response->json('data') ?? [])->map(function ($u) {
-                $user = (object) $u;
-                $user->last_login_at = $user->last_login_at ? Carbon::parse($user->last_login_at) : null;
-                $user->created_at = $user->created_at ? Carbon::parse($user->created_at) : null;
-                if (isset($user->role)) {
-                    $user->role = (object) $user->role;
-                }
-                return $user;
+                return $this->normalizarUsuario($u);
             });
         }
 
         return view('admin.usuarios.index', [
             'users' => $users,
         ]);
+    }
+
+    public function usuariosCreate(Request $request)
+    {
+        $roles = $this->fetchRoles();
+
+        return view('admin.usuarios.create', [
+            'roles' => $roles,
+        ]);
+    }
+
+    public function usuariosStore(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'surname' => 'nullable|string|max:255',
+            'email' => 'required|email',
+            'password' => 'required|min:4',
+            'role_id' => 'required|integer',
+        ]);
+
+        $response = Http::withToken($this->token())
+            ->post("{$this->apiUsersUrl}/api/users", $request->except(['_token']));
+
+        if ($response->successful()) {
+            return redirect()->route('admin.usuarios.index')
+                ->with('success', 'Usuario creado correctamente.');
+        }
+
+        return back()->withErrors($response->json('errors', [
+            'general' => $response->json('message', 'Error al crear el usuario.'),
+        ]))->withInput();
+    }
+
+    public function usuariosShow($id, Request $request)
+    {
+        $response = Http::withToken($this->token())
+            ->get("{$this->apiUsersUrl}/api/users/{$id}");
+
+        if (!$response->successful()) {
+            abort($response->status() === 404 ? 404 : 403);
+        }
+
+        $user = $this->normalizarUsuario($response->json('data') ?? []);
+
+        return view('admin.usuarios.show', [
+            'user' => $user,
+        ]);
+    }
+
+    public function usuariosEdit($id, Request $request)
+    {
+        $response = Http::withToken($this->token())
+            ->get("{$this->apiUsersUrl}/api/users/{$id}");
+
+        if (!$response->successful()) {
+            abort($response->status() === 404 ? 404 : 403);
+        }
+
+        $user = $this->normalizarUsuario($response->json('data') ?? []);
+        $roles = $this->fetchRoles();
+
+        return view('admin.usuarios.edit', [
+            'user' => $user,
+            'roles' => $roles,
+        ]);
+    }
+
+    public function usuariosUpdate(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'surname' => 'nullable|string|max:255',
+            'email' => 'required|email',
+            'password' => 'nullable|min:4',
+            'role_id' => 'required|integer',
+        ]);
+
+        $payload = $request->except(['_token', '_method']);
+        if (empty($payload['password'])) {
+            unset($payload['password']);
+        }
+
+        $response = Http::withToken($this->token())
+            ->put("{$this->apiUsersUrl}/api/users/{$id}", $payload);
+
+        if ($response->successful()) {
+            return redirect()->route('admin.usuarios.index')
+                ->with('success', 'Usuario actualizado correctamente.');
+        }
+
+        return back()->withErrors($response->json('errors', [
+            'general' => $response->json('message', 'Error al actualizar el usuario.'),
+        ]))->withInput();
+    }
+
+    public function usuariosDestroy($id, Request $request)
+    {
+        $currentUserId = Session::get('user.id');
+        if ((int) $currentUserId === (int) $id) {
+            return redirect()->route('admin.usuarios.index')
+                ->withErrors(['general' => 'No puedes eliminar tu propio usuario.']);
+        }
+
+        $response = Http::withToken($this->token())
+            ->delete("{$this->apiUsersUrl}/api/users/{$id}");
+
+        if ($response->successful()) {
+            return redirect()->route('admin.usuarios.index')
+                ->with('success', 'Usuario eliminado correctamente.');
+        }
+
+        return redirect()->route('admin.usuarios.index')
+            ->withErrors(['general' => $response->json('message', 'Error al eliminar el usuario.')]);
+    }
+
+    private function fetchRoles(): \Illuminate\Support\Collection
+    {
+        $response = Http::withToken($this->token())
+            ->get("{$this->apiUsersUrl}/api/roles");
+
+        if (!$response->successful()) {
+            return collect();
+        }
+
+        return collect($response->json('data') ?? [])->map(fn ($role) => (object) $role);
+    }
+
+    private function normalizarUsuario($u): object
+    {
+        $user = (object) $u;
+        $user->last_login_at = !empty($user->last_login_at) ? Carbon::parse($user->last_login_at) : null;
+        $user->created_at = !empty($user->created_at) ? Carbon::parse($user->created_at) : null;
+        $user->updated_at = !empty($user->updated_at) ? Carbon::parse($user->updated_at) : null;
+        if (isset($user->role) && is_array($user->role)) {
+            $user->role = (object) $user->role;
+        }
+        return $user;
     }
 
     public function logs(Request $request)

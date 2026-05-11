@@ -75,11 +75,14 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index') }}">Panel de Control</a>
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('admin.muebles.index') }}">
+                    <img src="{{ asset('images/JJDAY.png') }}" alt="Logo" style="height: 30px;" class="me-2">
+                    Panel de Control
+                </a>
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Usuario (Admin)</a>
+                            <span class="nav-link">{{ session('user.rol_name') }}</span>
                         </li>
                         <li class="nav-item">
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
@@ -97,9 +100,11 @@
         <div class="row">
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-                    <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
-                    <a class="nav-link" href="{{ route('admin.categorias.index') }}">Categorias</a>
+                    <a class="nav-link" href="{{ route('principal') }}">Ir a la tienda</a>
                     <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
+                    <a class="nav-link" href="{{ route('admin.categorias.index') }}">Categorías</a>
+                    <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.logs') }}">Logs de Actividad</a>
                 </div>
             </div>
 
@@ -118,7 +123,7 @@
                         <hr>
                         <div class="row g-3">
                             <div class="col-md-6"><p><span class="detail-label">ID:</span> {{ $mueble->id }}</p></div>
-                            <div class="col-md-6"><p><span class="detail-label">Categoria ID:</span> {{ $mueble->category_id }}</p></div>
+                            <div class="col-md-6"><p><span class="detail-label">Categoría:</span> {{ $mueble->category->name ?? 'Sin categoría' }}</p></div>
                             <div class="col-md-6"><p><span class="detail-label">Precio:</span> {{ number_format($mueble->price, 2) }} EUR</p></div>
                             <div class="col-md-6"><p><span class="detail-label">Stock:</span> {{ $mueble->stock }}</p></div>
                             <div class="col-12"><p><span class="detail-label">Descripcion:</span><br>{{ $mueble->description }}</p></div>

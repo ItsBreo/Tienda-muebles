@@ -67,8 +67,14 @@ Route::prefix('admin')->name('admin.')->middleware('es.admin')->group(function (
     Route::put('/categorias/{categoria}',  [AdminController::class, 'categoriasUpdate'])->name('categorias.update');
     Route::delete('/categorias/{categoria}', [AdminController::class, 'categoriasDestroy'])->name('categorias.destroy');
 
-    // Usuarios (solo lectura)
-    Route::get('/usuarios', [AdminController::class, 'usuariosIndex'])->name('usuarios.index');
+    // Usuarios
+    Route::get('/usuarios',                  [AdminController::class, 'usuariosIndex'])->name('usuarios.index');
+    Route::get('/usuarios/crear',            [AdminController::class, 'usuariosCreate'])->name('usuarios.create');
+    Route::post('/usuarios',                 [AdminController::class, 'usuariosStore'])->name('usuarios.store');
+    Route::get('/usuarios/{usuario}',        [AdminController::class, 'usuariosShow'])->name('usuarios.show');
+    Route::get('/usuarios/{usuario}/editar', [AdminController::class, 'usuariosEdit'])->name('usuarios.edit');
+    Route::put('/usuarios/{usuario}',        [AdminController::class, 'usuariosUpdate'])->name('usuarios.update');
+    Route::delete('/usuarios/{usuario}',     [AdminController::class, 'usuariosDestroy'])->name('usuarios.destroy');
 
     // Activity Logs
     Route::get('/logs', [AdminController::class, 'logs'])->name('logs');

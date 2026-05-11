@@ -8,7 +8,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
     <style>
-        /* Paleta */
         :root {
             --bs-davys-gray: #565254;
             --bs-gray-medium: #7A7D7D;
@@ -32,7 +31,8 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .navbar-custom .navbar-brand,
-        .navbar-custom .nav-link {
+        .navbar-custom .nav-link,
+        .navbar-custom .btn-link {
             color: var(--bs-snow) !important;
         }
 
@@ -68,11 +68,14 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Panel de Control</a>
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('admin.muebles.index') }}">
+                    <img src="{{ asset('images/JJDAY.png') }}" alt="Logo" style="height: 30px;" class="me-2">
+                    Panel de Control
+                </a>
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Usuario (Admin)</a>
+                            <span class="nav-link">{{ session('user.rol_name') }}</span>
                         </li>
                         <li class="nav-item">
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
@@ -91,14 +94,26 @@
 
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-                    <a class="nav-link" href="{{ route('admin.usuarios.index', ['sesionId' => $sesionId]) }}">Usuarios</a>
-                    <a class="nav-link" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorias</a>
-                    <a class="nav-link active" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
+                    <a class="nav-link" href="{{ route('principal') }}">Ir a la tienda</a>
+                    <a class="nav-link active" href="{{ route('admin.muebles.index') }}">Muebles</a>
+                    <a class="nav-link" href="{{ route('admin.categorias.index') }}">Categorías</a>
+                    <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.logs') }}">Logs de Actividad</a>
                 </div>
             </div>
 
             <div class="col-md-9 col-lg-10 p-4">
                 <h1 class="mb-4 text-primary">Crear Nuevo Mueble</h1>
+
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
@@ -106,7 +121,6 @@
                         <hr>
                         <form action="{{ route('admin.muebles.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
-                            <input type="hidden" name="sesionId" value="{{ $sesionId }}">
 
                             <div class="row g-3">
                                 <div class="col-md-6">
@@ -164,15 +178,11 @@
                                 </div>
                                 <div class="col-12 mt-4">
                                     <button type="submit" class="btn btn-primary">Guardar Mueble</button>
-                                    <a href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}" class="btn btn-secondary">Cancelar</a>
+                                    <a href="{{ route('admin.muebles.index') }}" class="btn btn-secondary">Cancelar</a>
                                 </div>
                             </div>
                         </form>
                     </div>
-                </div>
-
-                <div class="alert alert-info mt-4">
-                    Para añadir imágenes, primero guarda el mueble. Luego, podrás editarlo y subir su galería de imágenes.
                 </div>
             </div>
         </div>

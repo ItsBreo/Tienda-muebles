@@ -74,22 +74,20 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('admin.muebles.index') }}">
+                    <img src="{{ asset('images/JJDAY.png') }}" alt="Logo" style="height: 30px;" class="me-2">
                     Panel de Control
                 </a>
 
                 <div class="collapse navbar-collapse justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <span class="nav-link">Usuario (Admin)</span>
+                            <span class="nav-link">{{ session('user.rol_name') }}</span>
                         </li>
                         <li class="nav-item">
                             <form action="{{ route('login.logout') }}" method="POST" class="d-inline">
                                 @csrf
-                                <input type="hidden" name="sesionId" value="{{ $sesionId }}">
-                                <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">
-                                    Cerrar Sesion
-                                </button>
+                                <button type="submit" class="btn btn-link nav-link p-2" style="text-decoration: none;">Cerrar Sesión</button>
                             </form>
                         </li>
                     </ul>
@@ -102,20 +100,22 @@
         <div class="row">
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="nav flex-column nav-pills">
-                    <a class="nav-link" href="{{ route('admin.usuarios.index', ['sesionId' => $sesionId]) }}">Usuarios</a>
-                    <a class="nav-link" href="{{ route('admin.muebles.index', ['sesionId' => $sesionId]) }}">Muebles</a>
-                    <a class="nav-link active" href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}">Categorias</a>
+                    <a class="nav-link" href="{{ route('principal') }}">Ir a la tienda</a>
+                    <a class="nav-link" href="{{ route('admin.muebles.index') }}">Muebles</a>
+                    <a class="nav-link active" href="{{ route('admin.categorias.index') }}">Categorías</a>
+                    <a class="nav-link" href="{{ route('admin.usuarios.index') }}">Usuarios</a>
+                    <a class="nav-link" href="{{ route('admin.logs') }}">Logs de Actividad</a>
                 </div>
             </div>
 
             <div class="col-md-9 col-lg-10 p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h1 class="text-primary mb-0">Detalle de Categoria</h1>
+                    <h1 class="text-primary mb-0">Detalle de Categoría</h1>
                     <div>
-                        <a href="{{ route('admin.categorias.edit', ['sesionId' => $sesionId, 'categoria' => $categoria->id]) }}" class="btn btn-secondary">
-                            Editar Categoria
+                        <a href="{{ route('admin.categorias.edit', ['categoria' => $categoria->id]) }}" class="btn btn-secondary">
+                            Editar Categoría
                         </a>
-                        <a href="{{ route('admin.categorias.index', ['sesionId' => $sesionId]) }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('admin.categorias.index') }}" class="btn btn-outline-secondary">
                             Volver al Listado
                         </a>
                     </div>
@@ -123,7 +123,7 @@
 
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-body">
-                        <h5 class="card-title text-primary">Informacion General</h5>
+                        <h5 class="card-title text-primary">Información General</h5>
                         <hr>
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -135,7 +135,7 @@
                                 <p>#{{ $categoria->id }}</p>
                             </div>
                             <div class="col-12 mb-3">
-                                <label class="fw-bold text-muted">Descripcion:</label>
+                                <label class="fw-bold text-muted">Descripción:</label>
                                 <p class="bg-light p-3 rounded border">
                                     {{ $categoria->description }}
                                 </p>
@@ -144,7 +144,7 @@
                                 <small class="text-muted">Creado el: {{ optional($categoria->created_at)->format('d/m/Y H:i') ?? 'N/D' }}</small>
                             </div>
                             <div class="col-md-6">
-                                <small class="text-muted">Ultima actualizacion: {{ optional($categoria->updated_at)->format('d/m/Y H:i') ?? 'N/D' }}</small>
+                                <small class="text-muted">Última actualización: {{ optional($categoria->updated_at)->format('d/m/Y H:i') ?? 'N/D' }}</small>
                             </div>
                         </div>
                     </div>
@@ -152,7 +152,7 @@
 
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
-                        <h5 class="card-title text-primary">Muebles en esta Categoria</h5>
+                        <h5 class="card-title text-primary">Muebles en esta Categoría</h5>
                         <hr>
 
                         @if (collect($categoria->furniture ?? [])->isNotEmpty())
@@ -181,7 +181,7 @@
                                                     @endif
                                                 </td>
                                                 <td class="text-end">
-                                                    <a href="{{ route('admin.muebles.show', ['sesionId' => $sesionId, 'mueble' => $mueble->id]) }}"
+                                                    <a href="{{ route('admin.muebles.show', ['mueble' => $mueble->id]) }}"
                                                        class="btn btn-sm btn-info text-white">
                                                         Ver Mueble
                                                     </a>
@@ -193,7 +193,7 @@
                             </div>
                         @else
                             <div class="alert alert-warning">
-                                No hay muebles registrados en esta categoria actualmente.
+                                No hay muebles registrados en esta categoría actualmente.
                             </div>
                         @endif
                     </div>

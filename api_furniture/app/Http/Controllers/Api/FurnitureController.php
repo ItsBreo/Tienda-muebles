@@ -48,7 +48,7 @@ class FurnitureController extends Controller
             'category'      => 'nullable|integer|exists:categories,id',
             'q'             => 'nullable|string|max:100',
             'min_price'     => 'nullable|numeric|min:0',
-            'max_price'     => 'nullable|numeric|min:0|gte:min_price',
+            'max_price'     => 'nullable|numeric|min:0',
             'color'         => 'nullable|string|max:100',
             'only_salient'  => 'nullable|boolean',
             'sort'          => 'nullable|string|in:price_asc,price_desc,name_asc,name_desc,date_new,date_old',

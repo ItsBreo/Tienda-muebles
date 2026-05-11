@@ -52,6 +52,7 @@ class ApiFurnitureService
     public function getFurnitureList(array $filters = [])
     {
         try {
+            $filters = array_filter($filters, fn($v) => $v !== null && $v !== '');
             $response = Http::timeout(5)->get($this->baseUrl . '/api/furniture', $filters);
             if ($response->successful()) {
                 // Devuelve el array completo porque incluye metadata de paginación

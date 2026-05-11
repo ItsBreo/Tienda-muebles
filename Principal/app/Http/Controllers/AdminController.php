@@ -145,10 +145,23 @@ class AdminController extends Controller
 
     public function categoriasIndex(Request $request)
     {
-        $categorias = collect($this->apiFurniture->getCategories());
+        $search = $request->query('search');
+        $data = $this->apiFurniture->getCategories();
+        $categorias = collect($data);
+
+        if ($search) {
+            $categorias = $categorias->filter(function ($c) {
+                $search = request()->query('search');
+                return stripos($c['name'] ?? '', $search) !== false ||
+                       stripos($c['description'] ?? '', $search) !== false;
+            });
+        }
+
+        $categorias = $categorias->map(fn ($c) => (object) $c);
 
         return view('admin.categorias.index', [
             'categorias' => $categorias,
+            'search' => $search,
         ]);
     }
 

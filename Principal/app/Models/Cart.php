@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Models\Furniture;
 use App\Models\User;
 
 class Cart extends Model
@@ -23,18 +22,6 @@ class Cart extends Model
 	/**
 	 * Define la relación de muchos a muchos con Furniture.
 	 */
-	public function productos()
-	{
-		return $this->belongsToMany(
-			Furniture::class,
-			'cart_furniture',
-			'cart_id',
-			'furniture_id'
-		)
-		->withPivot('quantity', 'unit_price')
-		->withTimestamps();
-	}
-
 	/**
 	 * Define la relación de uno a muchos inversa con User.
 	 */

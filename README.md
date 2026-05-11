@@ -14,7 +14,59 @@ Este proyecto es una aplicación web de comercio electrónico desarrollada con *
 * **Diseño Minimalista:** Uso de Bootstrap y estilos personalizados para una interfaz limpia, enfocada en el producto.
 
 -----
+🏗️ Nueva Arquitectura Modular (Orientada a Servicios)
+El proyecto ha evolucionado de una estructura monolítica a una arquitectura modular orientada a servicios, separando las responsabilidades en tres aplicaciones independientes construidas con Laravel.
 
+Los 3 Proyectos Principales
+api_users (Servicio de Identidad):
+
+Es el núcleo central de seguridad y gestión de usuarios, actuando como Proveedor de Identidad (IdP).
+
+Gestiona el registro, autenticación (Login/Logout) y perfiles.
+
+Utiliza Laravel Sanctum para emitir tokens de acceso (Bearer) basados en permisos (abilities).
+
+Implementa un registro de auditoría (session_logs) para guardar IPs y User-Agents.
+
+api_furniture (Servicio de Recursos):
+
+Gestiona el dominio principal del negocio: catálogo de muebles, categorías y galería de imágenes.
+
+Implementa un middleware personalizado (remote.auth) que intercepta las peticiones y, en lugar de validar el token localmente, consulta a api_users para verificar la identidad y permisos del solicitante.
+
+Incluye su propio sistema de Log de Actividad que registra cada acción administrativa (crear, editar, eliminar).
+
+Principal (Tienda y Consumidor):
+
+Es la interfaz web final orientada al cliente y al administrador.
+
+Actúa como orquestador consumiendo la API de usuarios para autenticación y la API de muebles para mostrar el catálogo.
+
+Maneja la lógica del carrito de compras, el flujo de pagos (integrado con Stripe) y la visualización de pedidos.
+
+🔄 Principales Modificaciones frente a la versión anterior
+Bases de datos independientes: La lógica de usuarios y el catálogo de muebles se han movido a APIs y bases de datos independientes para mejorar la escalabilidad y el desacoplamiento.
+
+Validación remota: La API de muebles ahora confía en las validaciones de identidad realizadas remotamente por la API de usuarios mediante comunicación entre servicios.
+
+Control de acceso por "Abilities": Implementación de habilidades de Laravel Sanctum para otorgar permisos granulares según el rol (Admin, Gestor, Cliente).
+
+Pasarela de pago: Integración con Stripe real para garantizar un proceso de compra profesional.
+
+Trazabilidad y Logs: Adición de un apartado de logs detallado para registrar cambios de los administradores y una auditoría completa de sesiones.
+
+Seguridad en Rutas: Eliminación del paso del sesionID a través de las URLs, centralizando la seguridad en el manejo de tokens y sesiones protegidas.
+
+📡 Resumen de Endpoints y Permisos
+La comunicación entre la aplicación principal y los servicios se realiza a través de endpoints seguros. Algunos de los principales incluyen:
+
+Autenticación (api_users): /api/login, /api/register, /api/logout, /api/profile.
+
+Gestión de Usuarios (api_users): CRUD completo en /api/users/ protegido mediante las abilities usuarios.ver, usuarios.crear, etc.
+
+Catálogo (api_furniture): /api/furniture (Público para lectura, protegido con la ability muebles.crear/editar/eliminar para modificaciones).
+
+Galería (api_furniture): Gestión avanzada de imágenes en /api/furniture/{id}/gallery, permitiendo subir múltiples fotos y establecer la imagen principal.
 ## 🛠️ Tecnologías Utilizadas
 
 | Categoría | Tecnología | Versión Aproximada |

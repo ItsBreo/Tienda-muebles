@@ -10,7 +10,7 @@ use OpenApi\Attributes as OA;
     description: 'API REST responsable de la autenticación y gestión de usuarios. Utiliza Laravel Sanctum para proteger rutas mediante Bearer tokens con abilities basadas en roles.',
     contact: new OA\Contact(email: 'admin@tienda-muebles.test'),
 )]
-#[OA\Server(url: 'http://api_users.test', description: 'Servidor local')]
+#[OA\Server(url: 'http://127.0.0.1:8001', description: 'Servidor local')]
 #[OA\SecurityScheme(
     securityScheme: 'sanctum',
     type: 'http',

@@ -10,7 +10,7 @@ use OpenApi\Attributes as OA;
     description: 'API REST para catalogo, categorias, galeria y gestion de stock de muebles. Incluye endpoints publicos de consulta y endpoints protegidos para escritura.',
     contact: new OA\Contact(email: 'admin@tienda-muebles.test'),
 )]
-#[OA\Server(url: 'http://api_furniture.test', description: 'Servidor local')]
+#[OA\Server(url: 'http://127.0.0.1:8000', description: 'Servidor local')]
 #[OA\SecurityScheme(
     securityScheme: 'remoteAuth',
     type: 'http',

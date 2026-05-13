@@ -143,6 +143,91 @@ class AdminController extends Controller
             ->with('success', 'Mueble eliminado correctamente.');
     }
 
+    public function galleryStore(Request $request, $muebleId)
+    {
+        $request->validate([
+            'images'   => 'required|array|min:1|max:10',
+            'images.*' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
+        ]);
+
+        $http = Http::withToken($this->token());
+        foreach ($request->file('images') as $file) {
+            $http = $http->attach(
+                'images[]',
+                file_get_contents($file->getRealPath()),
+                $file->getClientOriginalName()
+            );
+        }
+
+        $response = $http->post($this->apiFurnitureUrl("/api/furniture/{$muebleId}/gallery"));
+
+        if ($response->successful()) {
+            return redirect()->route('admin.muebles.edit', ['mueble' => $muebleId])
+                ->with('success', 'Imágenes subidas correctamente.');
+        }
+
+        return back()->withErrors([
+            'general' => $response->json('message', 'Error al subir las imágenes.'),
+        ]);
+    }
+
+    public function galleryDestroy(Request $request, $muebleId, $imageId)
+    {
+        $response = Http::withToken($this->token())
+            ->delete($this->apiFurnitureUrl("/api/furniture/{$muebleId}/gallery/{$imageId}"));
+
+        if ($response->successful()) {
+            return redirect()->route('admin.muebles.edit', ['mueble' => $muebleId])
+                ->with('success', 'Imagen eliminada correctamente.');
+        }
+
+        return back()->withErrors([
+            'general' => $response->json('message', 'Error al eliminar la imagen.'),
+        ]);
+    }
+
+    public function gallerySetMain(Request $request, $muebleId, $imageId)
+    {
+        $response = Http::withToken($this->token())
+            ->post($this->apiFurnitureUrl("/api/furniture/{$muebleId}/gallery/{$imageId}/main"));
+
+        if ($response->successful()) {
+            return redirect()->route('admin.muebles.edit', ['mueble' => $muebleId])
+                ->with('success', 'Imagen principal actualizada.');
+        }
+
+        return back()->withErrors([
+            'general' => $response->json('message', 'Error al establecer la imagen principal.'),
+        ]);
+    }
+
+    public function galleryReorder(Request $request, $muebleId)
+    {
+        $request->validate([
+            'order'   => 'required|array|min:1',
+            'order.*' => 'required|integer',
+        ]);
+
+        $errors = [];
+        foreach ($request->input('order') as $imageId => $position) {
+            $response = Http::withToken($this->token())
+                ->put($this->apiFurnitureUrl("/api/furniture/{$muebleId}/gallery/{$imageId}/order"), [
+                    'display_order' => (int) $position,
+                ]);
+
+            if (!$response->successful()) {
+                $errors[] = "Imagen #{$imageId}: " . $response->json('message', 'error');
+            }
+        }
+
+        if (!empty($errors)) {
+            return back()->withErrors(['general' => implode(' | ', $errors)]);
+        }
+
+        return redirect()->route('admin.muebles.edit', ['mueble' => $muebleId])
+            ->with('success', 'Orden de la galería actualizado.');
+    }
+
     public function categoriasIndex(Request $request)
     {
         $search = $request->query('search');

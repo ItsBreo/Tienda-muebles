@@ -134,8 +134,11 @@
                             <div class="col-12">
                                 <p class="detail-label">Imagenes:</p>
                                 @forelse ($mueble->images as $image)
-                                    <div class="mb-2">
-                                        <img src="{{ asset($image->image_path) }}" alt="{{ $image->alt_text ?? 'Imagen' }}" style="max-width: 150px; max-height: 150px; object-fit: cover;">
+                                    <div class="mb-2 d-inline-block me-2">
+                                        <img src="{{ rtrim(env('API_FURNITURE_URL'), '/') }}/{{ $image->image_path }}"
+                                             alt="{{ $image->alt_text ?? 'Imagen' }}"
+                                             style="max-width: 150px; max-height: 150px; object-fit: cover;"
+                                             class="border rounded">
                                         @if($image->is_primary)
                                             <span class="badge bg-success ms-2">Principal</span>
                                         @endif

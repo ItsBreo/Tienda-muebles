@@ -219,33 +219,106 @@
                     </div>
                 </div>
 
+                @php
+                    $apiFurnitureUrl = rtrim(env('API_FURNITURE_URL'), '/');
+                    $imagesOrdered = collect($mueble->images ?? [])->sortBy([
+                        ['is_primary', 'desc'],
+                        ['display_order', 'asc'],
+                    ])->values();
+                @endphp
+
+                <div class="card shadow-sm border-0 mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">Subir Imágenes a la Galería</h5>
+                        <hr>
+                        <form action="{{ route('admin.muebles.gallery.store', ['mueble' => $mueble->id]) }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-9">
+                                    <label for="images" class="form-label">Selecciona una o varias imágenes (máx. 10, 4MB cada una)</label>
+                                    <input type="file" class="form-control" id="images" name="images[]" multiple required accept="image/*">
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="submit" class="btn btn-primary w-100">Subir Imágenes</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <div class="card shadow-sm border-0 mt-4 mb-5">
                     <div class="card-body">
-                        <h5 class="card-title text-primary">Galeria de Imagenes</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title text-primary mb-0">Galería de Imágenes</h5>
+                            @if ($imagesOrdered->isNotEmpty())
+                                <small class="text-muted">Edita el número de orden y pulsa "Guardar orden" para reordenar.</small>
+                            @endif
+                        </div>
                         <hr>
 
-                        @if (collect($mueble->images ?? [])->isNotEmpty())
-                            <div class="row g-3">
-                                @foreach ($mueble->images as $image)
-                                    <div class="col-md-3">
-                                        <div class="card gallery-card">
-                                            <img src="{{ asset($image->image_path) }}" class="card-img-top"
-                                                alt="Imagen galeria" style="height: 150px; object-fit: cover;">
+                        @if ($imagesOrdered->isNotEmpty())
+                            <form action="{{ route('admin.muebles.gallery.reorder', ['mueble' => $mueble->id]) }}" method="POST" id="reorder-form">
+                                @csrf
+                                @method('PUT')
+                                <div class="row g-3">
+                                    @foreach ($imagesOrdered as $image)
+                                        <div class="col-md-3">
+                                            <div class="card gallery-card h-100">
+                                                <img src="{{ $apiFurnitureUrl }}/{{ $image->image_path }}"
+                                                     class="card-img-top"
+                                                     alt="{{ $image->alt_text ?? 'Imagen' }}"
+                                                     style="height: 180px; object-fit: cover;">
 
-                                            <div class="card-body text-center d-flex align-items-end justify-content-center">
-                                                @if($image->is_primary)
-                                                    <span class="badge bg-success">Principal</span>
-                                                @else
-                                                    <span class="badge bg-secondary">Galeria</span>
-                                                @endif
+                                                <div class="card-body d-flex flex-column">
+                                                    <div class="mb-2 text-center">
+                                                        @if($image->is_primary)
+                                                            <span class="badge bg-success">Principal</span>
+                                                        @else
+                                                            <span class="badge bg-secondary">Galería</span>
+                                                        @endif
+                                                    </div>
+
+                                                    <div class="mb-2">
+                                                        <label class="form-label small mb-1">Orden</label>
+                                                        <input type="number" min="0" max="99"
+                                                               name="order[{{ $image->id }}]"
+                                                               value="{{ $image->display_order ?? 0 }}"
+                                                               class="form-control form-control-sm">
+                                                    </div>
+
+                                                    <div class="mt-auto d-flex flex-column gap-1">
+                                                        @if(!$image->is_primary)
+                                                            <button type="submit"
+                                                                    formaction="{{ route('admin.muebles.gallery.main', ['mueble' => $mueble->id, 'image' => $image->id]) }}"
+                                                                    formmethod="POST"
+                                                                    formnovalidate
+                                                                    class="btn btn-sm btn-outline-success">
+                                                                Marcar principal
+                                                            </button>
+                                                        @endif
+                                                        <button type="submit"
+                                                                formaction="{{ route('admin.muebles.gallery.destroy', ['mueble' => $mueble->id, 'image' => $image->id]) }}"
+                                                                formmethod="POST"
+                                                                formnovalidate
+                                                                onclick="return confirm('¿Eliminar esta imagen?');"
+                                                                class="btn btn-sm btn-outline-danger"
+                                                                name="_method" value="DELETE">
+                                                            Eliminar
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                @endforeach
-                            </div>
+                                    @endforeach
+                                </div>
+
+                                <div class="mt-3 text-end">
+                                    <button type="submit" class="btn btn-primary">Guardar orden</button>
+                                </div>
+                            </form>
                         @else
-                            <div class="alert alert-info mt-3">
-                                Este mueble aun no tiene imagenes adicionales en su galeria.
+                            <div class="alert alert-info mt-3 mb-0">
+                                Este mueble aún no tiene imágenes en su galería. Súbelas desde el formulario de arriba.
                             </div>
                         @endif
                     </div>

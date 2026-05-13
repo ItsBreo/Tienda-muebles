@@ -136,10 +136,14 @@
                         </div>
 
                         <div class="table-responsive mt-3">
-                            <table class="table table-hover">
+                            @php
+                                $apiFurnitureUrl = rtrim(env('API_FURNITURE_URL'), '/');
+                            @endphp
+                            <table class="table table-hover align-middle">
                                 <thead class="table-light">
                                     <tr>
                                         <th>ID</th>
+                                        <th>Imagen</th>
                                         <th>Nombre</th>
                                         <th>Precio</th>
                                         <th>Stock</th>
@@ -150,6 +154,16 @@
                                     @forelse ($muebles as $mueble)
                                         <tr>
                                             <td>{{ $mueble->id }}</td>
+                                            <td>
+                                                @if (!empty($mueble->main_image))
+                                                    <img src="{{ $apiFurnitureUrl }}/{{ $mueble->main_image }}"
+                                                         alt="{{ $mueble->name }}"
+                                                         style="width: 60px; height: 60px; object-fit: cover;"
+                                                         class="border rounded">
+                                                @else
+                                                    <span class="text-muted small">—</span>
+                                                @endif
+                                            </td>
                                             <td>{{ $mueble->name }}</td>
                                             <td>{{ number_format($mueble->price, 2) }} EUR</td>
                                             <td>{{ $mueble->stock }}</td>
@@ -177,7 +191,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="text-center text-secondary">
+                                            <td colspan="6" class="text-center text-secondary">
                                                 No hay muebles para mostrar.
                                             </td>
                                         </tr>

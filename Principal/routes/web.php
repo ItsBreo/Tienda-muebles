@@ -58,6 +58,12 @@ Route::prefix('admin')->name('admin.')->middleware('es.admin')->group(function (
     Route::put('/muebles/{mueble}',     [AdminController::class, 'mueblesUpdate'])->name('muebles.update');
     Route::delete('/muebles/{mueble}',  [AdminController::class, 'mueblesDestroy'])->name('muebles.destroy');
 
+    // Galería de muebles
+    Route::post('/muebles/{mueble}/galeria',                       [AdminController::class, 'galleryStore'])->name('muebles.gallery.store');
+    Route::delete('/muebles/{mueble}/galeria/{image}',             [AdminController::class, 'galleryDestroy'])->name('muebles.gallery.destroy');
+    Route::post('/muebles/{mueble}/galeria/{image}/principal',     [AdminController::class, 'gallerySetMain'])->name('muebles.gallery.main');
+    Route::put('/muebles/{mueble}/galeria/orden',                  [AdminController::class, 'galleryReorder'])->name('muebles.gallery.reorder');
+
     // Categorías
     Route::get('/categorias',              [AdminController::class, 'categoriasIndex'])->name('categorias.index');
     Route::get('/categorias/crear',        [AdminController::class, 'categoriasCreate'])->name('categorias.create');
